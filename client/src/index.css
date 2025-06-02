@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 214 100% 57%; /* #3B82F6 - Blue */
+  --primary-foreground: 211 100% 99%;
+  --secondary: 142 76% 36%; /* #10B981 - Green */
+  --secondary-foreground: 355.7 100% 97.3%;
+  --accent: 38 92% 50%; /* #F59E0B - Yellow/Orange */
+  --accent-foreground: 26 83.3% 14.1%;
+  --destructive: 0 84.2% 60.2%; /* #EF4444 - Red */
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+  
+  /* Custom app colors */
+  --danger: 0 84.2% 60.2%; /* #EF4444 - Red */
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 214 100% 57%; /* #3B82F6 - Blue */
+  --primary-foreground: 211 100% 99%;
+  --secondary: 142 76% 36%; /* #10B981 - Green */
+  --secondary-foreground: 355.7 100% 97.3%;
+  --accent: 38 92% 50%; /* #F59E0B - Yellow/Orange */
+  --accent-foreground: 26 83.3% 14.1%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+  
+  /* Custom app colors for dark mode */
+  --danger: 0 62.8% 30.6%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-danger {
+    color: hsl(var(--danger));
+  }
+  
+  .bg-danger {
+    background-color: hsl(var(--danger));
+  }
+  
+  .border-danger {
+    border-color: hsl(var(--danger));
+  }
+}
+
+/* Animation improvements */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-in.slide-in-from-right {
+  animation: slide-in-from-right 0.3s ease-out;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Focus styles for accessibility */
+.focus-visible:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Timer display styling */
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}
