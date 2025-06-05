@@ -10,6 +10,8 @@ import Timer from "@/pages/timer";
 import Reports from "@/pages/reports";
 import History from "@/pages/history";
 import NotFound from "@/pages/not-found";
+import LoginPage from "@/pages/login";         // <= importe
+import { useAuth } from "@/hooks/useAuth";     // <= importe
 
 function Router() {
   return (
@@ -28,6 +30,12 @@ function Router() {
 }
 
 function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Carregando...</div>;
+
+  if (!user) return <LoginPage />;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

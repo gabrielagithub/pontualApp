@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Bell, Calendar } from "lucide-react";
+import { auth } from "@/lib/firebase"; // 1. Importe aqui
 
 interface HeaderProps {
   title: string;
@@ -36,6 +37,16 @@ export default function Header({ title, onMenuClick }: HeaderProps) {
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="h-5 w-5 text-gray-400" />
             <span className="absolute top-1 right-1 h-2 w-2 bg-danger rounded-full"></span>
+          </Button>
+          
+          {/* BOTÃO DE SAIR: */}
+          <Button
+            variant="outline" // ou "ghost", seu gosto
+            size="sm"
+            onClick={() => auth.signOut()}
+            className="ml-2"
+          >
+            Sair
           </Button>
         </div>
       </div>
