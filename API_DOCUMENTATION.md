@@ -113,6 +113,35 @@ DELETE /api/tasks/:id
 ```
 **Nota**: Não é possível excluir tarefas que possuem apontamentos de tempo.
 
+### 6. Concluir tarefa
+```
+PUT /api/tasks/:id/complete
+```
+**Descrição**: Marca uma tarefa como concluída, definindo `isCompleted: true` e `completedAt` com a data/hora atual.
+
+**Resposta**:
+```json
+{
+  "id": 1,
+  "name": "Nome da Tarefa",
+  "description": "Descrição",
+  "color": "#3B82F6",
+  "isActive": true,
+  "isCompleted": true,
+  "completedAt": "2025-01-01T12:00:00.000Z",
+  "totalTime": 7200,
+  "activeEntries": 0
+}
+```
+
+### 7. Reabrir tarefa
+```
+PUT /api/tasks/:id/reopen
+```
+**Descrição**: Reativa uma tarefa concluída, definindo `isCompleted: false` e `completedAt: null`.
+
+**Resposta**: Mesmo formato da tarefa atualizada.
+
 ## Endpoints de Analytics/Dashboard
 
 ### 1. Estatísticas do dashboard
@@ -154,6 +183,94 @@ GET /api/dashboard/due-today-tasks
 ```
 GET /api/dashboard/due-tomorrow-tasks
 ```
+
+## Endpoints de Relatórios
+
+### 1. Tempo por tarefa
+```
+GET /api/reports/time-by-task
+```
+**Parâmetros de query opcionais**:
+- `startDate`: Data de início (YYYY-MM-DD)
+- `endDate`: Data de fim (YYYY-MM-DD)
+
+**Resposta**:
+```json
+[
+  {
+    "task": {
+      "id": 1,
+      "name": "Desenvolvimento Frontend",
+      "color": "#3B82F6"
+    },
+    "totalTime": 28800
+  }
+]
+```
+
+### 2. Estatísticas diárias
+```
+GET /api/reports/daily-stats
+```
+**Parâmetros de query obrigatórios**:
+- `startDate`: Data de início (YYYY-MM-DD)
+- `endDate`: Data de fim (YYYY-MM-DD)
+
+**Resposta**:
+```json
+[
+  {
+    "date": "2025-01-01",
+    "totalTime": 28800
+  },
+  {
+    "date": "2025-01-02", 
+    "totalTime": 21600
+  }
+]
+```
+
+### 3. Exportar dados (CSV)
+```
+GET /api/export/csv
+```
+**Parâmetros de query opcionais**:
+- `startDate`: Data de início (YYYY-MM-DD)
+- `endDate`: Data de fim (YYYY-MM-DD)
+- `taskId`: ID específico da tarefa
+
+**Resposta**: Arquivo CSV para download com apontamentos de tempo.
+
+## Endpoints de Timer Avançado
+
+### 1. Finalizar timer e concluir tarefa
+```
+POST /api/timer/finish-and-complete
+```
+**Body (JSON)**:
+```json
+{
+  "entryId": 123,
+  "taskId": 1
+}
+```
+
+**Descrição**: Para um timer ativo, calcula a duração final e marca a tarefa como concluída em uma única operação.
+
+**Resposta**:
+```json
+{
+  "message": "Timer finalizado e tarefa concluída com sucesso",
+  "timeEntry": { ... },
+  "task": { ... }
+}
+```
+
+### 2. Validação de exclusão de apontamentos
+```
+DELETE /api/time-entries/:id
+```
+**Nota**: Implementa validação para prevenir exclusão de apontamentos ativos (com `endTime: null` ou `isRunning: true`). Retorna erro 400 se tentar excluir entrada ativa.
 
 ## Exemplos de Uso
 
