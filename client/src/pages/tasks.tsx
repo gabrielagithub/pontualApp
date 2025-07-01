@@ -112,6 +112,24 @@ export default function Tasks() {
     },
   });
 
+  const completeTaskMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("PUT", `/api/tasks/${id}/complete`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({
+        title: "Sucesso",
+        description: "Atividade concluída com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Falha ao concluir atividade",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEditTask = (task: TaskWithStats) => {
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -131,6 +149,12 @@ export default function Tasks() {
   const handleReopenTask = (id: number) => {
     if (window.confirm("Tem certeza que deseja reabrir esta atividade?")) {
       reopenTaskMutation.mutate(id);
+    }
+  };
+
+  const handleCompleteTask = (id: number) => {
+    if (window.confirm("Tem certeza que deseja concluir esta atividade?")) {
+      completeTaskMutation.mutate(id);
     }
   };
 
@@ -275,6 +299,15 @@ export default function Tasks() {
                     </div>
                     <Button
                       size="sm"
+                      variant="outline"
+                      onClick={() => handleCompleteTask(task.id)}
+                      disabled={completeTaskMutation.isPending}
+                      className="border-green-500 text-green-600 hover:bg-green-50"
+                    >
+                      ✓ Concluir
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="ghost"
                       onClick={() => handleEditTask(task)}
                     >
@@ -285,8 +318,9 @@ export default function Tasks() {
                       variant="ghost"
                       onClick={() => handleDeleteTask(task.id)}
                       disabled={deleteTaskMutation.isPending}
+                      className="text-red-600 hover:bg-red-50"
                     >
-                      <Trash2 className="h-4 w-4 text-danger" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
