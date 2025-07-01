@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { IStorage } from './storage';
 import type { 
   User, InsertUser, 
@@ -11,10 +12,23 @@ import type {
 export class SQLiteStorage implements IStorage {
   private db: Database.Database;
 
-  constructor(dbPath: string = 'database.sqlite') {
-    this.db = new Database(dbPath);
+  constructor(dbPath?: string) {
+    // Use caminho absoluto para garantir persistência
+    const defaultPath = path.join(process.cwd(), 'data', 'database.sqlite');
+    const finalPath = dbPath || defaultPath;
+    
+    // Criar diretório data se não existir
+    const dataDir = path.dirname(finalPath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    console.log(`🗄️  Conectando ao banco SQLite: ${finalPath}`);
+    this.db = new Database(finalPath);
     this.initializeTables();
+    this.addMissingColumns();
     this.seedInitialData();
+    this.setupBackupSystem(finalPath);
   }
 
   private initializeTables() {
@@ -756,6 +770,88 @@ export class SQLiteStorage implements IStorage {
     
     const results = stmt.all(adjustedStart.toISOString().split('T')[0], adjustedEnd.toISOString().split('T')[0]) as Array<{ date: string; totalTime: number }>;
     return results;
+  }
+
+  private setupBackupSystem(dbPath: string) {
+    const fs = require('fs');
+    const backupDir = path.join(path.dirname(dbPath), 'backups');
+    
+    // Criar diretório de backup se não existir
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    // Fazer backup a cada 1 hora (em produção você pode ajustar)
+    const backupInterval = 60 * 60 * 1000; // 1 hora em ms
+    
+    setInterval(() => {
+      this.createBackup(dbPath, backupDir);
+    }, backupInterval);
+    
+    // Fazer backup inicial
+    this.createBackup(dbPath, backupDir);
+    
+    console.log(`📦 Sistema de backup configurado: ${backupDir}`);
+  }
+  
+  private createBackup(dbPath: string, backupDir: string) {
+    try {
+      const fs = require('fs');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = path.join(backupDir, `database-${timestamp}.sqlite`);
+      
+      // Copiar arquivo do banco
+      if (fs.existsSync(dbPath)) {
+        fs.copyFileSync(dbPath, backupPath);
+        console.log(`✅ Backup criado: ${backupPath}`);
+        
+        // Manter apenas os últimos 5 backups
+        this.cleanOldBackups(backupDir);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao criar backup:', error);
+    }
+  }
+  
+  private cleanOldBackups(backupDir: string) {
+    try {
+      const fs = require('fs');
+      const files = fs.readdirSync(backupDir)
+        .filter((file: string) => file.startsWith('database-') && file.endsWith('.sqlite'))
+        .map((file: string) => ({
+          name: file,
+          path: path.join(backupDir, file),
+          stats: fs.statSync(path.join(backupDir, file))
+        }))
+        .sort((a: any, b: any) => b.stats.mtime.getTime() - a.stats.mtime.getTime());
+      
+      // Manter apenas os 5 mais recentes
+      if (files.length > 5) {
+        files.slice(5).forEach((file: any) => {
+          fs.unlinkSync(file.path);
+          console.log(`🗑️  Backup antigo removido: ${file.name}`);
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao limpar backups antigos:', error);
+    }
+  }
+
+  exportData(): object {
+    // Exportar todos os dados para backup/migração
+    const users = this.db.prepare('SELECT * FROM users').all();
+    const tasks = this.db.prepare('SELECT * FROM tasks').all();
+    const taskItems = this.db.prepare('SELECT * FROM task_items').all();
+    const timeEntries = this.db.prepare('SELECT * FROM time_entries').all();
+    
+    return {
+      users,
+      tasks,
+      taskItems,
+      timeEntries,
+      exportedAt: new Date().toISOString(),
+      version: '1.0'
+    };
   }
 
   close() {

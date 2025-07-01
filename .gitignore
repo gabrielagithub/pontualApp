@@ -4,6 +4,19 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Banco de dados e backups - mantido local
 database.sqlite
+data/
+data/backups/
+*.sqlite
+*.db
+
+# Variáveis de ambiente
 .env
 .env.local
+.env.production
+
+# Logs
+logs/
+*.log
