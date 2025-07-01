@@ -108,6 +108,13 @@ Pontual is a Brazilian Portuguese time tracking and task management application 
 ```
 Changelog:
 - July 01, 2025. Initial setup
+- July 01, 2025 (21:00): Implemented timer system improvements:
+  * Fixed pause/resume functionality with proper state management
+  * Added prevention of multiple active sessions for same task
+  * Created finishTimer function to remove sessions from active list
+  * Improved distinction between paused sessions (temporary) and finished sessions (permanent)
+  * Updated backend query to only show truly running timers (isRunning = 1)
+  * Connected project to GitHub repository: https://github.com/gabrielagithub/pontualApp.git
 ```
 
 ## User Preferences
