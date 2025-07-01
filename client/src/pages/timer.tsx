@@ -35,7 +35,7 @@ export default function Timer() {
     refetchInterval: 5000, // Reduce from 1s to 5s
   });
 
-  const { startTimer, pauseTimer, resumeTimer, stopTimer, isLoading: timerLoading } = useTimer();
+  const { startTimer, pauseTimer, resumeTimer, stopTimer, finishTimer, isLoading: timerLoading } = useTimer();
 
   const addManualEntryMutation = useMutation({
     mutationFn: (data: InsertTimeEntry) => apiRequest("POST", "/api/time-entries", data),
@@ -350,7 +350,7 @@ export default function Timer() {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => stopTimer(entry.id)}
+                          onClick={() => entry.isRunning ? stopTimer(entry.id) : finishTimer(entry.id)}
                           disabled={timerLoading}
                         >
                           <Square className="h-3 w-3" />

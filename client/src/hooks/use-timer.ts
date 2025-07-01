@@ -268,11 +268,66 @@ export function useTimer() {
     },
   });
 
+  const finishTimerMutation = useMutation({
+    mutationFn: async (entryId: number) => {
+      console.log("finishTimerMutation called for entryId:", entryId);
+      
+      // Para finalizar, simplesmente removemos das sessões ativas marcando como finalizada
+      // sem alterar as durações já calculadas
+      const response = await fetch(`/api/time-entries/${entryId}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch entry: ${response.status}`);
+      }
+      
+      const entry = await response.json();
+      console.log("Entry to finish:", entry);
+      
+      // Para finalizar uma sessão pausada, ela deve sair das sessões ativas
+      // Para isso, vamos usar uma flag específica ou lógica diferente
+      const now = new Date();
+      
+      const updates: UpdateTimeEntry = {
+        endTime: entry.end_time || now.toISOString(), // Manter endTime se já pausada
+        duration: entry.duration, // Manter duração calculada
+        isRunning: false, // Garantir que não está mais ativa
+      };
+      
+      console.log("Finishing timer with updates:", updates);
+      
+      const result = await apiRequest("PUT", `/api/time-entries/${entryId}`, updates);
+      console.log("Finish result:", result);
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries/running"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      
+      showNotification({
+        type: "success",
+        title: "Atividade finalizada",
+        message: "A atividade foi finalizada com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Falha ao finalizar atividade",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     startTimer: startTimerMutation.mutate,
     pauseTimer: pauseTimerMutation.mutate,
     resumeTimer: resumeTimerMutation.mutate,
     stopTimer: stopTimerMutation.mutate,
-    isLoading: startTimerMutation.isPending || pauseTimerMutation.isPending || resumeTimerMutation.isPending || stopTimerMutation.isPending,
+    finishTimer: finishTimerMutation.mutate,
+    isLoading: startTimerMutation.isPending || pauseTimerMutation.isPending || resumeTimerMutation.isPending || stopTimerMutation.isPending || finishTimerMutation.isPending,
   };
 }
