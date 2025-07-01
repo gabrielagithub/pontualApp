@@ -124,6 +124,13 @@ Changelog:
   * Added proper error messages in Portuguese for blocked deletions
   * Validated system: active entries show "Fim N/A" and are protected from deletion
   * Finalized entries can be safely deleted from history
+- July 01, 2025 (21:46): Implemented task completion and management system:
+  * Added "Finalizar e Concluir" button in timer page - finalizes timer and marks task as completed
+  * Created complete/reopen task endpoints (/api/tasks/:id/complete and /api/tasks/:id/reopen)
+  * Updated tasks page to separate active and completed activities
+  * Completed tasks show with visual indicators and can be reopened
+  * Filtered completed tasks from timer selection - only active tasks selectable
+  * Added proper notifications and error handling for task state changes
 ```
 
 ## User Preferences

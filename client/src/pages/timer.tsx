@@ -256,7 +256,7 @@ export default function Timer() {
                   <SelectValue placeholder="Escolha uma atividade" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tasks?.map((task) => (
+                  {tasks?.filter(task => !task.isCompleted).map((task) => (
                     <SelectItem key={task.id} value={task.id.toString()}>
                       <div className="flex items-center">
                         <div 
