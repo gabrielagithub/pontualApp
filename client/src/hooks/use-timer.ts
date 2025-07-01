@@ -333,51 +333,60 @@ export function useTimer() {
 
   const finishAndCompleteTimerMutation = useMutation({
     mutationFn: async ({ entryId, taskId }: { entryId: number; taskId: number }) => {
-      console.log("finishAndCompleteTimerMutation called", { entryId, taskId });
-      
-      // Primeiro finalizar o timer
-      const response = await fetch(`/api/time-entries/${entryId}`, {
-        credentials: "include",
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch entry: ${response.status}`);
+      try {
+        console.log("finishAndCompleteTimerMutation called", { entryId, taskId });
+        
+        // Primeiro finalizar o timer
+        const response = await fetch(`/api/time-entries/${entryId}`, {
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch entry: ${response.status}`);
+        }
+        
+        const entry = await response.json();
+        console.log("Entry to finish and complete:", entry);
+        
+        const now = new Date();
+        let finalDuration = entry.duration || 0;
+        
+        // Se ainda estiver rodando, calcular tempo final
+        if (entry.is_running || entry.isRunning) {
+          const startTime = new Date(entry.start_time || entry.startTime);
+          const currentSessionDuration = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+          finalDuration = (entry.duration || 0) + currentSessionDuration;
+        }
+        
+        // Validar tempo mínimo de 1 minuto - mas permitir finalização para conclusão de tarefa
+        if (finalDuration < 60) {
+          // Para a função "Finalizar e Concluir", vamos permitir mesmo com menos de 1 minuto
+          // Mas vamos finalizar com duração mínima e depois concluir a tarefa
+          finalDuration = 60; // Setar duração mínima para permitir a conclusão
+        }
+        
+        // Finalizar o timer
+        const finalizedTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        const timeUpdates: UpdateTimeEntry = {
+          endTime: finalizedTime,
+          duration: finalDuration,
+          isRunning: false,
+        };
+        
+        console.log("Finalizing timer with updates:", timeUpdates);
+        const timeResult = await apiRequest("PUT", `/api/time-entries/${entryId}`, timeUpdates);
+        console.log("Timer finalized:", timeResult);
+        
+        // Concluir a tarefa
+        console.log("Completing task:", taskId);
+        const taskResult = await apiRequest("PUT", `/api/tasks/${taskId}/complete`);
+        console.log("Task completed:", taskResult);
+        
+        return { timeEntry: timeUpdates, taskId };
+      } catch (error) {
+        console.error("Error in finishAndCompleteTimerMutation:", error);
+        throw error;
       }
-      
-      const entry = await response.json();
-      console.log("Entry to finish and complete:", entry);
-      
-      const now = new Date();
-      let finalDuration = entry.duration || 0;
-      
-      // Se ainda estiver rodando, calcular tempo final
-      if (entry.is_running) {
-        const startTime = new Date(entry.start_time);
-        const currentSessionDuration = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-        finalDuration = (entry.duration || 0) + currentSessionDuration;
-      }
-      
-      // Validar tempo mínimo de 1 minuto - mas permitir finalização para conclusão de tarefa
-      if (finalDuration < 60) {
-        // Para a função "Finalizar e Concluir", vamos permitir mesmo com menos de 1 minuto
-        // Mas vamos finalizar com duração mínima e depois concluir a tarefa
-        finalDuration = 60; // Setar duração mínima para permitir a conclusão
-      }
-      
-      // Finalizar o timer
-      const finalizedTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-      const timeUpdates: UpdateTimeEntry = {
-        endTime: finalizedTime,
-        duration: finalDuration,
-        isRunning: false,
-      };
-      
-      await apiRequest("PUT", `/api/time-entries/${entryId}`, timeUpdates);
-      
-      // Concluir a tarefa
-      await apiRequest("PUT", `/api/tasks/${taskId}/complete`);
-      
-      return { timeEntry: timeUpdates, taskId };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
