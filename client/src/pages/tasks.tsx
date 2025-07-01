@@ -113,15 +113,20 @@ export default function Tasks() {
   });
 
   const completeTaskMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("PUT", `/api/tasks/${id}/complete`),
-    onSuccess: () => {
+    mutationFn: (id: number) => {
+      console.log("completeTaskMutation.mutationFn called with id:", id);
+      return apiRequest("PUT", `/api/tasks/${id}/complete`);
+    },
+    onSuccess: (data) => {
+      console.log("completeTaskMutation.onSuccess called with data:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Sucesso",
         description: "Atividade concluída com sucesso",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.log("completeTaskMutation.onError called with error:", error);
       toast({
         title: "Erro",
         description: "Falha ao concluir atividade",
@@ -153,8 +158,12 @@ export default function Tasks() {
   };
 
   const handleCompleteTask = (id: number) => {
+    console.log("handleCompleteTask called with id:", id);
     if (window.confirm("Tem certeza que deseja concluir esta atividade?")) {
+      console.log("User confirmed, calling completeTaskMutation.mutate");
       completeTaskMutation.mutate(id);
+    } else {
+      console.log("User cancelled completion");
     }
   };
 
