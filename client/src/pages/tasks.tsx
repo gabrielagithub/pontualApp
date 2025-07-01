@@ -24,11 +24,19 @@ export default function Tasks() {
     queryKey: ["/api/tasks"],
   });
 
-  // Lógica de filtros
-  const filteredTasks = useMemo(() => {
-    if (!tasks) return [];
+  // Separar tarefas ativas e concluídas
+  const { activeTasks, completedTasks } = useMemo(() => {
+    if (!tasks) return { activeTasks: [], completedTasks: [] };
 
-    return tasks.filter(task => {
+    const active = tasks.filter(task => !task.isCompleted);
+    const completed = tasks.filter(task => task.isCompleted);
+
+    return { activeTasks: active, completedTasks: completed };
+  }, [tasks]);
+
+  // Lógica de filtros para tarefas ativas
+  const filteredActiveTasks = useMemo(() => {
+    return activeTasks.filter(task => {
       // Filtro por busca (nome ou descrição)
       const matchesSearch = searchTerm === "" || 
         task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,7 +52,22 @@ export default function Tasks() {
 
       return matchesSearch && matchesStatus && matchesColor;
     });
-  }, [tasks, searchTerm, statusFilter, colorFilter]);
+  }, [activeTasks, searchTerm, statusFilter, colorFilter]);
+
+  // Lógica de filtros para tarefas concluídas
+  const filteredCompletedTasks = useMemo(() => {
+    return completedTasks.filter(task => {
+      // Filtro por busca (nome ou descrição)
+      const matchesSearch = searchTerm === "" || 
+        task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      // Filtro por cor
+      const matchesColor = colorFilter === "all" || task.color === colorFilter;
+
+      return matchesSearch && matchesColor;
+    });
+  }, [completedTasks, searchTerm, colorFilter]);
 
   // Cores únicas disponíveis
   const availableColors = useMemo(() => {
@@ -71,6 +94,24 @@ export default function Tasks() {
     },
   });
 
+  const reopenTaskMutation = useMutation({
+    mutationFn: (id: number) => apiRequest("PUT", `/api/tasks/${id}/reopen`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({
+        title: "Sucesso",
+        description: "Atividade reaberta com sucesso",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Falha ao reabrir atividade",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEditTask = (task: TaskWithStats) => {
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -84,6 +125,12 @@ export default function Tasks() {
   const handleDeleteTask = (id: number) => {
     if (window.confirm("Tem certeza que deseja excluir esta atividade?")) {
       deleteTaskMutation.mutate(id);
+    }
+  };
+
+  const handleReopenTask = (id: number) => {
+    if (window.confirm("Tem certeza que deseja reabrir esta atividade?")) {
+      reopenTaskMutation.mutate(id);
     }
   };
 
@@ -185,18 +232,20 @@ export default function Tasks() {
             {/* Contador de resultados */}
             {(searchTerm || statusFilter !== "all" || colorFilter !== "all") && (
               <div className="text-sm text-gray-500">
-                {filteredTasks.length} de {tasks?.length || 0} atividades
+                {filteredActiveTasks.length + filteredCompletedTasks.length} de {tasks?.length || 0} atividades
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
+      {/* Atividades Ativas */}
       <Card>
         <CardContent className="p-6">
-          {filteredTasks && filteredTasks.length > 0 ? (
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Atividades Ativas</h4>
+          {filteredActiveTasks && filteredActiveTasks.length > 0 ? (
             <div className="space-y-4">
-              {filteredTasks.map((task) => (
+              {filteredActiveTasks.map((task) => (
                 <div 
                   key={task.id} 
                   className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -272,6 +321,78 @@ export default function Tasks() {
           )}
         </CardContent>
       </Card>
+
+      {/* Atividades Concluídas */}
+      {filteredCompletedTasks && filteredCompletedTasks.length > 0 && (
+        <Card>
+          <CardContent className="p-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Atividades Concluídas</h4>
+            <div className="space-y-4">
+              {filteredCompletedTasks.map((task) => (
+                <div 
+                  key={task.id} 
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50 opacity-75"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: task.color }}
+                    />
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {task.name}
+                        <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                          ✓ Concluída
+                        </span>
+                      </h4>
+                      {task.description && (
+                        <p className="text-sm text-gray-600">{task.description}</p>
+                      )}
+                      {task.completedAt && (
+                        <p className="text-xs text-gray-500">
+                          Concluída em {new Date(task.completedAt).toLocaleDateString('pt-BR')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <span className="text-sm text-gray-500">
+                        Total: {formatDuration(task.totalTime)}
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleReopenTask(task.id)}
+                      disabled={reopenTaskMutation.isPending}
+                      className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                    >
+                      Reabrir
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditTask(task)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteTask(task.id)}
+                      disabled={deleteTaskMutation.isPending}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <TaskModal
         task={selectedTask}
