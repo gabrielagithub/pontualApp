@@ -229,15 +229,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Time entry not found" });
       }
       
-      console.log("Delete validation for entry", id, ":", {
-        endTime: entry.endTime,
-        isRunning: entry.isRunning,
-        willBlock: !entry.endTime || entry.isRunning
-      });
-      
       // Prevent deletion of active sessions (Fim N/A)
       if (!entry.endTime || entry.isRunning) {
-        console.log("Blocking deletion of active entry:", id);
         return res.status(400).json({ 
           message: "Não é possível excluir uma entrada que está em sessão ativa. Finalize o timer primeiro." 
         });

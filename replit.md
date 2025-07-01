@@ -118,6 +118,12 @@ Changelog:
   * Connected project to GitHub repository: https://github.com/gabrielagithub/pontualApp.git
   * Fixed finishTimer functionality - now correctly removes timers from active sessions
   * Added SQL validation to filter out finalized timers (endTime < startTime)
+- July 01, 2025 (21:32): Fixed validation system for time entry deletion:
+  * Corrected SQLiteStorage.getTimeEntry() to properly map database fields to TypeScript objects
+  * Implemented validation to prevent deletion of active time entries (endTime null or isRunning true)
+  * Added proper error messages in Portuguese for blocked deletions
+  * Validated system: active entries show "Fim N/A" and are protected from deletion
+  * Finalized entries can be safely deleted from history
 ```
 
 ## User Preferences
