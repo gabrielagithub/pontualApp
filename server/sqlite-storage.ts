@@ -392,11 +392,20 @@ export class SQLiteStorage implements IStorage {
 
   async getTimeEntry(id: number): Promise<TimeEntry | undefined> {
     const stmt = this.db.prepare('SELECT * FROM time_entries WHERE id = ?');
-    const result = stmt.get(id) as TimeEntry | undefined;
+    const result = stmt.get(id) as any;
     if (result) {
-      result.isRunning = Boolean(result.isRunning);
+      return {
+        id: result.id,
+        taskId: result.task_id,
+        startTime: result.start_time,
+        endTime: result.end_time,
+        duration: result.duration,
+        isRunning: Boolean(result.is_running),
+        notes: result.notes,
+        createdAt: result.created_at
+      };
     }
-    return result;
+    return undefined;
   }
 
   async getTimeEntriesByTask(taskId: number): Promise<TimeEntry[]> {
