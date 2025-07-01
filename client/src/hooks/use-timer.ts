@@ -90,11 +90,11 @@ export function useTimer() {
         accumulatedDuration
       });
 
-      // PAUSE: Preservar a sessão pausada mantendo isRunning = true, mas com endTime definido
+      // PAUSE: Pausar o timer definindo isRunning = false e endTime
       const updates: UpdateTimeEntry = {
         endTime: now,
         duration: accumulatedDuration, // Salvar duração acumulada ao pausar
-        isRunning: true, // Manter como true para aparecer nas sessões ativas
+        isRunning: false, // Definir como false para indicar que está pausado
       };
 
       return apiRequest("PUT", `/api/time-entries/${entryId}`, updates);
