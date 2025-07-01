@@ -71,17 +71,24 @@ O sistema está configurado para:
 
 1. **No dashboard do Render:**
    - Crie um novo PostgreSQL database
-   - Copie a DATABASE_URL interna
+   - Copie a **Internal Database URL**
 
 2. **No Web Service:**
-   - Configure a variável de ambiente: `DATABASE_URL=sua_url_postgresql`
-   - Build Command: `npm install && npm run build`  
-   - Start Command: `npm start`
+   - **Environment Variables:**
+     - `DATABASE_URL` = sua_url_postgresql_interna
+     - `NODE_ENV` = production
+   
+   - **Build Settings:**
+     - Build Command: `npm install && npm run build`
+     - Start Command: `npm start`
+   
+   - **Nota:** As dependências vite e esbuild já foram movidas para production dependencies
 
 3. **O sistema automaticamente:**
    - Detectará PostgreSQL via DATABASE_URL
-   - Criará as tabelas necessárias
+   - Criará as tabelas necessárias  
    - Migrará dados se necessário
+   - Mostrará "🐘 Usando PostgreSQL" nos logs
 
 ### Configuração Alternativa com SQLite
 

@@ -472,22 +472,24 @@ export class MemStorage implements IStorage {
   }
 }
 
+import { SQLiteStorage } from "./sqlite-storage.js";
+
 // Configuração inteligente de storage baseada no ambiente
 function createStorage() {
   // Se DATABASE_URL está configurada, usar PostgreSQL (ideal para Render)
   if (process.env.DATABASE_URL) {
     console.log("🐘 Usando PostgreSQL (DATABASE_URL detectada)");
     try {
-      const { DatabaseStorage } = require("./database-storage");
-      return new DatabaseStorage();
+      // Tentar importar e usar DatabaseStorage
+      const module = require("./database-storage.ts");
+      return new module.DatabaseStorage();
     } catch (error) {
-      console.warn("⚠️  Erro ao carregar PostgreSQL, usando SQLite como fallback:", error.message);
+      console.warn("⚠️  Erro ao carregar PostgreSQL, usando SQLite como fallback:", (error as Error).message);
     }
   }
   
   // Fallback para SQLite (desenvolvimento ou ambiente sem PostgreSQL)
   console.log("📁 Usando SQLite");
-  const { SQLiteStorage } = require("./sqlite-storage");
   return new SQLiteStorage();
 }
 
