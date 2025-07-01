@@ -265,6 +265,34 @@ export class SQLiteStorage implements IStorage {
     return result.changes > 0;
   }
 
+  async completeTask(id: number): Promise<Task | undefined> {
+    const stmt = this.db.prepare(`
+      UPDATE tasks 
+      SET is_completed = 1, completed_at = datetime('now') 
+      WHERE id = ?
+    `);
+    const result = stmt.run(id);
+    
+    if (result.changes > 0) {
+      return this.getTask(id);
+    }
+    return undefined;
+  }
+
+  async reopenTask(id: number): Promise<Task | undefined> {
+    const stmt = this.db.prepare(`
+      UPDATE tasks 
+      SET is_completed = 0, completed_at = NULL 
+      WHERE id = ?
+    `);
+    const result = stmt.run(id);
+    
+    if (result.changes > 0) {
+      return this.getTask(id);
+    }
+    return undefined;
+  }
+
   // Task item methods
   async getTaskItems(taskId: number): Promise<TaskItem[]> {
     const stmt = this.db.prepare('SELECT * FROM task_items WHERE task_id = ? ORDER BY created_at');
@@ -329,6 +357,8 @@ export class SQLiteStorage implements IStorage {
         t.estimated_hours as task_estimated_hours,
         t.deadline as task_deadline,
         t.is_active as task_is_active,
+        t.is_completed as task_is_completed,
+        t.completed_at as task_completed_at,
         t.created_at as task_created_at
       FROM time_entries te
       JOIN tasks t ON te.task_id = t.id
@@ -351,9 +381,11 @@ export class SQLiteStorage implements IStorage {
         color: entry.task_color,
         description: entry.task_description,
         estimatedHours: entry.task_estimated_hours,
-        deadline: entry.task_deadline,
+        deadline: entry.task_deadline ? new Date(entry.task_deadline) : null,
         isActive: Boolean(entry.task_is_active),
-        createdAt: entry.task_created_at
+        isCompleted: Boolean(entry.task_is_completed),
+        completedAt: entry.task_completed_at ? new Date(entry.task_completed_at) : null,
+        createdAt: new Date(entry.task_created_at)
       }
     }));
   }
@@ -381,6 +413,8 @@ export class SQLiteStorage implements IStorage {
         t.color as task_color,
         t.description as task_description,
         t.is_active as task_is_active,
+        t.is_completed as task_is_completed,
+        t.completed_at as task_completed_at,
         t.estimated_hours,
         t.deadline,
         t.created_at as task_created_at
@@ -413,9 +447,11 @@ export class SQLiteStorage implements IStorage {
         color: entry.task_color,
         description: entry.task_description,
         estimatedHours: entry.estimated_hours,
-        deadline: entry.deadline,
+        deadline: entry.deadline ? new Date(entry.deadline) : null,
         isActive: Boolean(entry.task_is_active),
-        createdAt: entry.task_created_at
+        isCompleted: Boolean(entry.task_is_completed),
+        completedAt: entry.task_completed_at ? new Date(entry.task_completed_at) : null,
+        createdAt: new Date(entry.task_created_at)
       }
     }));
   }

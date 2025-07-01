@@ -12,6 +12,8 @@ export interface IStorage {
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, updates: Partial<Task>): Promise<Task | undefined>;
   deleteTask(id: number): Promise<boolean>;
+  completeTask(id: number): Promise<Task | undefined>;
+  reopenTask(id: number): Promise<Task | undefined>;
 
   // Task item methods
   getTaskItems(taskId: number): Promise<TaskItem[]>;
@@ -147,6 +149,34 @@ export class MemStorage implements IStorage {
     task.isActive = false;
     this.tasks.set(id, task);
     return true;
+  }
+
+  async completeTask(id: number): Promise<Task | undefined> {
+    const task = this.tasks.get(id);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        isCompleted: true,
+        completedAt: new Date()
+      };
+      this.tasks.set(id, updatedTask);
+      return updatedTask;
+    }
+    return undefined;
+  }
+
+  async reopenTask(id: number): Promise<Task | undefined> {
+    const task = this.tasks.get(id);
+    if (task) {
+      const updatedTask = {
+        ...task,
+        isCompleted: false,
+        completedAt: null
+      };
+      this.tasks.set(id, updatedTask);
+      return updatedTask;
+    }
+    return undefined;
   }
 
   // Task item methods
