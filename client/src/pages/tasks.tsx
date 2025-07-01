@@ -190,7 +190,6 @@ export default function Tasks() {
           Nova Atividade
         </Button>
       </div>
-
       {/* Filtros */}
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -262,11 +261,10 @@ export default function Tasks() {
           </div>
         </CardContent>
       </Card>
-
       {/* Atividades Ativas */}
       <Card>
         <CardContent className="p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">Atividades Ativas</h4>
+          <h4 className="text-lg font-semibold text-gray-900 mb-4">Atividades</h4>
           {filteredActiveTasks && filteredActiveTasks.length > 0 ? (
             <div className="space-y-4">
               {filteredActiveTasks.map((task) => (
@@ -355,7 +353,6 @@ export default function Tasks() {
           )}
         </CardContent>
       </Card>
-
       {/* Atividades Concluídas */}
       {filteredCompletedTasks && filteredCompletedTasks.length > 0 && (
         <Card>
@@ -427,7 +424,6 @@ export default function Tasks() {
           </CardContent>
         </Card>
       )}
-
       <TaskModal
         task={selectedTask}
         isOpen={isModalOpen}
