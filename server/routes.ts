@@ -731,6 +731,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API Integration endpoints - simplified for external use
+  
+  // Quick entry creation - simplified endpoint for external integrations
+  app.post("/api/quick-entry", async (req, res) => {
+    try {
+      const { taskName, startTime, endTime, duration, description } = req.body;
+      
+      // Validate required fields
+      if (!taskName) {
+        return res.status(400).json({ message: "Nome da tarefa é obrigatório" });
+      }
+      
+      // Find or create task by name
+      let task;
+      const allTasks = await storage.getAllTasks();
+      task = allTasks.find(t => t.name.toLowerCase() === taskName.toLowerCase());
+      
+      if (!task) {
+        // Create new task if not found
+        task = await storage.createTask({
+          name: taskName,
+          description: description || "",
+          color: "#3B82F6",
+          isActive: true,
+          deadline: null
+        });
+      }
+      
+      // Create time entry
+      const timeEntryData: any = {
+        taskId: task.id,
+        startTime: startTime || new Date().toISOString(),
+        description: description || ""
+      };
+      
+      if (endTime) {
+        timeEntryData.endTime = endTime;
+      }
+      
+      if (duration) {
+        timeEntryData.duration = duration;
+      } else if (startTime && endTime) {
+        // Calculate duration from start and end times
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        timeEntryData.duration = Math.floor((end.getTime() - start.getTime()) / 1000);
+      }
+      
+      const validatedData = insertTimeEntrySchema.parse(timeEntryData);
+      const entry = await storage.createTimeEntry(validatedData);
+      
+      res.status(201).json({
+        message: "Apontamento criado com sucesso",
+        entry,
+        task
+      });
+    } catch (error) {
+      console.error("Quick entry creation error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Falha ao criar apontamento" });
+    }
+  });
+  
+  // Start timer for a task (by name or ID)
+  app.post("/api/start-timer", async (req, res) => {
+    try {
+      const { taskName, taskId, description } = req.body;
+      
+      let task;
+      if (taskId) {
+        task = await storage.getTask(taskId);
+      } else if (taskName) {
+        const allTasks = await storage.getAllTasks();
+        task = allTasks.find(t => t.name.toLowerCase() === taskName.toLowerCase());
+        
+        if (!task) {
+          // Create new task if not found
+          task = await storage.createTask({
+            name: taskName,
+            description: "",
+            color: "#3B82F6",
+            isActive: true,
+            deadline: null
+          });
+        }
+      }
+      
+      if (!task) {
+        return res.status(400).json({ message: "Tarefa não encontrada. Forneça taskId ou taskName." });
+      }
+      
+      // Check if there's already a running timer for this task
+      const runningEntries = await storage.getRunningTimeEntries();
+      const existingTimer = runningEntries.find(entry => entry.taskId === task.id);
+      
+      if (existingTimer) {
+        return res.status(400).json({ 
+          message: "Já existe um timer ativo para esta tarefa",
+          existingTimer
+        });
+      }
+      
+      // Create new running time entry
+      const timeEntryData = {
+        taskId: task.id,
+        startTime: new Date().toISOString(),
+        isRunning: true,
+        description: description || ""
+      };
+      
+      const validatedData = insertTimeEntrySchema.parse(timeEntryData);
+      const entry = await storage.createTimeEntry(validatedData);
+      
+      res.status(201).json({
+        message: "Timer iniciado com sucesso",
+        entry,
+        task
+      });
+    } catch (error) {
+      console.error("Start timer error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Falha ao iniciar timer" });
+    }
+  });
+  
+  // Stop timer for a task (by name or ID)
+  app.post("/api/stop-timer", async (req, res) => {
+    try {
+      const { taskName, taskId, description } = req.body;
+      
+      let task;
+      if (taskId) {
+        task = await storage.getTask(taskId);
+      } else if (taskName) {
+        const allTasks = await storage.getAllTasks();
+        task = allTasks.find(t => t.name.toLowerCase() === taskName.toLowerCase());
+      }
+      
+      if (!task) {
+        return res.status(400).json({ message: "Tarefa não encontrada. Forneça taskId ou taskName." });
+      }
+      
+      // Find running timer for this task
+      const runningEntries = await storage.getRunningTimeEntries();
+      const runningTimer = runningEntries.find(entry => entry.taskId === task.id);
+      
+      if (!runningTimer) {
+        return res.status(400).json({ message: "Nenhum timer ativo encontrado para esta tarefa" });
+      }
+      
+      // Calculate duration and stop timer
+      const endTime = new Date();
+      const startTime = new Date(runningTimer.startTime);
+      const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+      
+      const updates: any = {
+        endTime: endTime.toISOString(),
+        duration,
+        isRunning: false
+      };
+      
+      if (description) {
+        updates.notes = description;
+      }
+      
+      const validatedUpdates = updateTimeEntrySchema.parse(updates);
+      const updatedEntry = await storage.updateTimeEntry(runningTimer.id, validatedUpdates);
+      
+      res.json({
+        message: "Timer parado com sucesso",
+        entry: updatedEntry,
+        task,
+        duration: {
+          seconds: duration,
+          formatted: `${Math.floor(duration / 3600).toString().padStart(2, '0')}:${Math.floor((duration % 3600) / 60).toString().padStart(2, '0')}:${(duration % 60).toString().padStart(2, '0')}`
+        }
+      });
+    } catch (error) {
+      console.error("Stop timer error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Falha ao parar timer" });
+    }
+  });
+  
+  // Get current status - useful for external integrations
+  app.get("/api/status", async (req, res) => {
+    try {
+      const runningEntries = await storage.getRunningTimeEntries();
+      const stats = await storage.getDashboardStats();
+      
+      res.json({
+        currentTime: new Date().toISOString(),
+        runningTimers: runningEntries.length,
+        runningEntries: runningEntries.map(entry => ({
+          id: entry.id,
+          taskName: entry.task.name,
+          startTime: entry.startTime,
+          currentDuration: entry.startTime ? Math.floor((Date.now() - new Date(entry.startTime).getTime()) / 1000) : 0,
+          description: entry.notes
+        })),
+        todayStats: {
+          totalTime: stats.todayTime,
+          activeTasks: stats.activeTasks,
+          completedTasks: stats.completedTasks
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao obter status" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
