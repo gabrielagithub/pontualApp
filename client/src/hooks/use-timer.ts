@@ -290,7 +290,7 @@ export function useTimer() {
       const now = new Date();
       
       const updates: UpdateTimeEntry = {
-        endTime: entry.end_time || now.toISOString(), // Manter endTime se já pausada
+        endTime: now, // Sempre definir novo endTime para marcar finalização
         duration: entry.duration, // Manter duração calculada
         isRunning: false, // Garantir que não está mais ativa
       };
