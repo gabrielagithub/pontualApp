@@ -113,20 +113,15 @@ export default function Tasks() {
   });
 
   const completeTaskMutation = useMutation({
-    mutationFn: (id: number) => {
-      console.log("completeTaskMutation.mutationFn called with id:", id);
-      return apiRequest("PUT", `/api/tasks/${id}/complete`);
-    },
-    onSuccess: (data) => {
-      console.log("completeTaskMutation.onSuccess called with data:", data);
+    mutationFn: (id: number) => apiRequest("PUT", `/api/tasks/${id}/complete`),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Sucesso",
         description: "Atividade concluída com sucesso",
       });
     },
-    onError: (error) => {
-      console.log("completeTaskMutation.onError called with error:", error);
+    onError: () => {
       toast({
         title: "Erro",
         description: "Falha ao concluir atividade",
@@ -158,12 +153,8 @@ export default function Tasks() {
   };
 
   const handleCompleteTask = (id: number) => {
-    console.log("handleCompleteTask called with id:", id);
     if (window.confirm("Tem certeza que deseja concluir esta atividade?")) {
-      console.log("User confirmed, calling completeTaskMutation.mutate");
       completeTaskMutation.mutate(id);
-    } else {
-      console.log("User cancelled completion");
     }
   };
 
@@ -309,10 +300,7 @@ export default function Tasks() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        console.log("Button clicked! Task ID:", task.id);
-                        handleCompleteTask(task.id);
-                      }}
+                      onClick={() => handleCompleteTask(task.id)}
                       disabled={completeTaskMutation.isPending}
                       className="border-green-500 text-green-600 hover:bg-green-50"
                     >
@@ -368,8 +356,8 @@ export default function Tasks() {
         </CardContent>
       </Card>
 
-      {/* Atividades Concluídas - Temporariamente comentado para debug */}
-      {/*filteredCompletedTasks && filteredCompletedTasks.length > 0 && (
+      {/* Atividades Concluídas */}
+      {filteredCompletedTasks && filteredCompletedTasks.length > 0 && (
         <Card>
           <CardContent className="p-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4">Atividades Concluídas</h4>
@@ -438,7 +426,7 @@ export default function Tasks() {
             </div>
           </CardContent>
         </Card>
-      )*/}
+      )}
 
       <TaskModal
         task={selectedTask}
