@@ -116,6 +116,8 @@ Changelog:
   * Updated backend query to show running timers AND paused sessions from last 4 hours
   * Fixed paused timers visibility - they now remain in active sessions for resumption
   * Connected project to GitHub repository: https://github.com/gabrielagithub/pontualApp.git
+  * Fixed finishTimer functionality - now correctly removes timers from active sessions
+  * Added SQL validation to filter out finalized timers (endTime < startTime)
 ```
 
 ## User Preferences
