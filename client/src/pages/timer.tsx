@@ -35,7 +35,7 @@ export default function Timer() {
     refetchInterval: 5000, // Reduce from 1s to 5s
   });
 
-  const { startTimer, pauseTimer, resumeTimer, stopTimer, finishTimer, isLoading: timerLoading } = useTimer();
+  const { startTimer, pauseTimer, resumeTimer, stopTimer, finishTimer, finishAndCompleteTimer, isLoading: timerLoading } = useTimer();
 
   const addManualEntryMutation = useMutation({
     mutationFn: (data: InsertTimeEntry) => apiRequest("POST", "/api/time-entries", data),
@@ -354,6 +354,16 @@ export default function Timer() {
                           disabled={timerLoading}
                         >
                           <Square className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => finishAndCompleteTimer({ entryId: entry.id, taskId: entry.taskId })}
+                          disabled={timerLoading}
+                          className="border-green-500 text-green-600 hover:bg-green-50"
+                          title="Finalizar timer e marcar atividade como concluída"
+                        >
+                          ✓
                         </Button>
                       </div>
                     </div>

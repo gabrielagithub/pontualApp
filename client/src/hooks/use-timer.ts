@@ -331,12 +331,90 @@ export function useTimer() {
     },
   });
 
+  const finishAndCompleteTimerMutation = useMutation({
+    mutationFn: async ({ entryId, taskId }: { entryId: number; taskId: number }) => {
+      console.log("finishAndCompleteTimerMutation called", { entryId, taskId });
+      
+      // Primeiro finalizar o timer
+      const response = await fetch(`/api/time-entries/${entryId}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch entry: ${response.status}`);
+      }
+      
+      const entry = await response.json();
+      console.log("Entry to finish and complete:", entry);
+      
+      const now = new Date();
+      let finalDuration = entry.duration || 0;
+      
+      // Se ainda estiver rodando, calcular tempo final
+      if (entry.is_running) {
+        const startTime = new Date(entry.start_time);
+        const currentSessionDuration = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        finalDuration = (entry.duration || 0) + currentSessionDuration;
+      }
+      
+      // Validar tempo mínimo de 1 minuto
+      if (finalDuration < 60) {
+        // Se o tempo for menor que 1 minuto, deletar a entrada
+        await apiRequest("DELETE", `/api/time-entries/${entryId}`);
+        throw new Error("O tempo de trabalho deve ser de pelo menos 1 minuto para ser salvo. Sessão removida.");
+      }
+      
+      // Finalizar o timer
+      const finalizedTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+      const timeUpdates: UpdateTimeEntry = {
+        endTime: finalizedTime,
+        duration: finalDuration,
+        isRunning: false,
+      };
+      
+      await apiRequest("PUT", `/api/time-entries/${entryId}`, timeUpdates);
+      
+      // Concluir a tarefa
+      await apiRequest("PUT", `/api/tasks/${taskId}/complete`);
+      
+      return { timeEntry: timeUpdates, taskId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/time-entries/running"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      
+      showNotification({
+        type: "success",
+        title: "Atividade finalizada e concluída",
+        message: "O timer foi finalizado e a atividade foi marcada como concluída",
+      });
+    },
+    onError: (error: any) => {
+      if (error.message && error.message.includes("pelo menos 1 minuto")) {
+        toast({
+          title: "Sessão removida",
+          description: "Tempo inferior a 1 minuto. A sessão foi removida automaticamente.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao finalizar e concluir atividade",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   return {
     startTimer: startTimerMutation.mutate,
     pauseTimer: pauseTimerMutation.mutate,
     resumeTimer: resumeTimerMutation.mutate,
     stopTimer: stopTimerMutation.mutate,
     finishTimer: finishTimerMutation.mutate,
-    isLoading: startTimerMutation.isPending || pauseTimerMutation.isPending || resumeTimerMutation.isPending || stopTimerMutation.isPending || finishTimerMutation.isPending,
+    finishAndCompleteTimer: finishAndCompleteTimerMutation.mutate,
+    isLoading: startTimerMutation.isPending || pauseTimerMutation.isPending || resumeTimerMutation.isPending || stopTimerMutation.isPending || finishTimerMutation.isPending || finishAndCompleteTimerMutation.isPending,
   };
 }
