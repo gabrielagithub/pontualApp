@@ -357,11 +357,11 @@ export function useTimer() {
         finalDuration = (entry.duration || 0) + currentSessionDuration;
       }
       
-      // Validar tempo mínimo de 1 minuto
+      // Validar tempo mínimo de 1 minuto - mas permitir finalização para conclusão de tarefa
       if (finalDuration < 60) {
-        // Se o tempo for menor que 1 minuto, deletar a entrada
-        await apiRequest("DELETE", `/api/time-entries/${entryId}`);
-        throw new Error("O tempo de trabalho deve ser de pelo menos 1 minuto para ser salvo. Sessão removida.");
+        // Para a função "Finalizar e Concluir", vamos permitir mesmo com menos de 1 minuto
+        // Mas vamos finalizar com duração mínima e depois concluir a tarefa
+        finalDuration = 60; // Setar duração mínima para permitir a conclusão
       }
       
       // Finalizar o timer
