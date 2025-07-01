@@ -368,8 +368,8 @@ export default function Tasks() {
         </CardContent>
       </Card>
 
-      {/* Atividades Concluídas */}
-      {filteredCompletedTasks && filteredCompletedTasks.length > 0 && (
+      {/* Atividades Concluídas - Temporariamente comentado para debug */}
+      {/*filteredCompletedTasks && filteredCompletedTasks.length > 0 && (
         <Card>
           <CardContent className="p-6">
             <h4 className="text-lg font-semibold text-gray-900 mb-4">Atividades Concluídas</h4>
@@ -438,7 +438,7 @@ export default function Tasks() {
             </div>
           </CardContent>
         </Card>
-      )}
+      )*/}
 
       <TaskModal
         task={selectedTask}
