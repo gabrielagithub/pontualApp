@@ -124,7 +124,11 @@ export class MemStorage implements IStorage {
       ...insertTask,
       description: insertTask.description || null,
       color: insertTask.color || "#3B82F6",
+      estimatedHours: insertTask.estimatedHours ?? null,
+      deadline: insertTask.deadline || null,
       isActive: insertTask.isActive !== undefined ? insertTask.isActive : true,
+      isCompleted: false,
+      completedAt: null,
       id,
       createdAt: new Date(),
     };
