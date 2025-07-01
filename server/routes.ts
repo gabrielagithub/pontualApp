@@ -222,6 +222,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/time-entries/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Check if the entry exists and if it's active (endTime is null)
+      const entry = await storage.getTimeEntry(id);
+      if (!entry) {
+        return res.status(404).json({ message: "Time entry not found" });
+      }
+      
+      console.log("Delete validation for entry", id, ":", {
+        endTime: entry.endTime,
+        isRunning: entry.isRunning,
+        willBlock: !entry.endTime || entry.isRunning
+      });
+      
+      // Prevent deletion of active sessions (Fim N/A)
+      if (!entry.endTime || entry.isRunning) {
+        console.log("Blocking deletion of active entry:", id);
+        return res.status(400).json({ 
+          message: "Não é possível excluir uma entrada que está em sessão ativa. Finalize o timer primeiro." 
+        });
+      }
+      
       const success = await storage.deleteTimeEntry(id);
       if (!success) {
         return res.status(404).json({ message: "Time entry not found" });
