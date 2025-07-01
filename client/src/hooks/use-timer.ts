@@ -272,8 +272,8 @@ export function useTimer() {
     mutationFn: async (entryId: number) => {
       console.log("finishTimerMutation called for entryId:", entryId);
       
-      // Para finalizar, simplesmente removemos das sessões ativas marcando como finalizada
-      // sem alterar as durações já calculadas
+      // Para finalizar, primeiro precisamos parar o timer se estiver rodando
+      // Depois marcamos com um endTime mais antigo para sair das sessões ativas
       const response = await fetch(`/api/time-entries/${entryId}`, {
         credentials: "include",
       });
@@ -285,15 +285,22 @@ export function useTimer() {
       const entry = await response.json();
       console.log("Entry to finish:", entry);
       
-      // Para finalizar uma sessão pausada, ela deve sair das sessões ativas
-      // Para isso, vamos usar uma flag específica ou lógica diferente
       const now = new Date();
-      // Para garantir que a sessão saia das "ativas", vamos mover o endTime para 15 minutos atrás
-      const finalizedTime = new Date(now.getTime() - 15 * 60 * 1000);
+      let finalDuration = entry.duration || 0;
+      
+      // Se ainda estiver rodando, calcular tempo final
+      if (entry.is_running) {
+        const startTime = new Date(entry.start_time);
+        const currentSessionDuration = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        finalDuration = (entry.duration || 0) + currentSessionDuration;
+      }
+      
+      // Para garantir que a sessão saia das "ativas", vamos mover o endTime para 6 horas atrás
+      const finalizedTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
       
       const updates: UpdateTimeEntry = {
         endTime: finalizedTime, // endTime mais antigo para sair das sessões ativas
-        duration: entry.duration, // Manter duração calculada
+        duration: finalDuration, // Duração final calculada
         isRunning: false, // Garantir que não está mais ativa
       };
       
