@@ -288,9 +288,11 @@ export function useTimer() {
       // Para finalizar uma sessão pausada, ela deve sair das sessões ativas
       // Para isso, vamos usar uma flag específica ou lógica diferente
       const now = new Date();
+      // Para garantir que a sessão saia das "ativas", vamos mover o endTime para 15 minutos atrás
+      const finalizedTime = new Date(now.getTime() - 15 * 60 * 1000);
       
       const updates: UpdateTimeEntry = {
-        endTime: now, // Sempre definir novo endTime para marcar finalização
+        endTime: finalizedTime, // endTime mais antigo para sair das sessões ativas
         duration: entry.duration, // Manter duração calculada
         isRunning: false, // Garantir que não está mais ativa
       };
