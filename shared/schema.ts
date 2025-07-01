@@ -16,6 +16,8 @@ export const tasks = pgTable("tasks", {
   estimatedHours: integer("estimated_hours"), // horas previstas
   deadline: timestamp("deadline"), // prazo
   isActive: boolean("is_active").notNull().default(true),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

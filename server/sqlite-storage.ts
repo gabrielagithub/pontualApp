@@ -74,10 +74,12 @@ export class SQLiteStorage implements IStorage {
 
   private addMissingColumns() {
     try {
-      // Check if estimated_hours column exists and add if not
+      // Check if columns exist and add if not
       const tableInfo = this.db.prepare("PRAGMA table_info(tasks)").all() as any[];
       const hasEstimatedHours = tableInfo.some(col => col.name === 'estimated_hours');
       const hasDeadline = tableInfo.some(col => col.name === 'deadline');
+      const hasIsCompleted = tableInfo.some(col => col.name === 'is_completed');
+      const hasCompletedAt = tableInfo.some(col => col.name === 'completed_at');
 
       if (!hasEstimatedHours) {
         this.db.exec("ALTER TABLE tasks ADD COLUMN estimated_hours INTEGER");
@@ -85,6 +87,14 @@ export class SQLiteStorage implements IStorage {
 
       if (!hasDeadline) {
         this.db.exec("ALTER TABLE tasks ADD COLUMN deadline DATETIME");
+      }
+
+      if (!hasIsCompleted) {
+        this.db.exec("ALTER TABLE tasks ADD COLUMN is_completed BOOLEAN NOT NULL DEFAULT 0");
+      }
+
+      if (!hasCompletedAt) {
+        this.db.exec("ALTER TABLE tasks ADD COLUMN completed_at DATETIME");
       }
     } catch (error) {
       console.error("Error adding missing columns:", error);
@@ -154,7 +164,9 @@ export class SQLiteStorage implements IStorage {
     return tasks.map(task => ({
       ...task,
       isActive: Boolean((task as any).is_active),
+      isCompleted: Boolean((task as any).is_completed),
       estimatedHours: (task as any).estimated_hours,
+      completedAt: (task as any).completed_at ? new Date((task as any).completed_at) : null,
       items: itemsStmt.all(task.id) as TaskItem[]
     }));
   }
@@ -166,7 +178,11 @@ export class SQLiteStorage implements IStorage {
       return {
         ...result,
         isActive: Boolean(result.is_active),
-        estimatedHours: result.estimated_hours
+        isCompleted: Boolean(result.is_completed),
+        estimatedHours: result.estimated_hours,
+        completedAt: result.completed_at ? new Date(result.completed_at) : null,
+        deadline: result.deadline ? new Date(result.deadline) : null,
+        createdAt: new Date(result.created_at)
       };
     }
     return undefined;
@@ -199,6 +215,8 @@ export class SQLiteStorage implements IStorage {
         estimatedHours: result.estimated_hours,
         deadline: result.deadline ? new Date(result.deadline) : null,
         isActive: Boolean(result.is_active),
+        isCompleted: Boolean(result.is_completed),
+        completedAt: result.completed_at ? new Date(result.completed_at) : null,
         createdAt: new Date(result.created_at)
       };
     } catch (error) {
