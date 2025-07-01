@@ -763,7 +763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timeEntryData: any = {
         taskId: task.id,
         startTime: startTime || new Date().toISOString(),
-        description: description || ""
+        notes: description || ""
       };
       
       if (endTime) {
@@ -840,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         taskId: task.id,
         startTime: new Date().toISOString(),
         isRunning: true,
-        description: description || ""
+        notes: description || ""
       };
       
       const validatedData = insertTimeEntrySchema.parse(timeEntryData);

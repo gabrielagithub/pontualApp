@@ -30,7 +30,7 @@ export function useTimer() {
           startTime: new Date(),
           endTime: null,
           duration: null,
-          isRunning: false,
+          isRunning: true,
         };
         return apiRequest("POST", "/api/time-entries", timeEntry);
       } catch (error) {
