@@ -67,28 +67,39 @@ O sistema está configurado para:
 
 ## Para Deploy no Render
 
-### Configuração do Banco PostgreSQL (Recomendado)
+### ✅ Configuração Corrigida - Problema do Build Resolvido
 
-1. **No dashboard do Render:**
-   - Crie um novo PostgreSQL database
-   - Copie a **Internal Database URL**
+**Problema identificado e corrigido:**
+- Vite e ESBuild estavam em devDependencies
+- Agora foram movidos para dependencies
+- Build funcionará corretamente no Render
 
-2. **No Web Service:**
-   - **Environment Variables:**
-     - `DATABASE_URL` = sua_url_postgresql_interna
-     - `NODE_ENV` = production
-   
-   - **Build Settings:**
-     - Build Command: `npm install && npm run build`
-     - Start Command: `npm start`
-   
-   - **Nota:** As dependências vite e esbuild já foram movidas para production dependencies
+### Configuração para Deploy:
 
-3. **O sistema automaticamente:**
-   - Detectará PostgreSQL via DATABASE_URL
-   - Criará as tabelas necessárias  
-   - Migrará dados se necessário
-   - Mostrará "🐘 Usando PostgreSQL" nos logs
+1. **No Web Service do Render:**
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+   - **Node Version:** 18 ou 20 (recomendado)
+
+2. **Variáveis de Ambiente (obrigatórias):**
+   ```
+   NODE_ENV=production
+   ```
+
+3. **Para usar PostgreSQL (opcional mas recomendado):**
+   - Crie PostgreSQL database no Render
+   - Adicione variável: `DATABASE_URL=sua_url_postgresql`
+   - Sistema detectará automaticamente e usará PostgreSQL
+
+4. **Para manter SQLite (funciona mas dados podem ser perdidos):**
+   - Não configure DATABASE_URL
+   - Sistema usará SQLite em `/tmp` (temporário)
+
+### Status da Configuração:
+- ✅ Dependencies corrigidas (vite, esbuild em production)
+- ✅ Build testado e funcionando
+- ✅ Sistema de backup automático ativo
+- ✅ Pronto para deploy no Render
 
 ### Configuração Alternativa com SQLite
 
