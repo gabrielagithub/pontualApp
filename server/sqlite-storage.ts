@@ -773,7 +773,6 @@ export class SQLiteStorage implements IStorage {
   }
 
   private setupBackupSystem(dbPath: string) {
-    const fs = require('fs');
     const backupDir = path.join(path.dirname(dbPath), 'backups');
     
     // Criar diretório de backup se não existir
@@ -796,7 +795,6 @@ export class SQLiteStorage implements IStorage {
   
   private createBackup(dbPath: string, backupDir: string) {
     try {
-      const fs = require('fs');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const backupPath = path.join(backupDir, `database-${timestamp}.sqlite`);
       
@@ -815,7 +813,6 @@ export class SQLiteStorage implements IStorage {
   
   private cleanOldBackups(backupDir: string) {
     try {
-      const fs = require('fs');
       const files = fs.readdirSync(backupDir)
         .filter((file: string) => file.startsWith('database-') && file.endsWith('.sqlite'))
         .map((file: string) => ({

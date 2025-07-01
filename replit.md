@@ -139,6 +139,14 @@ Changelog:
   * Documented all advanced timer functionality and validation features
   * Enhanced filter system for task organization by status, search term, and color
   * System now fully supports active/completed task workflow with seamless transitions
+- July 01, 2025 (22:37): Implemented robust data persistence solution:
+  * Migrated SQLite database from root to dedicated data/ directory for better organization
+  * Added automatic backup system creating hourly backups in data/backups/ directory
+  * Implemented backup retention policy (keeps 5 most recent backups)
+  * Updated .gitignore to protect database files from being committed to Git
+  * Fixed ES module imports in SQLiteStorage for proper Node.js compatibility
+  * Database path now uses absolute paths to ensure persistence across builds and deployments
+  * Added export functionality for data migration and additional backup options
 ```
 
 ## User Preferences
