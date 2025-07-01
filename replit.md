@@ -113,7 +113,8 @@ Changelog:
   * Added prevention of multiple active sessions for same task
   * Created finishTimer function to remove sessions from active list
   * Improved distinction between paused sessions (temporary) and finished sessions (permanent)
-  * Updated backend query to only show truly running timers (isRunning = 1)
+  * Updated backend query to show running timers AND paused sessions from last 4 hours
+  * Fixed paused timers visibility - they now remain in active sessions for resumption
   * Connected project to GitHub repository: https://github.com/gabrielagithub/pontualApp.git
 ```
 
