@@ -309,7 +309,10 @@ export default function Tasks() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleCompleteTask(task.id)}
+                      onClick={() => {
+                        console.log("Button clicked! Task ID:", task.id);
+                        handleCompleteTask(task.id);
+                      }}
                       disabled={completeTaskMutation.isPending}
                       className="border-green-500 text-green-600 hover:bg-green-50"
                     >
