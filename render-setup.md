@@ -67,39 +67,43 @@ O sistema está configurado para:
 
 ## Para Deploy no Render
 
-### ✅ Configuração Corrigida - Problema do Build Resolvido
+### ✅ Sistema Híbrido Funcionando - PostgreSQL + SQLite
 
-**Problema identificado e corrigido:**
-- Vite e ESBuild estavam em devDependencies
-- Agora foram movidos para dependencies
-- Build funcionará corretamente no Render
+**Sistema inteligente implementado:**
+- Detecta automaticamente DATABASE_URL
+- PostgreSQL quando DATABASE_URL está presente
+- SQLite como fallback para desenvolvimento
+- Dependencies de build corrigidas (vite, esbuild)
 
-### Configuração para Deploy:
+### Configuração para Deploy no Render:
 
-1. **No Web Service do Render:**
+1. **Web Service Settings:**
    - **Build Command:** `npm install && npm run build`
    - **Start Command:** `npm start`
-   - **Node Version:** 18 ou 20 (recomendado)
+   - **Node Version:** 18 ou 20
 
-2. **Variáveis de Ambiente (obrigatórias):**
+2. **Environment Variables:**
    ```
    NODE_ENV=production
    ```
 
-3. **Para usar PostgreSQL (opcional mas recomendado):**
+3. **Para dados persistentes (RECOMENDADO):**
    - Crie PostgreSQL database no Render
-   - Adicione variável: `DATABASE_URL=sua_url_postgresql`
-   - Sistema detectará automaticamente e usará PostgreSQL
+   - Configure: `DATABASE_URL=sua_internal_database_url`
+   - Sistema mostrará: "🐘 Usando PostgreSQL"
+   - **Resultado:** Dados persistentes entre deploys
 
-4. **Para manter SQLite (funciona mas dados podem ser perdidos):**
+4. **Para desenvolvimento/teste:**
    - Não configure DATABASE_URL
-   - Sistema usará SQLite em `/tmp` (temporário)
+   - Sistema mostrará: "📁 Usando SQLite"
+   - **Resultado:** Dados temporários (perdidos no redeploy)
 
-### Status da Configuração:
-- ✅ Dependencies corrigidas (vite, esbuild em production)
+### Status Atual:
+- ✅ Sistema híbrido funcionando
+- ✅ PostgreSQL detectado e conectado
+- ✅ Tabelas criadas automaticamente
 - ✅ Build testado e funcionando
-- ✅ Sistema de backup automático ativo
-- ✅ Pronto para deploy no Render
+- ✅ Pronto para deploy com dados persistentes
 
 ### Configuração Alternativa com SQLite
 

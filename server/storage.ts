@@ -474,4 +474,5 @@ export class MemStorage implements IStorage {
 
 import { SQLiteStorage } from "./sqlite-storage.js";
 
+console.log("📁 Usando SQLite");
 export const storage = new SQLiteStorage();
