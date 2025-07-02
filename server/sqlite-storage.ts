@@ -176,6 +176,21 @@ export class SQLiteStorage implements IStorage {
       if (!hasCompletedAt) {
         this.db.exec("ALTER TABLE tasks ADD COLUMN completed_at DATETIME");
       }
+
+      // Check and add WhatsApp integration columns
+      const whatsappTableInfo = this.db.prepare("PRAGMA table_info(whatsapp_integrations)").all() as any[];
+      const hasAllowedGroupName = whatsappTableInfo.some((col: any) => col.name === 'allowed_group_name');
+      const hasRestrictToGroup = whatsappTableInfo.some((col: any) => col.name === 'restrict_to_group');
+      
+      if (!hasAllowedGroupName) {
+        console.log("Adicionando coluna allowed_group_name à tabela whatsapp_integrations...");
+        this.db.exec("ALTER TABLE whatsapp_integrations ADD COLUMN allowed_group_name TEXT");
+      }
+
+      if (!hasRestrictToGroup) {
+        console.log("Adicionando coluna restrict_to_group à tabela whatsapp_integrations...");
+        this.db.exec("ALTER TABLE whatsapp_integrations ADD COLUMN restrict_to_group BOOLEAN DEFAULT 0");
+      }
     } catch (error) {
       console.error("Error adding missing columns:", error);
     }
@@ -1045,26 +1060,26 @@ export class SQLiteStorage implements IStorage {
         console.log("No record found after update");
         return undefined;
       }
+
+      return {
+        id: updated.id,
+        userId: updated.user_id,
+        instanceName: updated.instance_name,
+        apiUrl: updated.api_url,
+        apiKey: updated.api_key,
+        phoneNumber: updated.phone_number,
+        isActive: !!updated.is_active,
+        webhookUrl: updated.webhook_url,
+        allowedGroupName: updated.allowed_group_name,
+        restrictToGroup: !!updated.restrict_to_group,
+        lastConnection: updated.last_connection ? new Date(updated.last_connection) : null,
+        createdAt: new Date(updated.created_at),
+        updatedAt: new Date(updated.updated_at),
+      };
     } catch (sqlError) {
       console.error("SQL Error:", sqlError);
       throw sqlError;
     }
-
-    return {
-      id: updated.id,
-      userId: updated.user_id,
-      instanceName: updated.instance_name,
-      apiUrl: updated.api_url,
-      apiKey: updated.api_key,
-      phoneNumber: updated.phone_number,
-      isActive: !!updated.is_active,
-      webhookUrl: updated.webhook_url,
-      allowedGroupName: updated.allowed_group_name,
-      restrictToGroup: !!updated.restrict_to_group,
-      lastConnection: updated.last_connection ? new Date(updated.last_connection) : null,
-      createdAt: new Date(updated.created_at),
-      updatedAt: new Date(updated.updated_at),
-    };
   }
 
   async deleteWhatsappIntegration(id: number): Promise<boolean> {
