@@ -995,7 +995,6 @@ export class SQLiteStorage implements IStorage {
   }
 
   async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
-    console.log("updateWhatsappIntegration called with:", { id, updates });
     const fields = [];
     const values = [];
 
@@ -1037,7 +1036,6 @@ export class SQLiteStorage implements IStorage {
     }
 
     if (fields.length === 0) {
-      console.log("No fields to update, returning existing integration");
       return this.getWhatsappIntegration(id);
     }
 
@@ -1045,19 +1043,14 @@ export class SQLiteStorage implements IStorage {
     values.push(id);
 
     const sql = `UPDATE whatsapp_integrations SET ${fields.join(', ')} WHERE id = ?`;
-    console.log("SQL:", sql);
-    console.log("Values:", values);
 
     try {
       const stmt = this.db.prepare(sql);
       const result = stmt.run(...values);
-      console.log("Update result:", result);
 
       const updated = this.db.prepare('SELECT * FROM whatsapp_integrations WHERE id = ?').get(id) as any;
-      console.log("Updated record:", updated);
       
       if (!updated) {
-        console.log("No record found after update");
         return undefined;
       }
 
