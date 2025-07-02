@@ -27,9 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         instanceName,
         event,
         hasData: !!data,
-        messageType: data?.messages?.[0]?.messageType,
-        messageText: data?.messages?.[0]?.message?.conversation,
-        fullMessage: data?.messages?.[0]?.message // Debug completo
+        fullData: JSON.stringify(data, null, 2) // Capturar toda a estrutura
       });
       
       // Processar mensagens de texto - verificar múltiplos formatos
