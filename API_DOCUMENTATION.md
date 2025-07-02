@@ -477,3 +477,303 @@ As durações são sempre em segundos:
 - 1 hora = 3600 segundos
 - 8 horas = 28800 segundos
 - 1 minuto = 60 segundos
+
+---
+
+# WhatsApp Integration API
+
+## Endpoints de Integração WhatsApp
+
+### 1. Criar Integração WhatsApp
+```
+POST /api/whatsapp/integration
+```
+**Body (JSON)**:
+```json
+{
+  "instanceName": "pontual-bot",
+  "apiUrl": "https://api.evolution.com",
+  "apiKey": "B6D9F2A1-1234-5678-9ABC-DEF123456789",
+  "phoneNumber": "5511999999999",
+  "restrictToGroup": true,
+  "allowedGroupName": "Equipe Desenvolvimento"
+}
+```
+
+**Resposta (200)**:
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "instanceName": "pontual-bot",
+  "apiUrl": "https://api.evolution.com",
+  "phoneNumber": "5511999999999",
+  "webhookUrl": "https://seu-dominio.com/api/whatsapp/webhook/pontual-bot",
+  "isActive": true,
+  "restrictToGroup": true,
+  "allowedGroupName": "Equipe Desenvolvimento",
+  "createdAt": "2025-07-02T00:00:00.000Z"
+}
+```
+
+### 2. Listar Integrações WhatsApp
+```
+GET /api/whatsapp/integration
+```
+
+**Resposta (200)**:
+```json
+{
+  "id": 1,
+  "instanceName": "pontual-bot",
+  "apiUrl": "https://api.evolution.com",
+  "phoneNumber": "5511999999999",
+  "webhookUrl": "https://seu-dominio.com/api/whatsapp/webhook/pontual-bot",
+  "isActive": true,
+  "restrictToGroup": true,
+  "allowedGroupName": "Equipe Desenvolvimento"
+}
+```
+
+### 3. Atualizar Integração WhatsApp
+```
+PUT /api/whatsapp/integration/:id
+```
+**Body (JSON)**:
+```json
+{
+  "apiUrl": "https://nova-url.com",
+  "restrictToGroup": false,
+  "allowedGroupName": null
+}
+```
+
+### 4. Deletar Integração WhatsApp
+```
+DELETE /api/whatsapp/integration/:id
+```
+
+**Resposta (200)**:
+```json
+{
+  "message": "Integração WhatsApp deletada com sucesso"
+}
+```
+
+### 5. Webhook WhatsApp
+```
+POST /api/whatsapp/webhook/:instanceName
+```
+**Body (JSON)** - Formato Evolution API:
+```json
+{
+  "event": "messages.upsert",
+  "instance": "pontual-bot",
+  "data": {
+    "key": {
+      "remoteJid": "5511999999999@s.whatsapp.net",
+      "fromMe": false,
+      "id": "message-id"
+    },
+    "message": {
+      "conversation": "tarefas"
+    },
+    "messageTimestamp": 1672531200,
+    "pushName": "João Silva"
+  }
+}
+```
+
+**Resposta (200)**:
+```json
+{
+  "success": true,
+  "message": "Mensagem processada com sucesso"
+}
+```
+
+## Configurações de Notificação
+
+### 1. Criar Configurações de Notificação
+```
+POST /api/whatsapp/notifications
+```
+**Body (JSON)**:
+```json
+{
+  "dailyReport": true,
+  "dailyReportTime": "18:00",
+  "weeklyReport": true,
+  "weeklyReportDay": "friday",
+  "weeklyReportTime": "17:00",
+  "deadlineReminders": true,
+  "timerReminders": true
+}
+```
+
+### 2. Listar Configurações de Notificação
+```
+GET /api/whatsapp/notifications
+```
+
+### 3. Atualizar Configurações de Notificação
+```
+PUT /api/whatsapp/notifications
+```
+
+## Logs do WhatsApp
+
+### 1. Listar Logs WhatsApp
+```
+GET /api/whatsapp/logs?limit=50
+```
+
+**Resposta (200)**:
+```json
+[
+  {
+    "id": 1,
+    "integrationId": 1,
+    "messageId": "message-id-123",
+    "phoneNumber": "5511999999999",
+    "groupName": "Equipe Desenvolvimento",
+    "message": "tarefas",
+    "response": "📋 Tarefas Ativas:\n\n1. Desenvolvimento Frontend (2h30min trabalhado)",
+    "success": true,
+    "error": null,
+    "createdAt": "2025-07-02T10:30:00.000Z"
+  }
+]
+```
+
+## Comandos WhatsApp Disponíveis
+
+### Gestão de Tarefas
+- `tarefas` - Listar tarefas ativas
+- `nova [nome]` - Criar nova tarefa
+- `concluir [tarefa]` - Finalizar tarefa
+- `reabrir [tarefa]` - Reativar tarefa
+
+### Controle de Tempo
+- `iniciar [tarefa]` - Iniciar timer
+- `parar [tarefa]` - Parar timer
+- `pausar [tarefa]` - Pausar timer
+- `retomar [tarefa]` - Retomar timer
+
+### Lançamentos
+- `lancamento [tarefa] [tempo]` - Lançar horas
+- `lancar-concluir [tarefa] [tempo]` - Lançar e finalizar
+
+### Relatórios
+- `relatorio` - Relatório de hoje
+- `relatorio semanal` - Relatório da semana
+- `relatorio mensal` - Relatório do mês
+- `status` - Status dos timers ativos
+
+### Ajuda
+- `ajuda` - Mostrar todos os comandos
+
+## Formatos de Tempo Aceitos no WhatsApp
+
+- **Horas:** `2h`, `1.5h`
+- **Minutos:** `90min`, `30min`
+- **Combinado:** `1h30min`
+
+## Códigos de Erro WhatsApp
+
+### 400 - Bad Request
+```json
+{
+  "error": "Dados inválidos",
+  "details": "Nome da instância é obrigatório"
+}
+```
+
+### 404 - Not Found
+```json
+{
+  "error": "Integração não encontrada"
+}
+```
+
+### 500 - Internal Server Error
+```json
+{
+  "error": "Erro interno do servidor",
+  "details": "Falha ao conectar com Evolution API"
+}
+```
+
+## Estrutura de Resposta dos Comandos WhatsApp
+
+### Comando: `tarefas`
+```
+📋 Tarefas Ativas:
+
+1. Desenvolvimento Frontend
+   ⏱️ Tempo: 2h30min | 📅 Prazo: 03/07/2025
+
+2. Reunião com Cliente
+   ⏱️ Tempo: 1h15min | 📅 Prazo: Hoje
+
+Total: 2 tarefas ativas
+```
+
+### Comando: `status`
+```
+⏱️ Status dos Timers:
+
+🟢 Timer Ativo:
+• Desenvolvimento Frontend (iniciado às 14:30)
+  Tempo decorrido: 1h45min
+
+📊 Hoje: 3h20min trabalhado
+📈 Semana: 18h45min trabalhado
+```
+
+### Comando: `relatorio`
+```
+📊 Relatório de Hoje - 02/07/2025
+
+⏱️ Tempo Total: 6h30min
+
+📋 Por Tarefa:
+• Desenvolvimento Frontend: 4h15min
+• Reunião com Cliente: 2h15min
+
+✅ Tarefas Concluídas: 1
+🔄 Tarefas Ativas: 2
+```
+
+## Autenticação WhatsApp
+
+A autenticação é feita via API Key da Evolution API. Cada integração deve ter sua própria API Key válida.
+
+**Headers necessários para Evolution API:**
+```
+Content-Type: application/json
+apikey: sua-api-key-aqui
+```
+
+## Configuração de Webhook
+
+O webhook deve ser configurado na Evolution API apontando para:
+```
+https://seu-dominio.com/api/whatsapp/webhook/{instanceName}
+```
+
+**Eventos requeridos:**
+- `messages.upsert`
+- `send.message`
+
+## Filtros de Grupo
+
+Quando `restrictToGroup` é `true`:
+- Bot responde apenas no grupo especificado em `allowedGroupName`
+- Mensagens individuais são ignoradas
+- Nome do grupo deve ser exatamente igual (case-sensitive)
+
+Quando `restrictToGroup` é `false`:
+- Bot responde em mensagens individuais
+- Bot responde em qualquer grupo
+- Usar com cuidado em ambientes corporativos

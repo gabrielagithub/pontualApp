@@ -169,6 +169,13 @@ Changelog:
   * Added group name extraction and filtering logic in message processing
   * Updated frontend configuration to include group filtering settings
   * All WhatsApp commands now work with task IDs for better precision
+- July 02, 2025 (05:30): Created comprehensive WhatsApp documentation:
+  * Created detailed WHATSAPP_SETUP.md with complete manual configuration guide
+  * Added step-by-step setup instructions for Evolution API and Pontual integration
+  * Enhanced README.md with WhatsApp integration overview and command reference
+  * Extended API_DOCUMENTATION.md with complete WhatsApp endpoints documentation
+  * Documented all commands, error codes, authentication flow, and troubleshooting steps
+  * Included practical examples and security best practices for production use
 ```
 
 ## User Preferences

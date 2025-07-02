@@ -29,6 +29,13 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 - Filtragem por períodos
 - Exclusão em massa com proteção de dados
 
+### Integração WhatsApp
+- Controle completo via WhatsApp com Evolution API
+- Comandos para criação, timer e gestão de tarefas
+- Filtro por grupo específico para ambientes corporativos
+- Relatórios automáticos e notificações personalizadas
+- Logs completos de interações
+
 ## Tecnologias Utilizadas
 
 - **Frontend**: React.js, TypeScript, Tailwind CSS
@@ -104,6 +111,29 @@ pontual/
 - Suporte completo ao fuso horário UTC-3
 - Cálculos precisos de data e hora
 - Interface adaptada ao formato brasileiro
+
+## Integração WhatsApp
+
+O Pontual inclui integração completa com WhatsApp via Evolution API, permitindo controle total das tarefas e tempo via mensagens.
+
+### Configuração
+Para configurar a integração WhatsApp, consulte o guia detalhado:
+**[📱 WHATSAPP_SETUP.md](./WHATSAPP_SETUP.md)**
+
+### Comandos Principais
+- `tarefas` - Listar tarefas ativas
+- `nova [nome]` - Criar nova tarefa
+- `iniciar [tarefa]` - Iniciar timer
+- `parar [tarefa]` - Parar timer
+- `concluir [tarefa]` - Finalizar tarefa
+- `relatorio` - Relatório do dia
+- `ajuda` - Lista completa de comandos
+
+### Recursos Avançados
+- **Filtro por Grupo**: Configure para responder apenas em grupos específicos
+- **Notificações Automáticas**: Relatórios diários e semanais via WhatsApp
+- **Logs de Interação**: Monitoramento completo de comandos processados
+- **Múltiplos Formatos**: Aceita diferentes formatos de tempo (2h, 90min, 1h30min)
 
 ## Contribuição
 
