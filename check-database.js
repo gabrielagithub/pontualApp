@@ -21,22 +21,20 @@ if (integration) {
   console.log('- Allowed Group JID:', integration.allowed_group_jid);
   console.log('- Tipo do JID:', typeof integration.allowed_group_jid);
   
-  // Se o JID estiver nulo ou vazio, vamos definir um valor de teste
-  if (!integration.allowed_group_jid || integration.allowed_group_jid === 'null') {
-    console.log('⚠️  JID está nulo, atualizando com valor correto...');
-    
-    const updateResult = db.prepare(`
-      UPDATE whatsapp_integrations 
-      SET allowed_group_jid = ? 
-      WHERE id = ?
-    `).run('120363403778516269@g.us', integration.id);
-    
-    console.log('✅ Atualização resultado:', updateResult);
-    
-    // Verificar novamente
-    const updatedIntegration = db.prepare('SELECT * FROM whatsapp_integrations WHERE id = ?').get(integration.id);
-    console.log('📋 Após atualização - JID:', updatedIntegration.allowed_group_jid);
-  }
+  // Forçar atualização do JID para o grupo que está testando
+  console.log('🔄 Atualizando JID para o grupo de teste...');
+  
+  const updateResult = db.prepare(`
+    UPDATE whatsapp_integrations 
+    SET allowed_group_jid = ? 
+    WHERE id = ?
+  `).run('553197293010-1520015638@g.us', integration.id);
+  
+  console.log('✅ Atualização resultado:', updateResult);
+  
+  // Verificar novamente
+  const updatedIntegration = db.prepare('SELECT * FROM whatsapp_integrations WHERE id = ?').get(integration.id);
+  console.log('📋 Após atualização - JID:', updatedIntegration.allowed_group_jid);
 } else {
   console.log('❌ Nenhuma integração encontrada');
 }

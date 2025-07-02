@@ -216,6 +216,13 @@ Changelog:
   * Updated web interface to configure authorized group JID
   * System now only processes messages from exact configured group JID (e.g., 120363419788242278@g.us)
   * Prevents accidental triggering from unauthorized groups or individual messages
+- July 02, 2025 (16:51): Resolved message text extraction and database JID storage issues:
+  * Fixed database storage problem where JID field wasn't being saved properly from web interface
+  * Enhanced message text extraction to support multiple Evolution API message formats
+  * Added comprehensive debugging for message structure analysis when text extraction fails
+  * Created database verification script to diagnose and fix JID storage issues
+  * System now successfully captures and processes WhatsApp messages with proper group filtering
+  * Only remaining issue: Evolution API instance "pontualApp" doesn't exist (404 error)
 ```
 
 ## User Preferences

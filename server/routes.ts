@@ -37,11 +37,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const remoteJid = message.key.remoteJid;
         
         // Extrair texto da mensagem - múltiplos formatos possíveis
-        const messageText = message.message?.conversation || 
-                           message.message?.extendedTextMessage?.text ||
-                           message.message?.imageMessage?.caption ||
-                           message.message?.videoMessage?.caption ||
-                           '';
+        let messageText = '';
+        
+        if (message.message) {
+          // Formatos de texto mais comuns
+          messageText = message.message.conversation || 
+                       message.message.extendedTextMessage?.text ||
+                       message.message.templateButtonReplyMessage?.selectedDisplayText ||
+                       message.message.buttonsResponseMessage?.selectedDisplayText ||
+                       message.message.listResponseMessage?.singleSelectReply?.selectedRowId ||
+                       message.message.imageMessage?.caption ||
+                       message.message.videoMessage?.caption ||
+                       message.message.documentMessage?.caption ||
+                       '';
+        }
+        
+        // Se ainda estiver vazio, tentar outras estruturas da Evolution API
+        if (!messageText && message.text) {
+          messageText = message.text;
+        }
+        
+        // Debug detalhado da estrutura da mensagem
+        if (!messageText) {
+          console.log('🔍 ESTRUTURA COMPLETA DA MENSAGEM:', JSON.stringify(message, null, 2));
+        }
         
         console.log('📱 MENSAGEM IDENTIFICADA:', {
           remoteJid,
