@@ -196,6 +196,31 @@ export class WhatsappService {
     const action = words[0];
     const params = words.slice(1);
 
+    // Mapear comandos com maiúscula para minúscula
+    const commandMap: { [key: string]: string } = {
+      'tarefas': 'tarefas',
+      'Tarefas': 'tarefas', 
+      'TAREFAS': 'tarefas',
+      'ajuda': 'ajuda',
+      'Ajuda': 'ajuda',
+      'AJUDA': 'ajuda',
+      'nova': 'nova',
+      'Nova': 'nova',
+      'NOVA': 'nova',
+      'iniciar': 'iniciar',
+      'Iniciar': 'iniciar',
+      'INICIAR': 'iniciar',
+      'parar': 'parar',
+      'Parar': 'parar',
+      'PARAR': 'parar',
+      'status': 'status',
+      'Status': 'status',
+      'STATUS': 'status',
+      'relatorio': 'relatorio',
+      'Relatorio': 'relatorio',
+      'RELATORIO': 'relatorio'
+    };
+
     return { action, params };
   }
 

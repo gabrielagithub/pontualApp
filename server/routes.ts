@@ -1078,13 +1078,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { instanceName } = req.params;
       const { event, data } = req.body;
       
-      console.log('📱 Webhook WhatsApp recebido:', { instanceName, event, data });
+      console.log('📱 WEBHOOK RECEBIDO:', {
+        instanceName,
+        event,
+        hasData: !!data,
+        messageType: data?.messages?.[0]?.messageType,
+        messageText: data?.messages?.[0]?.message?.conversation
+      });
       
       // Processar apenas mensagens de texto recebidas
       if (event === 'messages.upsert' && data?.messages?.[0]?.messageType === 'conversation') {
         const message = data.messages[0];
         const remoteJid = message.key.remoteJid;
         const messageText = message.message.conversation;
+        
+        console.log('📱 MENSAGEM IDENTIFICADA:', {
+          remoteJid,
+          messageText,
+          fromMe: message.key.fromMe
+        });
+        
+        // Ignorar mensagens enviadas pelo próprio bot
+        if (message.key.fromMe) {
+          console.log('📱 IGNORANDO mensagem própria');
+          return res.status(200).json({ status: 'ignored - own message' });
+        }
         
         // Extrair informações da mensagem
         let phoneNumber = '';
@@ -1099,10 +1117,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
         }
         
+        console.log('📱 DADOS EXTRAÍDOS:', { phoneNumber, groupName });
+        
         // Buscar integração por instanceName
         const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
         
+        console.log('📱 INTEGRAÇÃO ENCONTRADA:', {
+          found: !!integration,
+          instanceMatch: integration?.instanceName === instanceName,
+          expectedInstance: instanceName,
+          foundInstance: integration?.instanceName
+        });
+        
         if (integration && integration.instanceName === instanceName) {
+          console.log('📱 PROCESSANDO MENSAGEM para:', phoneNumber);
           await whatsappService.processIncomingMessage(
             integration.id,
             phoneNumber,
@@ -1110,7 +1138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message.key.id,
             groupName
           );
+        } else {
+          console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');
         }
+      } else {
+        console.log('📱 EVENTO IGNORADO:', event, 'messageType:', data?.messages?.[0]?.messageType);
       }
       
       res.status(200).json({ status: 'ok' });
