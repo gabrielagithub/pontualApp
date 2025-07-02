@@ -101,8 +101,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');
         }
-      } else {
-        console.log('📱 EVENTO IGNORADO:', event, 'messageType:', data?.messages?.[0]?.messageType);
       }
       
       res.status(200).json({ status: 'ok' });
