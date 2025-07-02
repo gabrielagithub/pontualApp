@@ -65,6 +65,8 @@ export class WhatsappService {
     const integration = await storage.getWhatsappIntegration(integrationId);
     if (!integration) return;
 
+    console.log(`📱 DEBUG FILTRO: restrictToGroup=${integration.restrictToGroup}, allowedGroupJid="${integration.allowedGroupJid}", receivedJid="${groupJid}"`);
+
     // Filtrar por JID do grupo específico se configurado
     if (integration.restrictToGroup && integration.allowedGroupJid) {
       if (!groupJid || groupJid !== integration.allowedGroupJid) {
