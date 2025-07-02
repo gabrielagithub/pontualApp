@@ -23,37 +23,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { instanceName } = req.params;
       const { event, data } = req.body;
       
-      console.log('📱 WEBHOOK RECEBIDO:', {
-        instanceName,
-        event,
-        hasData: !!data,
-        fullData: JSON.stringify(data, null, 2) // Capturar toda a estrutura
-      });
+      // Debug simplificado - apenas para mensagens com dados
+      if (data && Object.keys(data).length > 0) {
+        console.log('📱 WEBHOOK RECEBIDO:', {
+          instanceName,
+          event,
+          hasMessages: !!data?.messages?.length,
+          messageCount: data?.messages?.length || 0
+        });
+      }
       
-      // Processar mensagens de texto - verificar múltiplos formatos
-      const message = data?.messages?.[0];
-      const isTextMessage = message && (
-        message.messageType === 'conversation' ||
-        message.message?.conversation ||
-        message.message?.extendedTextMessage?.text
-      );
-      
-      if (event === 'messages.upsert' && isTextMessage) {
-        const remoteJid = message.key.remoteJid;
-        // Extrair texto da mensagem - suportar múltiplos formatos
+      // Processar mensagens UPSERT (novas mensagens)
+      if (event === 'messages.upsert' && data?.messages?.[0]) {
+        const message = data.messages[0];
+        const remoteJid = message.key?.remoteJid;
+        
+        // Extrair texto da mensagem - múltiplos formatos possíveis
         const messageText = message.message?.conversation || 
                            message.message?.extendedTextMessage?.text ||
+                           message.message?.imageMessage?.caption ||
+                           message.message?.videoMessage?.caption ||
                            '';
         
         console.log('📱 MENSAGEM IDENTIFICADA:', {
           remoteJid,
           messageText,
-          fromMe: message.key.fromMe
+          fromMe: message.key?.fromMe || false,
+          hasText: !!messageText
         });
         
+        // Pular mensagens sem texto ou vazias
+        if (!messageText || messageText.trim() === '') {
+          console.log('📱 IGNORANDO - mensagem sem texto');
+          return res.status(200).json({ status: 'ignored - no text' });
+        }
+
         // Ignorar mensagens enviadas pelo próprio bot
-        if (message.key.fromMe) {
-          console.log('📱 IGNORANDO mensagem própria');
+        if (message.key?.fromMe) {
+          console.log('📱 IGNORANDO - mensagem própria');
           return res.status(200).json({ status: 'ignored - own message' });
         }
         
