@@ -73,8 +73,13 @@ export class WhatsappService {
 
     console.log(`📱 DEBUG FILTRO: restrictToGroup=${integration.restrictToGroup}, allowedGroupJid="${integration.allowedGroupJid}", receivedJid="${groupJid}"`);
 
-    // Filtrar por JID do grupo específico se configurado
-    if (integration.restrictToGroup && integration.allowedGroupJid && integration.allowedGroupJid !== 'null') {
+    // Filtrar por JID do grupo - SEMPRE obrigatório quando restrictToGroup está ativo
+    if (integration.restrictToGroup) {
+      if (!integration.allowedGroupJid || integration.allowedGroupJid === 'null' || integration.allowedGroupJid.trim() === '') {
+        console.log(`📱 Mensagem ignorada - JID não configurado na integração`);
+        return;
+      }
+      
       if (!groupJid || groupJid !== integration.allowedGroupJid) {
         console.log(`📱 Mensagem ignorada - JID "${groupJid}" não autorizado. Permitido: "${integration.allowedGroupJid}"`);
         return;

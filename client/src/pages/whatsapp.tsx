@@ -26,6 +26,15 @@ const integrationSchema = z.object({
   allowedGroupName: z.string().optional(),
   allowedGroupJid: z.string().optional(),
   restrictToGroup: z.boolean().default(false),
+}).refine((data) => {
+  // Se restrictToGroup está ativo, allowedGroupJid é obrigatório
+  if (data.restrictToGroup && (!data.allowedGroupJid || data.allowedGroupJid.trim() === '')) {
+    return false;
+  }
+  return true;
+}, {
+  message: "JID do grupo é obrigatório quando 'Restringir a grupo' está ativado",
+  path: ["allowedGroupJid"]
 });
 
 const notificationSchema = z.object({
