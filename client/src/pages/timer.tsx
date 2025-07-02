@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Play, Pause, Square, Clock, Plus } from "lucide-react";
 import TimerDisplay from "@/components/timer-display";
+import QuickTaskForm from "@/components/quick-task-form";
 import { useTimer } from "@/hooks/use-timer";
 import { formatDuration } from "@/lib/timer-utils";
 import { queryClient, apiRequest } from "@/lib/queryClient";

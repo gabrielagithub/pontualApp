@@ -222,24 +222,127 @@ Digite qualquer comando para começar! 🚀`;
 
   private async createTask(params: string[]): Promise<string> {
     if (params.length === 0) {
-      return "❌ Por favor, informe o nome da tarefa.\n\n*Exemplo:* nova Reunião com cliente";
+      return "❌ Por favor, informe o nome da tarefa.\n\n*Exemplos:*\n• nova Reunião com cliente\n• nova Desenvolvimento Frontend --desc \"Criar tela de login\" --tempo 4h --prazo 2025-07-05\n• nova Projeto X --cor verde --tempo 2h30min\n\n*Parâmetros opcionais:*\n--desc: Descrição\n--tempo: Tempo estimado (ex: 2h, 90min, 1h30min)\n--prazo: Data limite (AAAA-MM-DD)\n--cor: azul, verde, amarelo, vermelho, roxo";
     }
 
-    const taskName = params.join(' ');
+    // Parse parameters
+    const input = params.join(' ');
+    const taskData = this.parseTaskCreationInput(input);
+    
+    if (!taskData.name) {
+      return "❌ Nome da tarefa é obrigatório.\n\n*Exemplo:* nova Reunião com cliente";
+    }
     
     try {
       const task = await storage.createTask({
-        name: taskName,
-        description: 'Criada via WhatsApp',
-        color: '#3B82F6',
+        name: taskData.name,
+        description: taskData.description || 'Criada via WhatsApp',
+        color: taskData.color || '#3B82F6',
         isActive: true,
-        deadline: null,
+        deadline: taskData.deadline,
+        estimatedHours: taskData.estimatedHours,
       });
 
-      return `✅ Tarefa criada com sucesso!\n\n📋 *${task.name}*\nID: ${task.id}\n\nUse *iniciar ${task.id}* para começar a cronometrar.`;
+      let response = `✅ Tarefa criada com sucesso!\n\n📋 *${task.name}*\nID: ${task.id}`;
+      
+      if (taskData.description && taskData.description !== 'Criada via WhatsApp') {
+        response += `\n📝 ${taskData.description}`;
+      }
+      
+      if (taskData.estimatedHours) {
+        const hours = Math.floor(taskData.estimatedHours);
+        const minutes = Math.round((taskData.estimatedHours - hours) * 60);
+        response += `\n⏱️ Tempo estimado: ${hours}h${minutes > 0 ? ` ${minutes}min` : ''}`;
+      }
+      
+      if (taskData.deadline) {
+        response += `\n📅 Prazo: ${taskData.deadline.toLocaleDateString('pt-BR')}`;
+      }
+      
+      response += `\n\nUse *iniciar ${task.id}* para começar a cronometrar.`;
+      
+      return response;
     } catch (error) {
       return `❌ Erro ao criar tarefa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
     }
+  }
+
+  private parseTaskCreationInput(input: string): {
+    name: string;
+    description?: string;
+    estimatedHours?: number;
+    deadline?: Date;
+    color?: string;
+  } {
+    const result: any = {};
+    
+    // Extract parameters using --param format
+    const paramRegex = /--(\w+)\s+"([^"]+)"|--(\w+)\s+(\S+)/g;
+    const params: { [key: string]: string } = {};
+    let match;
+    
+    let cleanInput = input;
+    
+    // Extract all parameters
+    while ((match = paramRegex.exec(input)) !== null) {
+      const paramName = match[1] || match[3];
+      const paramValue = match[2] || match[4];
+      params[paramName] = paramValue;
+      
+      // Remove the parameter from the input to get the clean name
+      cleanInput = cleanInput.replace(match[0], '').trim();
+    }
+    
+    // The remaining text is the task name
+    result.name = cleanInput.trim();
+    
+    // Process description
+    if (params.desc || params.descricao) {
+      result.description = params.desc || params.descricao;
+    }
+    
+    // Process estimated time
+    if (params.tempo || params.time) {
+      const timeStr = params.tempo || params.time;
+      result.estimatedHours = this.parseTimeString(timeStr);
+    }
+    
+    // Process deadline
+    if (params.prazo || params.deadline) {
+      const dateStr = params.prazo || params.deadline;
+      try {
+        // Support formats: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          result.deadline = date;
+        }
+      } catch (error) {
+        // Invalid date format, ignore
+      }
+    }
+    
+    // Process color
+    if (params.cor || params.color) {
+      const colorInput = (params.cor || params.color).toLowerCase();
+      const colorMap: { [key: string]: string } = {
+        'azul': '#3B82F6',
+        'blue': '#3B82F6',
+        'verde': '#10B981',
+        'green': '#10B981',
+        'amarelo': '#F59E0B',
+        'yellow': '#F59E0B',
+        'vermelho': '#EF4444',
+        'red': '#EF4444',
+        'roxo': '#8B5CF6',
+        'purple': '#8B5CF6',
+      };
+      
+      if (colorMap[colorInput]) {
+        result.color = colorMap[colorInput];
+      }
+    }
+    
+    return result;
   }
 
   private async startTimer(params: string[]): Promise<string> {
