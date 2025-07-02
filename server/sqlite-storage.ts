@@ -945,8 +945,8 @@ export class SQLiteStorage implements IStorage {
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
     const stmt = this.db.prepare(`
-      INSERT INTO whatsapp_integrations (user_id, instance_name, api_url, api_key, phone_number, webhook_url, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO whatsapp_integrations (user_id, instance_name, api_url, api_key, phone_number, webhook_url, allowed_group_name, restrict_to_group, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `);
     
     const result = stmt.run(
@@ -955,7 +955,9 @@ export class SQLiteStorage implements IStorage {
       integration.apiUrl,
       integration.apiKey,
       integration.phoneNumber,
-      integration.webhookUrl
+      integration.webhookUrl,
+      integration.allowedGroupName || null,
+      integration.restrictToGroup ? 1 : 0
     );
 
     const created = this.db.prepare('SELECT * FROM whatsapp_integrations WHERE id = ?').get(result.lastInsertRowid) as any;
@@ -1008,6 +1010,14 @@ export class SQLiteStorage implements IStorage {
     if (updates.lastConnection !== undefined) {
       fields.push('last_connection = ?');
       values.push(updates.lastConnection?.toISOString());
+    }
+    if (updates.allowedGroupName !== undefined) {
+      fields.push('allowed_group_name = ?');
+      values.push(updates.allowedGroupName);
+    }
+    if (updates.restrictToGroup !== undefined) {
+      fields.push('restrict_to_group = ?');
+      values.push(updates.restrictToGroup ? 1 : 0);
     }
 
     if (fields.length === 0) return this.getWhatsappIntegration(id);

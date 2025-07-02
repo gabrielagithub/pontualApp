@@ -76,18 +76,18 @@ export default function WhatsAppPage() {
   });
 
   // Queries
-  const { data: integration, isLoading: integrationLoading } = useQuery({
+  const { data: integration, isLoading: integrationLoading } = useQuery<any>({
     queryKey: ["/api/whatsapp/integration/1"],
     retry: false,
   });
 
-  const { data: notificationSettings, isLoading: notificationLoading } = useQuery({
+  const { data: notificationSettings, isLoading: notificationLoading } = useQuery<any>({
     queryKey: ["/api/notifications/settings/1"],
     retry: false,
   });
 
-  const { data: logs } = useQuery({
-    queryKey: integration ? ["/api/whatsapp/logs", integration.id] : null,
+  const { data: logs } = useQuery<any[]>({
+    queryKey: ["/api/whatsapp/logs"],
     enabled: !!integration,
   });
 
