@@ -75,7 +75,7 @@ export class WhatsappService {
       return;
     }
 
-    // Debug removido - sistema funcionando corretamente
+    // Sistema funcionando corretamente
 
     // Filtrar por JID do grupo - SEMPRE obrigatório quando restrictToGroup está ativo
     if (integration.restrictToGroup) {
