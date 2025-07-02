@@ -6,7 +6,10 @@ import type {
   User, InsertUser, 
   Task, InsertTask, TaskWithStats,
   TaskItem, InsertTaskItem,
-  TimeEntry, InsertTimeEntry, UpdateTimeEntry, TimeEntryWithTask
+  TimeEntry, InsertTimeEntry, UpdateTimeEntry, TimeEntryWithTask,
+  WhatsappIntegration, InsertWhatsappIntegration,
+  WhatsappLog, InsertWhatsappLog,
+  NotificationSettings, InsertNotificationSettings
 } from '@shared/schema';
 
 export class SQLiteStorage implements IStorage {
@@ -88,6 +91,60 @@ export class SQLiteStorage implements IStorage {
         notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create whatsapp_integrations table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS whatsapp_integrations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        instance_name TEXT NOT NULL,
+        api_url TEXT NOT NULL,
+        api_key TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT 1,
+        webhook_url TEXT,
+        last_connection DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create whatsapp_logs table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS whatsapp_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        integration_id INTEGER NOT NULL,
+        message_id TEXT,
+        message_type TEXT NOT NULL,
+        message_content TEXT,
+        command TEXT,
+        response TEXT,
+        success BOOLEAN NOT NULL DEFAULT 1,
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (integration_id) REFERENCES whatsapp_integrations(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create notification_settings table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS notification_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        enable_daily_report BOOLEAN NOT NULL DEFAULT 0,
+        daily_report_time TEXT DEFAULT '18:00',
+        enable_weekly_report BOOLEAN NOT NULL DEFAULT 0,
+        weekly_report_day INTEGER DEFAULT 5,
+        enable_deadline_reminders BOOLEAN NOT NULL DEFAULT 1,
+        reminder_hours_before INTEGER DEFAULT 24,
+        enable_timer_reminders BOOLEAN NOT NULL DEFAULT 0,
+        timer_reminder_interval INTEGER DEFAULT 120,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
 
@@ -862,5 +919,287 @@ export class SQLiteStorage implements IStorage {
 
   close() {
     this.db.close();
+  }
+
+  // WhatsApp Integration methods
+  async getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined> {
+    const result = this.db.prepare('SELECT * FROM whatsapp_integrations WHERE user_id = ? AND is_active = 1').get(userId) as any;
+    if (!result) return undefined;
+    
+    return {
+      id: result.id,
+      userId: result.user_id,
+      instanceName: result.instance_name,
+      apiUrl: result.api_url,
+      apiKey: result.api_key,
+      phoneNumber: result.phone_number,
+      isActive: !!result.is_active,
+      webhookUrl: result.webhook_url,
+      lastConnection: result.last_connection ? new Date(result.last_connection) : null,
+      createdAt: new Date(result.created_at),
+      updatedAt: new Date(result.updated_at),
+    };
+  }
+
+  async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
+    const stmt = this.db.prepare(`
+      INSERT INTO whatsapp_integrations (user_id, instance_name, api_url, api_key, phone_number, webhook_url, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `);
+    
+    const result = stmt.run(
+      integration.userId,
+      integration.instanceName,
+      integration.apiUrl,
+      integration.apiKey,
+      integration.phoneNumber,
+      integration.webhookUrl
+    );
+
+    const created = this.db.prepare('SELECT * FROM whatsapp_integrations WHERE id = ?').get(result.lastInsertRowid) as any;
+    
+    return {
+      id: created.id,
+      userId: created.user_id,
+      instanceName: created.instance_name,
+      apiUrl: created.api_url,
+      apiKey: created.api_key,
+      phoneNumber: created.phone_number,
+      isActive: !!created.is_active,
+      webhookUrl: created.webhook_url,
+      lastConnection: created.last_connection ? new Date(created.last_connection) : null,
+      createdAt: new Date(created.created_at),
+      updatedAt: new Date(created.updated_at),
+    };
+  }
+
+  async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
+    const fields = [];
+    const values = [];
+
+    if (updates.instanceName !== undefined) {
+      fields.push('instance_name = ?');
+      values.push(updates.instanceName);
+    }
+    if (updates.apiUrl !== undefined) {
+      fields.push('api_url = ?');
+      values.push(updates.apiUrl);
+    }
+    if (updates.apiKey !== undefined) {
+      fields.push('api_key = ?');
+      values.push(updates.apiKey);
+    }
+    if (updates.phoneNumber !== undefined) {
+      fields.push('phone_number = ?');
+      values.push(updates.phoneNumber);
+    }
+    if (updates.isActive !== undefined) {
+      fields.push('is_active = ?');
+      values.push(updates.isActive ? 1 : 0);
+    }
+    if (updates.webhookUrl !== undefined) {
+      fields.push('webhook_url = ?');
+      values.push(updates.webhookUrl);
+    }
+    if (updates.lastConnection !== undefined) {
+      fields.push('last_connection = ?');
+      values.push(updates.lastConnection?.toISOString());
+    }
+
+    if (fields.length === 0) return this.getWhatsappIntegration(id);
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(id);
+
+    const stmt = this.db.prepare(`UPDATE whatsapp_integrations SET ${fields.join(', ')} WHERE id = ?`);
+    stmt.run(...values);
+
+    const updated = this.db.prepare('SELECT * FROM whatsapp_integrations WHERE id = ?').get(id) as any;
+    if (!updated) return undefined;
+
+    return {
+      id: updated.id,
+      userId: updated.user_id,
+      instanceName: updated.instance_name,
+      apiUrl: updated.api_url,
+      apiKey: updated.api_key,
+      phoneNumber: updated.phone_number,
+      isActive: !!updated.is_active,
+      webhookUrl: updated.webhook_url,
+      lastConnection: updated.last_connection ? new Date(updated.last_connection) : null,
+      createdAt: new Date(updated.created_at),
+      updatedAt: new Date(updated.updated_at),
+    };
+  }
+
+  async deleteWhatsappIntegration(id: number): Promise<boolean> {
+    const stmt = this.db.prepare('DELETE FROM whatsapp_integrations WHERE id = ?');
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
+  async createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog> {
+    const stmt = this.db.prepare(`
+      INSERT INTO whatsapp_logs (integration_id, message_id, message_type, message_content, command, response, success, error_message)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    const result = stmt.run(
+      log.integrationId,
+      log.messageId,
+      log.messageType,
+      log.messageContent,
+      log.command,
+      log.response,
+      log.success ? 1 : 0,
+      log.errorMessage
+    );
+
+    const created = this.db.prepare('SELECT * FROM whatsapp_logs WHERE id = ?').get(result.lastInsertRowid) as any;
+    
+    return {
+      id: created.id,
+      integrationId: created.integration_id,
+      messageId: created.message_id,
+      messageType: created.message_type,
+      messageContent: created.message_content,
+      command: created.command,
+      response: created.response,
+      success: !!created.success,
+      errorMessage: created.error_message,
+      createdAt: new Date(created.created_at),
+    };
+  }
+
+  async getWhatsappLogs(integrationId: number, limit: number = 50): Promise<WhatsappLog[]> {
+    const stmt = this.db.prepare(`
+      SELECT * FROM whatsapp_logs 
+      WHERE integration_id = ? 
+      ORDER BY created_at DESC 
+      LIMIT ?
+    `);
+    
+    const results = stmt.all(integrationId, limit) as any[];
+    
+    return results.map(row => ({
+      id: row.id,
+      integrationId: row.integration_id,
+      messageId: row.message_id,
+      messageType: row.message_type,
+      messageContent: row.message_content,
+      command: row.command,
+      response: row.response,
+      success: !!row.success,
+      errorMessage: row.error_message,
+      createdAt: new Date(row.created_at),
+    }));
+  }
+
+  async getNotificationSettings(userId: number): Promise<NotificationSettings | undefined> {
+    const result = this.db.prepare('SELECT * FROM notification_settings WHERE user_id = ?').get(userId) as any;
+    if (!result) return undefined;
+    
+    return {
+      id: result.id,
+      userId: result.user_id,
+      enableDailyReport: !!result.enable_daily_report,
+      dailyReportTime: result.daily_report_time,
+      enableWeeklyReport: !!result.enable_weekly_report,
+      weeklyReportDay: result.weekly_report_day,
+      enableDeadlineReminders: !!result.enable_deadline_reminders,
+      reminderHoursBefore: result.reminder_hours_before,
+      enableTimerReminders: !!result.enable_timer_reminders,
+      timerReminderInterval: result.timer_reminder_interval,
+      createdAt: new Date(result.created_at),
+      updatedAt: new Date(result.updated_at),
+    };
+  }
+
+  async createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings> {
+    const stmt = this.db.prepare(`
+      INSERT INTO notification_settings (
+        user_id, enable_daily_report, daily_report_time, enable_weekly_report, 
+        weekly_report_day, enable_deadline_reminders, reminder_hours_before,
+        enable_timer_reminders, timer_reminder_interval, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `);
+    
+    const result = stmt.run(
+      settings.userId,
+      settings.enableDailyReport ? 1 : 0,
+      settings.dailyReportTime,
+      settings.enableWeeklyReport ? 1 : 0,
+      settings.weeklyReportDay,
+      settings.enableDeadlineReminders ? 1 : 0,
+      settings.reminderHoursBefore,
+      settings.enableTimerReminders ? 1 : 0,
+      settings.timerReminderInterval
+    );
+
+    const created = this.db.prepare('SELECT * FROM notification_settings WHERE id = ?').get(result.lastInsertRowid) as any;
+    
+    return {
+      id: created.id,
+      userId: created.user_id,
+      enableDailyReport: !!created.enable_daily_report,
+      dailyReportTime: created.daily_report_time,
+      enableWeeklyReport: !!created.enable_weekly_report,
+      weeklyReportDay: created.weekly_report_day,
+      enableDeadlineReminders: !!created.enable_deadline_reminders,
+      reminderHoursBefore: created.reminder_hours_before,
+      enableTimerReminders: !!created.enable_timer_reminders,
+      timerReminderInterval: created.timer_reminder_interval,
+      createdAt: new Date(created.created_at),
+      updatedAt: new Date(created.updated_at),
+    };
+  }
+
+  async updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
+    const fields = [];
+    const values = [];
+
+    if (updates.enableDailyReport !== undefined) {
+      fields.push('enable_daily_report = ?');
+      values.push(updates.enableDailyReport ? 1 : 0);
+    }
+    if (updates.dailyReportTime !== undefined) {
+      fields.push('daily_report_time = ?');
+      values.push(updates.dailyReportTime);
+    }
+    if (updates.enableWeeklyReport !== undefined) {
+      fields.push('enable_weekly_report = ?');
+      values.push(updates.enableWeeklyReport ? 1 : 0);
+    }
+    if (updates.weeklyReportDay !== undefined) {
+      fields.push('weekly_report_day = ?');
+      values.push(updates.weeklyReportDay);
+    }
+    if (updates.enableDeadlineReminders !== undefined) {
+      fields.push('enable_deadline_reminders = ?');
+      values.push(updates.enableDeadlineReminders ? 1 : 0);
+    }
+    if (updates.reminderHoursBefore !== undefined) {
+      fields.push('reminder_hours_before = ?');
+      values.push(updates.reminderHoursBefore);
+    }
+    if (updates.enableTimerReminders !== undefined) {
+      fields.push('enable_timer_reminders = ?');
+      values.push(updates.enableTimerReminders ? 1 : 0);
+    }
+    if (updates.timerReminderInterval !== undefined) {
+      fields.push('timer_reminder_interval = ?');
+      values.push(updates.timerReminderInterval);
+    }
+
+    if (fields.length === 0) return this.getNotificationSettings(userId);
+
+    fields.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(userId);
+
+    const stmt = this.db.prepare(`UPDATE notification_settings SET ${fields.join(', ')} WHERE user_id = ?`);
+    stmt.run(...values);
+
+    return this.getNotificationSettings(userId);
   }
 }

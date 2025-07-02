@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTaskSchema, insertTaskItemSchema, insertTimeEntrySchema, updateTimeEntrySchema } from "@shared/schema";
+import { insertTaskSchema, insertTaskItemSchema, insertTimeEntrySchema, updateTimeEntrySchema, insertWhatsappIntegrationSchema, insertNotificationSettingsSchema } from "@shared/schema";
 import { z } from "zod";
 import { basicAuth } from "./auth";
+import { whatsappService } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Aplicar autenticação básica a todas as rotas /api/*
