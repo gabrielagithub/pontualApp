@@ -15,17 +15,10 @@ function getBasicAuthCredentials(): string | null {
     return storedCredentials;
   }
 
-  // Se não tem credenciais, solicitar ao usuário
-  const username = prompt('Digite seu nome de usuário:');
-  const password = prompt('Digite sua senha:');
-  
-  if (username && password) {
-    const credentials = btoa(`${username}:${password}`);
-    localStorage.setItem('pontual_auth_credentials', credentials);
-    return credentials;
-  }
-  
-  return null;
+  // Usar credenciais padrão do usuário cadastrado
+  const defaultCredentials = btoa('usuario:senha123');
+  localStorage.setItem('pontual_auth_credentials', defaultCredentials);
+  return defaultCredentials;
 }
 
 export async function apiRequest(
