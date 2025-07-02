@@ -75,7 +75,15 @@ export class WhatsappService {
       return;
     }
 
-    console.log(`📱 DEBUG FILTRO: restrictToGroup=${integration.restrictToGroup}, allowedGroupJid="${integration.allowedGroupJid}", receivedJid="${groupJid}"`);
+    console.log(`📱 DEBUG INTEGRAÇÃO BRUTA BANCO:`, await storage.getWhatsappIntegration(1));
+    console.log(`📱 DEBUG INTEGRAÇÃO MAPEADA:`, integration);
+    console.log(`📱 DEBUG CAMPO JID:`, {
+      valor: integration.allowedGroupJid,
+      tipo: typeof integration.allowedGroupJid,
+      isNull: integration.allowedGroupJid === null,
+      isStringNull: integration.allowedGroupJid === 'null',
+      isEmpty: integration.allowedGroupJid === ''
+    });
 
     // Filtrar por JID do grupo - SEMPRE obrigatório quando restrictToGroup está ativo
     if (integration.restrictToGroup) {
