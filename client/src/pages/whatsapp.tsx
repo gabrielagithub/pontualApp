@@ -158,12 +158,14 @@ export default function WhatsAppPage() {
   useEffect(() => {
     if (integration) {
       integrationForm.reset({
-        userId: integration.userId,
-        instanceName: integration.instanceName,
-        apiUrl: integration.apiUrl,
+        userId: integration.userId || 1,
+        instanceName: integration.instanceName || "",
+        apiUrl: integration.apiUrl || "",
         apiKey: "", // Não carregamos a API key por segurança
-        phoneNumber: integration.phoneNumber,
-        webhookUrl: integration.webhookUrl || `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
+        phoneNumber: integration.phoneNumber || "",
+        webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
+        allowedGroupName: integration.allowedGroupName || "",
+        restrictToGroup: integration.restrictToGroup || false,
       });
     }
   }, [integration, integrationForm]);
@@ -173,6 +175,14 @@ export default function WhatsAppPage() {
       notificationForm.reset(notificationSettings);
     }
   }, [notificationSettings, notificationForm]);
+
+  // Update webhook URL when instance name changes
+  useEffect(() => {
+    const instanceName = integrationForm.watch("instanceName");
+    if (instanceName) {
+      integrationForm.setValue("webhookUrl", `${window.location.origin}/api/whatsapp/webhook/${instanceName}`);
+    }
+  }, [integrationForm.watch("instanceName"), integrationForm]);
 
   const onSubmitIntegration = (data: any) => {
     if (integration) {
