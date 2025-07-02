@@ -28,9 +28,17 @@ export class WhatsappService {
     }
   }
 
-  async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string): Promise<void> {
+  async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupName?: string): Promise<void> {
     const integration = await storage.getWhatsappIntegration(integrationId);
     if (!integration) return;
+
+    // Filtrar por grupo específico se configurado
+    if (integration.restrictToGroup && integration.allowedGroupName) {
+      if (!groupName || groupName !== integration.allowedGroupName) {
+        console.log(`📱 Mensagem ignorada - grupo "${groupName}" não autorizado. Permitido: "${integration.allowedGroupName}"`);
+        return;
+      }
+    }
 
     const command = this.extractCommand(message);
     let response = '';
@@ -75,6 +83,21 @@ export class WhatsappService {
         case 'lancamento':
         case 'lancar':
           response = await this.logTime(command.params);
+          break;
+
+        case 'concluir':
+        case 'finalizar':
+          response = await this.completeTask(command.params);
+          break;
+
+        case 'reabrir':
+        case 'reativar':
+          response = await this.reopenTask(command.params);
+          break;
+
+        case 'lancar-concluir':
+        case 'finalizar-com-tempo':
+          response = await this.logTimeAndComplete(command.params);
           break;
 
         case 'relatorio':
@@ -133,9 +156,10 @@ export class WhatsappService {
     return `🤖 *Pontual - Comandos WhatsApp*
 
 📋 *Gestão de Tarefas:*
-• *tarefas* - Listar todas as tarefas
+• *tarefas* - Listar tarefas ativas
 • *nova [nome]* - Criar nova tarefa
-• *criar [nome]* - Criar nova tarefa
+• *concluir [tarefa]* - Finalizar tarefa
+• *reabrir [tarefa]* - Reativar tarefa concluída
 
 ⏱️ *Controle de Tempo:*
 • *iniciar [tarefa]* - Iniciar timer
@@ -144,8 +168,8 @@ export class WhatsappService {
 • *retomar [tarefa]* - Retomar timer
 
 📝 *Lançamentos:*
-• *lancamento [tarefa] [horas]* - Lançar horas
-• *lancar [tarefa] [tempo]* - Lançar tempo
+• *lancamento [tarefa] [tempo]* - Lançar horas
+• *lancar-concluir [tarefa] [tempo]* - Lançar e finalizar
 
 📊 *Relatórios:*
 • *relatorio* - Relatório de hoje
@@ -153,41 +177,46 @@ export class WhatsappService {
 • *relatorio mensal* - Relatório do mês
 • *status* - Status atual dos timers
 
+💡 *Dicas:*
+• Use o ID da tarefa nos comandos (ex: *iniciar 2*)
+• Formatos de tempo: 2h, 1.5h, 90min, 1h30min
+
 Digite qualquer comando para começar! 🚀`;
   }
 
   private async getTasksList(): Promise<string> {
     const tasks = await storage.getAllTasks();
     
-    if (tasks.length === 0) {
-      return "📋 Nenhuma tarefa encontrada.\n\nUse *nova [nome]* para criar uma tarefa.";
-    }
-
+    // Filtrar apenas tarefas ativas (não concluídas)
     const activeTasks = tasks.filter(t => t.isActive && !t.isCompleted);
-    const completedTasks = tasks.filter(t => t.isCompleted);
+    
+    if (activeTasks.length === 0) {
+      return "📋 Nenhuma tarefa ativa encontrada.\n\nUse *nova [nome]* para criar uma tarefa.";
+    }
 
-    let message = "📋 *Suas Tarefas:*\n\n";
+    let message = "📋 *Suas Tarefas Ativas:*\n\n";
 
-    if (activeTasks.length > 0) {
-      message += "*🟢 Ativas:*\n";
-      activeTasks.forEach((task, index) => {
-        const totalTime = Math.floor(task.totalTime / 3600);
-        const isRunning = task.activeEntries > 0 ? "⏱️" : "";
-        message += `${index + 1}. ${task.name} ${isRunning}\n`;
-        if (totalTime > 0) {
-          message += `   └ ${totalTime}h trabalhadas\n`;
+    activeTasks.forEach((task, index) => {
+      const totalTime = Math.floor(task.totalTime / 3600);
+      const minutes = Math.floor((task.totalTime % 3600) / 60);
+      const isRunning = task.activeEntries > 0 ? "⏱️" : "";
+      
+      message += `${task.id}. ${task.name} ${isRunning}\n`;
+      if (totalTime > 0 || minutes > 0) {
+        message += `   └ ${totalTime}h ${minutes}min trabalhadas\n`;
+      }
+      if (task.deadline) {
+        const deadline = new Date(task.deadline);
+        const now = new Date();
+        const daysUntil = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntil <= 3) {
+          message += `   ⚠️ Prazo: ${deadline.toLocaleDateString('pt-BR')}\n`;
         }
-      });
-    }
+      }
+    });
 
-    if (completedTasks.length > 0) {
-      message += "\n*✅ Concluídas:*\n";
-      completedTasks.slice(0, 5).forEach((task, index) => {
-        const totalTime = Math.floor(task.totalTime / 3600);
-        message += `${index + 1}. ${task.name} (${totalTime}h)\n`;
-      });
-    }
-
+    message += "\n💡 *Dica:* Use o ID da tarefa nos comandos (ex: *iniciar 2*)";
+    
     return message;
   }
 
@@ -366,6 +395,115 @@ Digite qualquer comando para começar! 🚀`;
       return message;
     } catch (error) {
       return `❌ Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  }
+
+  private async completeTask(params: string[]): Promise<string> {
+    if (params.length === 0) {
+      return "❌ Por favor, informe o ID ou nome da tarefa.\n\n*Exemplo:* concluir 1";
+    }
+
+    const taskIdentifier = params.join(' ');
+    const task = await this.findTask(taskIdentifier);
+
+    if (!task) {
+      return `❌ Tarefa não encontrada: "${taskIdentifier}"\n\nUse *tarefas* para ver a lista.`;
+    }
+
+    if (task.isCompleted) {
+      return `❌ Tarefa "${task.name}" já está concluída.`;
+    }
+
+    try {
+      // Primeiro, finalizar qualquer timer ativo para esta tarefa
+      const runningEntries = await storage.getRunningTimeEntries();
+      const taskEntry = runningEntries.find(entry => entry.taskId === task.id);
+      
+      if (taskEntry) {
+        const endTime = new Date();
+        const duration = Math.floor((endTime.getTime() - new Date(taskEntry.startTime).getTime()) / 1000);
+        
+        await storage.updateTimeEntry(taskEntry.id, {
+          endTime,
+          duration,
+          isRunning: false,
+        });
+      }
+
+      // Concluir a tarefa
+      await storage.completeTask(task.id);
+
+      return `✅ Tarefa "${task.name}" concluída com sucesso!${taskEntry ? '\n⏱️ Timer também foi finalizado.' : ''}`;
+    } catch (error) {
+      return `❌ Erro ao concluir tarefa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  }
+
+  private async reopenTask(params: string[]): Promise<string> {
+    if (params.length === 0) {
+      return "❌ Por favor, informe o ID ou nome da tarefa.\n\n*Exemplo:* reabrir 1";
+    }
+
+    const taskIdentifier = params.join(' ');
+    const task = await this.findTask(taskIdentifier);
+
+    if (!task) {
+      return `❌ Tarefa não encontrada: "${taskIdentifier}"\n\nUse *tarefas* para ver a lista.`;
+    }
+
+    if (!task.isCompleted) {
+      return `❌ Tarefa "${task.name}" já está ativa.`;
+    }
+
+    try {
+      await storage.reopenTask(task.id);
+      return `✅ Tarefa "${task.name}" reaberta com sucesso!\n\nAgora você pode continuar trabalhando nela.`;
+    } catch (error) {
+      return `❌ Erro ao reabrir tarefa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  }
+
+  private async logTimeAndComplete(params: string[]): Promise<string> {
+    if (params.length < 2) {
+      return "❌ Por favor, informe a tarefa e o tempo.\n\n*Exemplo:* finalizar-com-tempo 1 2h\n*Ou:* lancar-concluir Reunião 1h30min";
+    }
+
+    const timeStr = params[params.length - 1];
+    const taskIdentifier = params.slice(0, -1).join(' ');
+
+    const task = await this.findTask(taskIdentifier);
+    if (!task) {
+      return `❌ Tarefa não encontrada: "${taskIdentifier}"`;
+    }
+
+    const duration = this.parseTimeString(timeStr);
+    if (duration === 0) {
+      return "❌ Formato de tempo inválido.\n\n*Exemplos:* 2h, 1.5h, 90min, 1h30min";
+    }
+
+    try {
+      // Lançar o tempo
+      const now = new Date();
+      const startTime = new Date(now.getTime() - (duration * 1000));
+
+      await storage.createTimeEntry({
+        taskId: task.id,
+        startTime,
+        endTime: now,
+        duration,
+        isRunning: false,
+        notes: 'Lançamento final via WhatsApp',
+      });
+
+      // Concluir a tarefa
+      await storage.completeTask(task.id);
+
+      const hours = Math.floor(duration / 3600);
+      const minutes = Math.floor((duration % 3600) / 60);
+
+      return `✅ Tarefa "${task.name}" finalizada!\n\n⏱️ ${hours}h ${minutes}min registrados\n🏁 Tarefa marcada como concluída`;
+    } catch (error) {
+      return `❌ Erro ao finalizar tarefa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
     }
   }
 
