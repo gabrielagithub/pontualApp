@@ -650,7 +650,8 @@ GET /api/whatsapp/logs?limit=50
 
 ### Gestão de Tarefas
 - `tarefas` - Listar tarefas ativas
-- `nova [nome]` - Criar nova tarefa
+- `nova [nome]` - Criar tarefa simples
+- `nova [nome] --desc "descrição" --tempo 2h --prazo 2025-07-05 --cor verde` - Criar tarefa completa
 - `concluir [tarefa]` - Finalizar tarefa
 - `reabrir [tarefa]` - Reativar tarefa
 
@@ -678,6 +679,23 @@ GET /api/whatsapp/logs?limit=50
 - **Horas:** `2h`, `1.5h`
 - **Minutos:** `90min`, `30min`
 - **Combinado:** `1h30min`
+
+## Parâmetros para Criação de Tarefas Completas
+
+### Comando: `nova [nome] --desc "descrição" --tempo 2h --prazo 2025-07-05 --cor verde`
+
+**Parâmetros disponíveis:**
+- `--desc` ou `--descricao`: Descrição detalhada da tarefa
+- `--tempo` ou `--time`: Tempo estimado (formatos: 2h, 90min, 1h30min)
+- `--prazo` ou `--deadline`: Data limite (formato: AAAA-MM-DD)
+- `--cor` ou `--color`: Cor da tarefa (azul, verde, amarelo, vermelho, roxo)
+
+**Exemplos:**
+```
+nova Reunião Cliente
+nova Projeto X --desc "Desenvolvimento da API REST" --tempo 4h --cor azul
+nova Entrega Final --desc "Finalizar documentação" --tempo 2h30min --prazo 2025-07-15 --cor verde
+```
 
 ## Códigos de Erro WhatsApp
 

@@ -176,6 +176,15 @@ Changelog:
   * Extended API_DOCUMENTATION.md with complete WhatsApp endpoints documentation
   * Documented all commands, error codes, authentication flow, and troubleshooting steps
   * Included practical examples and security best practices for production use
+- July 02, 2025 (04:54): Enhanced WhatsApp task creation with complete parameter support:
+  * Implemented advanced task creation via WhatsApp with full parameter parsing
+  * Added support for --desc, --tempo, --prazo, and --cor parameters in task creation
+  * Created parseTaskCreationInput method to handle complex parameter extraction
+  * Enhanced help message to include detailed examples of advanced task creation
+  * Updated API documentation with comprehensive parameter reference and examples
+  * Task creation now supports: descriptions, estimated time, deadlines, and color coding
+  * All parameters work with both English and Portuguese aliases (--desc/--descricao)
+  * Color mapping supports user-friendly names (azul, verde, amarelo, vermelho, roxo)
 ```
 
 ## User Preferences

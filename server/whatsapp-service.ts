@@ -157,7 +157,8 @@ export class WhatsappService {
 
 📋 *Gestão de Tarefas:*
 • *tarefas* - Listar tarefas ativas
-• *nova [nome]* - Criar nova tarefa
+• *nova [nome]* - Criar tarefa simples
+• *nova [nome] --desc "descrição" --tempo 2h --prazo 2025-07-05 --cor verde* - Criar tarefa completa
 • *concluir [tarefa]* - Finalizar tarefa
 • *reabrir [tarefa]* - Reativar tarefa concluída
 
@@ -177,9 +178,16 @@ export class WhatsappService {
 • *relatorio mensal* - Relatório do mês
 • *status* - Status atual dos timers
 
-💡 *Dicas:*
-• Use o ID da tarefa nos comandos (ex: *iniciar 2*)
-• Formatos de tempo: 2h, 1.5h, 90min, 1h30min
+📝 *Parâmetros para Nova Tarefa:*
+• *--desc*: Descrição da tarefa
+• *--tempo*: Tempo estimado (2h, 90min, 1h30min)
+• *--prazo*: Data limite (AAAA-MM-DD)
+• *--cor*: azul, verde, amarelo, vermelho, roxo
+
+💡 *Exemplos:*
+• nova Reunião Cliente
+• nova Projeto X --desc "Desenvolvimento da API" --tempo 4h --cor azul
+• iniciar 2 ou iniciar Reunião
 
 Digite qualquer comando para começar! 🚀`;
   }
@@ -239,8 +247,8 @@ Digite qualquer comando para começar! 🚀`;
         description: taskData.description || 'Criada via WhatsApp',
         color: taskData.color || '#3B82F6',
         isActive: true,
-        deadline: taskData.deadline,
-        estimatedHours: taskData.estimatedHours,
+        deadline: taskData.deadline || null,
+        estimatedHours: taskData.estimatedHours || null,
       });
 
       let response = `✅ Tarefa criada com sucesso!\n\n📋 *${task.name}*\nID: ${task.id}`;
