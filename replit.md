@@ -208,6 +208,14 @@ Changelog:
   * Confirmed group filtering works correctly (ignores unauthorized groups/individuals)
   * WhatsApp integration fully functional with commands like "Tarefas" working properly
   * System ready for production use with Evolution API
+- July 02, 2025 (15:30): Implemented secure group filtering with JID-based authentication:
+  * Added allowedGroupJid field to database schema for precise group identification
+  * Fixed message structure parsing to handle Evolution API format correctly (data in root, not array)
+  * Implemented strict group filtering using WhatsApp JID instead of unreliable group names
+  * Created comprehensive Postman test simulation for webhook validation
+  * Updated web interface to configure authorized group JID
+  * System now only processes messages from exact configured group JID (e.g., 120363419788242278@g.us)
+  * Prevents accidental triggering from unauthorized groups or individual messages
 ```
 
 ## User Preferences
