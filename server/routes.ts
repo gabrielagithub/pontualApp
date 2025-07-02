@@ -3,8 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTaskSchema, insertTaskItemSchema, insertTimeEntrySchema, updateTimeEntrySchema } from "@shared/schema";
 import { z } from "zod";
+import { basicAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Aplicar autenticação básica a todas as rotas /api/*
+  app.use('/api', basicAuth);
   // Task routes
   app.get("/api/tasks", async (req, res) => {
     try {

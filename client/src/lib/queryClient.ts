@@ -7,14 +7,25 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Credenciais Basic Auth
+const authCredentials = btoa('admin:admin123');
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<any> {
+  const headers: Record<string, string> = {
+    'Authorization': `Basic ${authCredentials}`,
+  };
+  
+  if (data) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -30,6 +41,9 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
+      headers: {
+        'Authorization': `Basic ${authCredentials}`,
+      },
       credentials: "include",
     });
 

@@ -79,7 +79,7 @@ O sistema está configurado para:
 
 1. **Web Service Settings:**
    - **Build Command:** `npm install && npm run build`
-   - **Start Command:** `npm start`
+   - **Start Command:** `./render-init.sh` ou `npm start`
    - **Node Version:** 18 ou 20
 
 2. **Environment Variables:**
