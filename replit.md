@@ -185,6 +185,15 @@ Changelog:
   * Task creation now supports: descriptions, estimated time, deadlines, and color coding
   * All parameters work with both English and Portuguese aliases (--desc/--descricao)
   * Color mapping supports user-friendly names (azul, verde, amarelo, vermelho, roxo)
+- July 02, 2025 (04:58): Implemented interactive task selection system for WhatsApp:
+  * Added conversational context system to remember last task list for 10 minutes
+  * Created interactive selection allowing users to respond with numbers (1, 2, 3...)
+  * Implemented direct action commands: "1 iniciar", "2 concluir", "3 lancamento 2h"
+  * Added detailed task menu showing all available actions when selecting by number
+  * Enhanced task listing to use sequential numbers (1, 2, 3) instead of task IDs
+  * Created intelligent parsing for numeric responses with action detection
+  * Users can now: list tasks, select by number, perform actions without remembering IDs
+  * Greatly simplified WhatsApp workflow: "tarefas" → "1" → see menu → "1 iniciar"
 ```
 
 ## User Preferences

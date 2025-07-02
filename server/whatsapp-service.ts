@@ -7,6 +7,39 @@ import type {
 } from "@shared/schema";
 
 export class WhatsappService {
+  // Sistema de contexto para interações sequenciais
+  private userContexts: Map<string, {
+    lastCommand: string;
+    taskList?: TaskWithStats[];
+    timestamp: number;
+  }> = new Map();
+
+  private getContextKey(integrationId: number, phoneNumber: string): string {
+    return `${integrationId}-${phoneNumber}`;
+  }
+
+  private setUserContext(integrationId: number, phoneNumber: string, command: string, taskList?: TaskWithStats[]): void {
+    const key = this.getContextKey(integrationId, phoneNumber);
+    this.userContexts.set(key, {
+      lastCommand: command,
+      taskList,
+      timestamp: Date.now()
+    });
+  }
+
+  private getUserContext(integrationId: number, phoneNumber: string): { lastCommand: string; taskList?: TaskWithStats[]; timestamp: number } | null {
+    const key = this.getContextKey(integrationId, phoneNumber);
+    const context = this.userContexts.get(key);
+    
+    // Limpar contextos antigos (mais de 10 minutos)
+    if (context && Date.now() - context.timestamp > 600000) {
+      this.userContexts.delete(key);
+      return null;
+    }
+    
+    return context || null;
+  }
+
   private async sendMessage(integration: WhatsappIntegration, phoneNumber: string, message: string): Promise<boolean> {
     try {
       const response = await fetch(`${integration.apiUrl}/message/sendText/${integration.instanceName}`, {
@@ -40,6 +73,17 @@ export class WhatsappService {
       }
     }
 
+    // Verificar se é uma resposta numérica para seleção interativa
+    const numericResponse = this.parseNumericResponse(message);
+    if (numericResponse) {
+      const context = this.getUserContext(integrationId, phoneNumber);
+      if (context && context.taskList && context.lastCommand === 'tarefas') {
+        const response = await this.handleTaskSelection(numericResponse, context.taskList, integrationId, phoneNumber);
+        await this.sendMessage(integration, phoneNumber, response);
+        return;
+      }
+    }
+
     const command = this.extractCommand(message);
     let response = '';
 
@@ -52,7 +96,10 @@ export class WhatsappService {
 
         case 'tarefas':
         case 'tasks':
-          response = await this.getTasksList();
+          const tasksList = await this.getTasksList();
+          response = tasksList.response;
+          // Salvar contexto para permitir seleção interativa
+          this.setUserContext(integrationId, phoneNumber, 'tarefas', tasksList.tasks);
           break;
 
         case 'criar':
@@ -152,15 +199,153 @@ export class WhatsappService {
     return { action, params };
   }
 
+  private parseNumericResponse(message: string): { taskNumber: number; action: string; params?: string[] } | null {
+    const trimmed = message.trim();
+    
+    // Detectar padrões como: "1", "2 iniciar", "3 concluir", "1 lancamento 2h"
+    const patterns = [
+      /^(\d+)$/,                           // Apenas número
+      /^(\d+)\s+(iniciar|start)$/i,        // Número + iniciar
+      /^(\d+)\s+(parar|stop)$/i,           // Número + parar  
+      /^(\d+)\s+(concluir|complete)$/i,    // Número + concluir
+      /^(\d+)\s+(reabrir|reopen)$/i,       // Número + reabrir
+      /^(\d+)\s+(lancamento|log)\s+(.+)$/i // Número + lancamento + tempo
+    ];
+    
+    for (const pattern of patterns) {
+      const match = trimmed.match(pattern);
+      if (match) {
+        const taskNumber = parseInt(match[1]);
+        let action = 'menu'; // ação padrão para apenas número
+        let params: string[] = [];
+        
+        if (match[2]) {
+          action = match[2].toLowerCase();
+          if (match[3]) {
+            params = [match[3]];
+          }
+        }
+        
+        return { taskNumber, action, params };
+      }
+    }
+    
+    return null;
+  }
+
+  private async handleTaskSelection(selection: { taskNumber: number; action: string; params?: string[] }, taskList: TaskWithStats[], integrationId: number, phoneNumber: string): Promise<string> {
+    if (selection.taskNumber < 1 || selection.taskNumber > taskList.length) {
+      return `❌ Número inválido. Digite um número entre 1 e ${taskList.length}.`;
+    }
+    
+    const selectedTask = taskList[selection.taskNumber - 1];
+    
+    switch (selection.action) {
+      case 'menu':
+        return this.showTaskMenu(selectedTask);
+      
+      case 'iniciar':
+      case 'start':
+        return await this.startTimerForTask(selectedTask);
+      
+      case 'parar':
+      case 'stop':
+        return await this.stopTimerForTask(selectedTask);
+      
+      case 'concluir':
+      case 'complete':
+        return await this.completeTaskById(selectedTask.id);
+      
+      case 'reabrir':
+      case 'reopen':
+        return await this.reopenTaskById(selectedTask.id);
+      
+      case 'lancamento':
+      case 'log':
+        if (!selection.params || selection.params.length === 0) {
+          return `❌ Informe o tempo para lançamento.\n\n*Exemplo:* ${selection.taskNumber} lancamento 2h`;
+        }
+        return await this.logTimeForTask(selectedTask, selection.params[0]);
+      
+      default:
+        return this.showTaskMenu(selectedTask);
+    }
+  }
+
+  private showTaskMenu(task: TaskWithStats): string {
+    const hours = Math.floor(task.totalTime / 3600);
+    const minutes = Math.floor((task.totalTime % 3600) / 60);
+    const isRunning = task.activeEntries > 0;
+    
+    let menu = `📋 *${task.name}*\n`;
+    menu += `ID: ${task.id}\n`;
+    
+    if (task.description && task.description !== 'Criada via WhatsApp') {
+      menu += `📝 ${task.description}\n`;
+    }
+    
+    menu += `⏱️ Tempo trabalhado: ${hours}h ${minutes}min\n`;
+    
+    if (task.deadline) {
+      const deadline = new Date(task.deadline);
+      menu += `📅 Prazo: ${deadline.toLocaleDateString('pt-BR')}\n`;
+    }
+    
+    menu += `\n🎯 *Ações disponíveis:*\n`;
+    
+    if (isRunning) {
+      menu += `• *${task.id} parar* - Parar timer\n`;
+    } else {
+      menu += `• *${task.id} iniciar* - Iniciar timer\n`;
+    }
+    
+    menu += `• *${task.id} lancamento [tempo]* - Lançar horas\n`;
+    menu += `• *${task.id} concluir* - Finalizar tarefa\n`;
+    
+    if (task.isCompleted) {
+      menu += `• *${task.id} reabrir* - Reativar tarefa\n`;
+    }
+    
+    menu += `\n💡 *Exemplo:* ${task.id} lancamento 1h30min`;
+    
+    return menu;
+  }
+
+  private async startTimerForTask(task: TaskWithStats): Promise<string> {
+    return await this.startTimer([task.id.toString()]);
+  }
+
+  private async stopTimerForTask(task: TaskWithStats): Promise<string> {
+    return await this.stopTimer([task.id.toString()]);
+  }
+
+  private async completeTaskById(taskId: number): Promise<string> {
+    return await this.completeTask([taskId.toString()]);
+  }
+
+  private async reopenTaskById(taskId: number): Promise<string> {
+    return await this.reopenTask([taskId.toString()]);
+  }
+
+  private async logTimeForTask(task: TaskWithStats, timeStr: string): Promise<string> {
+    return await this.logTime([task.id.toString(), timeStr]);
+  }
+
   private getHelpMessage(): string {
     return `🤖 *Pontual - Comandos WhatsApp*
 
 📋 *Gestão de Tarefas:*
-• *tarefas* - Listar tarefas ativas
+• *tarefas* - Listar tarefas ativas (com seleção interativa)
 • *nova [nome]* - Criar tarefa simples
 • *nova [nome] --desc "descrição" --tempo 2h --prazo 2025-07-05 --cor verde* - Criar tarefa completa
 • *concluir [tarefa]* - Finalizar tarefa
 • *reabrir [tarefa]* - Reativar tarefa concluída
+
+🎯 *Seleção Interativa (após listar tarefas):*
+• *1* - Ver menu da tarefa 1
+• *2 iniciar* - Iniciar timer da tarefa 2  
+• *3 concluir* - Finalizar tarefa 3
+• *1 lancamento 2h* - Lançar tempo na tarefa 1
 
 ⏱️ *Controle de Tempo:*
 • *iniciar [tarefa]* - Iniciar timer
@@ -192,14 +377,17 @@ export class WhatsappService {
 Digite qualquer comando para começar! 🚀`;
   }
 
-  private async getTasksList(): Promise<string> {
+  private async getTasksList(): Promise<{ response: string; tasks: TaskWithStats[] }> {
     const tasks = await storage.getAllTasks();
     
     // Filtrar apenas tarefas ativas (não concluídas)
     const activeTasks = tasks.filter(t => t.isActive && !t.isCompleted);
     
     if (activeTasks.length === 0) {
-      return "📋 Nenhuma tarefa ativa encontrada.\n\nUse *nova [nome]* para criar uma tarefa.";
+      return {
+        response: "📋 Nenhuma tarefa ativa encontrada.\n\nUse *nova [nome]* para criar uma tarefa.",
+        tasks: []
+      };
     }
 
     let message = "📋 *Suas Tarefas Ativas:*\n\n";
@@ -209,7 +397,8 @@ Digite qualquer comando para começar! 🚀`;
       const minutes = Math.floor((task.totalTime % 3600) / 60);
       const isRunning = task.activeEntries > 0 ? "⏱️" : "";
       
-      message += `${task.id}. ${task.name} ${isRunning}\n`;
+      const taskNumber = index + 1;
+      message += `${taskNumber}. ${task.name} ${isRunning}\n`;
       if (totalTime > 0 || minutes > 0) {
         message += `   └ ${totalTime}h ${minutes}min trabalhadas\n`;
       }
@@ -223,9 +412,16 @@ Digite qualquer comando para começar! 🚀`;
       }
     });
 
-    message += "\n💡 *Dica:* Use o ID da tarefa nos comandos (ex: *iniciar 2*)";
+    message += "\n🎯 *Seleção Interativa:*\n";
+    message += "• Digite *1*, *2*, *3*... para ver ações da tarefa\n";
+    message += "• *1 iniciar* - Iniciar timer da tarefa 1\n";
+    message += "• *2 concluir* - Finalizar tarefa 2\n";
+    message += "• *3 lancamento 2h* - Lançar tempo na tarefa 3";
     
-    return message;
+    return {
+      response: message,
+      tasks: activeTasks
+    };
   }
 
   private async createTask(params: string[]): Promise<string> {
