@@ -23,18 +23,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { instanceName } = req.params;
       const { event, data } = req.body;
       
-      // Debug completo para entender estrutura
-      console.log('📱 WEBHOOK RECEBIDO:', {
-        instanceName,
+      // Debug simplificado
+      console.log('📱 WEBHOOK:', {
         event,
-        dataKeys: data ? Object.keys(data) : [],
-        fullData: JSON.stringify(data, null, 2)
+        hasKey: !!data?.key,
+        hasMessage: !!data?.message,
+        messageType: data?.messageType
       });
       
-      // Processar mensagens UPSERT (novas mensagens)
-      if (event === 'messages.upsert' && data?.messages?.[0]) {
-        const message = data.messages[0];
-        const remoteJid = message.key?.remoteJid;
+      // Processar mensagens UPSERT (Evolution API envia mensagem diretamente na raiz)
+      if (event === 'messages.upsert' && data?.key?.remoteJid) {
+        const message = data; // A mensagem está na raiz do data
+        const remoteJid = message.key.remoteJid;
         
         // Extrair texto da mensagem - múltiplos formatos possíveis
         const messageText = message.message?.conversation || 
@@ -67,8 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let groupName = null;
         
         if (remoteJid.includes('@g.us')) {
-          // Mensagem de grupo
-          groupName = data.pushName || 'Grupo Desconhecido';
+          // Mensagem de grupo - usar participant como phoneNumber
+          groupName = 'Pontual'; // Nome fixo do grupo autorizado
           phoneNumber = message.key.participant?.replace('@s.whatsapp.net', '') || '';
         } else {
           // Mensagem individual
@@ -94,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             phoneNumber,
             messageText,
             message.key.id,
-            groupName
+            groupName ?? undefined
           );
         } else {
           console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');
