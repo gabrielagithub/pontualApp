@@ -1,4 +1,10 @@
-import { users, tasks, taskItems, timeEntries, type User, type InsertUser, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TimeEntryWithTask, type TaskWithStats } from "@shared/schema";
+import { 
+  users, tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings,
+  type User, type InsertUser, type Task, type InsertTask, type TaskItem, type InsertTaskItem, 
+  type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TimeEntryWithTask, type TaskWithStats,
+  type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog,
+  type NotificationSettings, type InsertNotificationSettings
+} from "@shared/schema";
 
 export interface IStorage {
   // User methods
@@ -47,6 +53,21 @@ export interface IStorage {
   }>;
   getTimeByTask(startDate?: Date, endDate?: Date): Promise<Array<{ task: Task; totalTime: number }>>;
   getDailyStats(startDate: Date, endDate: Date): Promise<Array<{ date: string; totalTime: number }>>;
+
+  // WhatsApp Integration methods
+  getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined>;
+  createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration>;
+  updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined>;
+  deleteWhatsappIntegration(id: number): Promise<boolean>;
+  
+  // WhatsApp Logs methods
+  createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog>;
+  getWhatsappLogs(integrationId: number, limit?: number): Promise<WhatsappLog[]>;
+  
+  // Notification Settings methods
+  getNotificationSettings(userId: number): Promise<NotificationSettings | undefined>;
+  createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings>;
+  updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -469,6 +490,44 @@ export class MemStorage implements IStorage {
     }
 
     return result.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // WhatsApp Integration methods - implementação básica para compatibilidade
+  async getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined> {
+    // Em memória, retorna undefined - não implementado
+    return undefined;
+  }
+
+  async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
+    throw new Error("WhatsApp integration não disponível em modo de memória");
+  }
+
+  async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
+    throw new Error("WhatsApp integration não disponível em modo de memória");
+  }
+
+  async deleteWhatsappIntegration(id: number): Promise<boolean> {
+    throw new Error("WhatsApp integration não disponível em modo de memória");
+  }
+
+  async createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog> {
+    throw new Error("WhatsApp logs não disponível em modo de memória");
+  }
+
+  async getWhatsappLogs(integrationId: number, limit?: number): Promise<WhatsappLog[]> {
+    return [];
+  }
+
+  async getNotificationSettings(userId: number): Promise<NotificationSettings | undefined> {
+    return undefined;
+  }
+
+  async createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings> {
+    throw new Error("Notification settings não disponível em modo de memória");
+  }
+
+  async updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
+    throw new Error("Notification settings não disponível em modo de memória");
   }
 }
 

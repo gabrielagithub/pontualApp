@@ -40,6 +40,51 @@ export const timeEntries = pgTable("time_entries", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Configurações de integração WhatsApp por usuário
+export const whatsappIntegrations = pgTable("whatsapp_integrations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  instanceName: text("instance_name").notNull(), // nome da instância Evolution API
+  apiUrl: text("api_url").notNull(), // URL da Evolution API
+  apiKey: text("api_key").notNull(), // chave de acesso
+  phoneNumber: text("phone_number").notNull(), // número conectado
+  isActive: boolean("is_active").notNull().default(true),
+  webhookUrl: text("webhook_url"), // URL para receber webhooks
+  lastConnection: timestamp("last_connection"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Log de comandos e mensagens WhatsApp
+export const whatsappLogs = pgTable("whatsapp_logs", {
+  id: serial("id").primaryKey(),
+  integrationId: integer("integration_id").notNull().references(() => whatsappIntegrations.id),
+  messageId: text("message_id"), // ID da mensagem no WhatsApp
+  messageType: text("message_type").notNull(), // text, audio, image, etc.
+  messageContent: text("message_content"), // conteúdo da mensagem
+  command: text("command"), // comando extraído
+  response: text("response"), // resposta enviada
+  success: boolean("success").notNull().default(true),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Configurações de notificações automáticas
+export const notificationSettings = pgTable("notification_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  enableDailyReport: boolean("enable_daily_report").notNull().default(false),
+  dailyReportTime: text("daily_report_time").default("18:00"), // formato HH:MM
+  enableWeeklyReport: boolean("enable_weekly_report").notNull().default(false),
+  weeklyReportDay: integer("weekly_report_day").default(5), // 0=domingo, 5=sexta
+  enableDeadlineReminders: boolean("enable_deadline_reminders").notNull().default(true),
+  reminderHoursBefore: integer("reminder_hours_before").default(24), // horas antes do deadline
+  enableTimerReminders: boolean("enable_timer_reminders").notNull().default(false),
+  timerReminderInterval: integer("timer_reminder_interval").default(120), // minutos
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -103,3 +148,39 @@ export interface TaskWithStats extends Task {
   activeEntries: number;
   items?: TaskItem[];
 }
+
+// Schemas para WhatsApp Integration
+export const insertWhatsappIntegrationSchema = createInsertSchema(whatsappIntegrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  apiUrl: z.string().url("URL da Evolution API deve ser válida"),
+  phoneNumber: z.string().min(10, "Número de telefone deve ter pelo menos 10 dígitos"),
+});
+
+export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  dailyReportTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato deve ser HH:MM"),
+  weeklyReportDay: z.number().min(0).max(6),
+  reminderHoursBefore: z.number().min(1).max(168), // máximo 1 semana
+  timerReminderInterval: z.number().min(5).max(480), // 5 min a 8 horas
+});
+
+// Types para WhatsApp
+export type InsertWhatsappIntegration = z.infer<typeof insertWhatsappIntegrationSchema>;
+export type WhatsappIntegration = typeof whatsappIntegrations.$inferSelect;
+
+export type InsertWhatsappLog = z.infer<typeof insertWhatsappLogSchema>;
+export type WhatsappLog = typeof whatsappLogs.$inferSelect;
+
+export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
+export type NotificationSettings = typeof notificationSettings.$inferSelect;
