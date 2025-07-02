@@ -67,13 +67,13 @@ O sistema está configurado para:
 
 ## Para Deploy no Render
 
-### ✅ Sistema Híbrido Funcionando - PostgreSQL + SQLite
+### ✅ SQLite com Persistência no Render
 
-**Sistema inteligente implementado:**
-- Detecta automaticamente DATABASE_URL
-- PostgreSQL quando DATABASE_URL está presente
-- SQLite como fallback para desenvolvimento
+**Configuração otimizada:**
+- SQLite com caminho persistente no Render
+- Dados mantidos no diretório /opt/render/project/src
 - Dependencies de build corrigidas (vite, esbuild)
+- Sistema de backup automático ativo
 
 ### Configuração para Deploy no Render:
 
@@ -87,23 +87,24 @@ O sistema está configurado para:
    NODE_ENV=production
    ```
 
-3. **Para dados persistentes (RECOMENDADO):**
-   - Crie PostgreSQL database no Render
-   - Configure: `DATABASE_URL=sua_internal_database_url`
-   - Sistema mostrará: "🐘 Usando PostgreSQL"
-   - **Resultado:** Dados persistentes entre deploys
+3. **Como funciona a persistência:**
+   - Sistema detecta ambiente de produção
+   - Usa caminho persistente: `/opt/render/project/src/data/`
+   - Dados são mantidos entre redeploys
+   - Backup automático continua funcionando
 
-4. **Para desenvolvimento/teste:**
-   - Não configure DATABASE_URL
-   - Sistema mostrará: "📁 Usando SQLite"
-   - **Resultado:** Dados temporários (perdidos no redeploy)
+### Importante para o Render:
+- O banco SQLite não está no Git (mantido no .gitignore)
+- Na primeira execução, criará banco vazio
+- Para migrar dados existentes, use o script de migração
+- Dados ficam persistentes após primeiro deploy
 
 ### Status Atual:
-- ✅ Sistema híbrido funcionando
-- ✅ PostgreSQL detectado e conectado
-- ✅ Tabelas criadas automaticamente
+- ✅ SQLite configurado para produção
+- ✅ Caminho persistente no Render configurado
 - ✅ Build testado e funcionando
-- ✅ Pronto para deploy com dados persistentes
+- ✅ Sistema de backup ativo
+- ✅ Pronto para deploy com persistência
 
 ### Configuração Alternativa com SQLite
 

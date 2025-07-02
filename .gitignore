@@ -5,8 +5,12 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
-# Backups mantidos locais, mas banco principal vai para deploy
+# Banco de dados e backups - mantido local
+database.sqlite
+data/
 data/backups/
+*.sqlite
+*.db
 
 # Variáveis de ambiente
 .env

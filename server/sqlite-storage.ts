@@ -13,8 +13,17 @@ export class SQLiteStorage implements IStorage {
   private db: Database.Database;
 
   constructor(dbPath?: string) {
-    // Use caminho absoluto para garantir persistência
-    const defaultPath = path.join(process.cwd(), 'data', 'database.sqlite');
+    // Configurar caminho baseado no ambiente
+    let defaultPath: string;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // No Render, usar /opt/render/project/src para persistência
+      defaultPath = '/opt/render/project/src/data/database.sqlite';
+    } else {
+      // Desenvolvimento: usar caminho local
+      defaultPath = path.join(process.cwd(), 'data', 'database.sqlite');
+    }
+    
     const finalPath = dbPath || defaultPath;
     
     // Criar diretório data se não existir
