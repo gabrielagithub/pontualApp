@@ -201,6 +201,13 @@ Changelog:
   * Enhanced debugging output with detailed message processing steps
   * Created webhook test script for development debugging
   * Improved error handling and logging throughout the WhatsApp integration pipeline
+- July 02, 2025 (05:54): Fixed webhook authentication issue and completed WhatsApp integration:
+  * Resolved 401 authentication error by implementing conditional middleware for webhook routes
+  * Webhook now bypasses authentication while maintaining security for other endpoints
+  * Successfully tested message processing from authorized WhatsApp groups
+  * Confirmed group filtering works correctly (ignores unauthorized groups/individuals)
+  * WhatsApp integration fully functional with commands like "Tarefas" working properly
+  * System ready for production use with Evolution API
 ```
 
 ## User Preferences

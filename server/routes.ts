@@ -9,14 +9,11 @@ import { whatsappService } from "./whatsapp-service";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware condicional: aplicar autenticação apenas para rotas que NÃO são o webhook
   app.use('/api', (req, res, next) => {
-    console.log('🔍 MIDDLEWARE CHECK - path:', req.path, 'url:', req.url);
     // Pular autenticação para webhook do WhatsApp
     if (req.path.includes('/whatsapp/webhook/')) {
-      console.log('📱 WEBHOOK REQUEST - pulando autenticação para:', req.path);
       return next();
     }
     // Aplicar autenticação para todas as outras rotas
-    console.log('🔒 APLICANDO AUTENTICAÇÃO para:', req.path);
     return basicAuth(req, res, next);
   });
 
@@ -31,14 +28,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         event,
         hasData: !!data,
         messageType: data?.messages?.[0]?.messageType,
-        messageText: data?.messages?.[0]?.message?.conversation
+        messageText: data?.messages?.[0]?.message?.conversation,
+        fullMessage: data?.messages?.[0]?.message // Debug completo
       });
       
-      // Processar apenas mensagens de texto recebidas
-      if (event === 'messages.upsert' && data?.messages?.[0]?.messageType === 'conversation') {
-        const message = data.messages[0];
+      // Processar mensagens de texto - verificar múltiplos formatos
+      const message = data?.messages?.[0];
+      const isTextMessage = message && (
+        message.messageType === 'conversation' ||
+        message.message?.conversation ||
+        message.message?.extendedTextMessage?.text
+      );
+      
+      if (event === 'messages.upsert' && isTextMessage) {
         const remoteJid = message.key.remoteJid;
-        const messageText = message.message.conversation;
+        // Extrair texto da mensagem - suportar múltiplos formatos
+        const messageText = message.message?.conversation || 
+                           message.message?.extendedTextMessage?.text ||
+                           '';
         
         console.log('📱 MENSAGEM IDENTIFICADA:', {
           remoteJid,
