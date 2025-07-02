@@ -7,8 +7,98 @@ import { basicAuth } from "./auth";
 import { whatsappService } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Aplicar autenticação básica a todas as rotas /api/*
-  app.use('/api', basicAuth);
+  // Middleware condicional: aplicar autenticação apenas para rotas que NÃO são o webhook
+  app.use('/api', (req, res, next) => {
+    console.log('🔍 MIDDLEWARE CHECK - path:', req.path, 'url:', req.url);
+    // Pular autenticação para webhook do WhatsApp
+    if (req.path.includes('/whatsapp/webhook/')) {
+      console.log('📱 WEBHOOK REQUEST - pulando autenticação para:', req.path);
+      return next();
+    }
+    // Aplicar autenticação para todas as outras rotas
+    console.log('🔒 APLICANDO AUTENTICAÇÃO para:', req.path);
+    return basicAuth(req, res, next);
+  });
+
+  // Webhook para receber mensagens do WhatsApp (SEM autenticação)
+  app.post("/api/whatsapp/webhook/:instanceName", async (req, res) => {
+    try {
+      const { instanceName } = req.params;
+      const { event, data } = req.body;
+      
+      console.log('📱 WEBHOOK RECEBIDO:', {
+        instanceName,
+        event,
+        hasData: !!data,
+        messageType: data?.messages?.[0]?.messageType,
+        messageText: data?.messages?.[0]?.message?.conversation
+      });
+      
+      // Processar apenas mensagens de texto recebidas
+      if (event === 'messages.upsert' && data?.messages?.[0]?.messageType === 'conversation') {
+        const message = data.messages[0];
+        const remoteJid = message.key.remoteJid;
+        const messageText = message.message.conversation;
+        
+        console.log('📱 MENSAGEM IDENTIFICADA:', {
+          remoteJid,
+          messageText,
+          fromMe: message.key.fromMe
+        });
+        
+        // Ignorar mensagens enviadas pelo próprio bot
+        if (message.key.fromMe) {
+          console.log('📱 IGNORANDO mensagem própria');
+          return res.status(200).json({ status: 'ignored - own message' });
+        }
+        
+        // Extrair informações da mensagem
+        let phoneNumber = '';
+        let groupName = null;
+        
+        if (remoteJid.includes('@g.us')) {
+          // Mensagem de grupo
+          groupName = data.pushName || 'Grupo Desconhecido';
+          phoneNumber = message.key.participant?.replace('@s.whatsapp.net', '') || '';
+        } else {
+          // Mensagem individual
+          phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
+        }
+        
+        console.log('📱 DADOS EXTRAÍDOS:', { phoneNumber, groupName });
+        
+        // Buscar integração por instanceName
+        const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
+        
+        console.log('📱 INTEGRAÇÃO ENCONTRADA:', {
+          found: !!integration,
+          instanceMatch: integration?.instanceName === instanceName,
+          expectedInstance: instanceName,
+          foundInstance: integration?.instanceName
+        });
+        
+        if (integration && integration.instanceName === instanceName) {
+          console.log('📱 PROCESSANDO MENSAGEM para:', phoneNumber);
+          await whatsappService.processIncomingMessage(
+            integration.id,
+            phoneNumber,
+            messageText,
+            message.key.id,
+            groupName
+          );
+        } else {
+          console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');
+        }
+      } else {
+        console.log('📱 EVENTO IGNORADO:', event, 'messageType:', data?.messages?.[0]?.messageType);
+      }
+      
+      res.status(200).json({ status: 'ok' });
+    } catch (error) {
+      console.error('❌ Erro no webhook WhatsApp:', error);
+      res.status(500).json({ message: "Erro no webhook" });
+    }
+  });
   // Task routes
   app.get("/api/tasks", async (req, res) => {
     try {
@@ -1072,85 +1162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Webhook para receber mensagens do WhatsApp (sem autenticação para permitir Evolution API)
-  app.post("/api/whatsapp/webhook/:instanceName", async (req, res) => {
-    try {
-      const { instanceName } = req.params;
-      const { event, data } = req.body;
-      
-      console.log('📱 WEBHOOK RECEBIDO:', {
-        instanceName,
-        event,
-        hasData: !!data,
-        messageType: data?.messages?.[0]?.messageType,
-        messageText: data?.messages?.[0]?.message?.conversation
-      });
-      
-      // Processar apenas mensagens de texto recebidas
-      if (event === 'messages.upsert' && data?.messages?.[0]?.messageType === 'conversation') {
-        const message = data.messages[0];
-        const remoteJid = message.key.remoteJid;
-        const messageText = message.message.conversation;
-        
-        console.log('📱 MENSAGEM IDENTIFICADA:', {
-          remoteJid,
-          messageText,
-          fromMe: message.key.fromMe
-        });
-        
-        // Ignorar mensagens enviadas pelo próprio bot
-        if (message.key.fromMe) {
-          console.log('📱 IGNORANDO mensagem própria');
-          return res.status(200).json({ status: 'ignored - own message' });
-        }
-        
-        // Extrair informações da mensagem
-        let phoneNumber = '';
-        let groupName = null;
-        
-        if (remoteJid.includes('@g.us')) {
-          // Mensagem de grupo
-          groupName = data.pushName || 'Grupo Desconhecido';
-          phoneNumber = message.key.participant?.replace('@s.whatsapp.net', '') || '';
-        } else {
-          // Mensagem individual
-          phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
-        }
-        
-        console.log('📱 DADOS EXTRAÍDOS:', { phoneNumber, groupName });
-        
-        // Buscar integração por instanceName
-        const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
-        
-        console.log('📱 INTEGRAÇÃO ENCONTRADA:', {
-          found: !!integration,
-          instanceMatch: integration?.instanceName === instanceName,
-          expectedInstance: instanceName,
-          foundInstance: integration?.instanceName
-        });
-        
-        if (integration && integration.instanceName === instanceName) {
-          console.log('📱 PROCESSANDO MENSAGEM para:', phoneNumber);
-          await whatsappService.processIncomingMessage(
-            integration.id,
-            phoneNumber,
-            messageText,
-            message.key.id,
-            groupName
-          );
-        } else {
-          console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');
-        }
-      } else {
-        console.log('📱 EVENTO IGNORADO:', event, 'messageType:', data?.messages?.[0]?.messageType);
-      }
-      
-      res.status(200).json({ status: 'ok' });
-    } catch (error) {
-      console.error('❌ Erro no webhook WhatsApp:', error);
-      res.status(500).json({ message: "Erro no webhook" });
-    }
-  });
+
 
   // Logs do WhatsApp
   app.get("/api/whatsapp/logs/:integrationId", async (req, res) => {
