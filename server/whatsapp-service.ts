@@ -74,7 +74,7 @@ export class WhatsappService {
     console.log(`📱 DEBUG FILTRO: restrictToGroup=${integration.restrictToGroup}, allowedGroupJid="${integration.allowedGroupJid}", receivedJid="${groupJid}"`);
 
     // Filtrar por JID do grupo específico se configurado
-    if (integration.restrictToGroup && integration.allowedGroupJid) {
+    if (integration.restrictToGroup && integration.allowedGroupJid && integration.allowedGroupJid !== 'null') {
       if (!groupJid || groupJid !== integration.allowedGroupJid) {
         console.log(`📱 Mensagem ignorada - JID "${groupJid}" não autorizado. Permitido: "${integration.allowedGroupJid}"`);
         return;
@@ -104,6 +104,8 @@ export class WhatsappService {
 
         case 'tarefas':
         case 'tasks':
+        case 'listar':
+        case 'list':
           const tasksList = await this.getTasksList();
           response = tasksList.response;
           // Salvar contexto para permitir seleção interativa
