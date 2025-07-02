@@ -1041,6 +1041,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = req.body;
       
+      console.log("Atualizando integração:", id, updates);
+      
       const integration = await storage.updateWhatsappIntegration(id, updates);
       
       if (!integration) {
@@ -1050,6 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { apiKey, ...safeIntegration } = integration;
       res.json(safeIntegration);
     } catch (error) {
+      console.error("Erro ao atualizar integração WhatsApp:", error);
       res.status(500).json({ message: "Falha ao atualizar integração WhatsApp" });
     }
   });
