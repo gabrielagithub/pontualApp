@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             phoneNumber,
             messageText,
             message.key.id,
-            groupName ?? undefined
+            remoteJid
           );
         } else {
           console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');

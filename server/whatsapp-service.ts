@@ -61,14 +61,14 @@ export class WhatsappService {
     }
   }
 
-  async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupName?: string): Promise<void> {
+  async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
     const integration = await storage.getWhatsappIntegration(integrationId);
     if (!integration) return;
 
-    // Filtrar por grupo específico se configurado
-    if (integration.restrictToGroup && integration.allowedGroupName) {
-      if (!groupName || groupName !== integration.allowedGroupName) {
-        console.log(`📱 Mensagem ignorada - grupo "${groupName}" não autorizado. Permitido: "${integration.allowedGroupName}"`);
+    // Filtrar por JID do grupo específico se configurado
+    if (integration.restrictToGroup && integration.allowedGroupJid) {
+      if (!groupJid || groupJid !== integration.allowedGroupJid) {
+        console.log(`📱 Mensagem ignorada - JID "${groupJid}" não autorizado. Permitido: "${integration.allowedGroupJid}"`);
         return;
       }
     }
