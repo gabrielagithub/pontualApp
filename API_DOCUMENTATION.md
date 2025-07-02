@@ -726,15 +726,48 @@ nova Entrega Final --desc "Finalizar documentação" --tempo 2h30min --prazo 202
 
 ### Comando: `tarefas`
 ```
-📋 Tarefas Ativas:
+📋 Suas Tarefas Ativas:
 
-1. Desenvolvimento Frontend
-   ⏱️ Tempo: 2h30min | 📅 Prazo: 03/07/2025
+1. Desenvolvimento Frontend ⏱️
+   └ 2h30min trabalhadas
+   ⚠️ Prazo: 03/07/2025
 
 2. Reunião com Cliente
-   ⏱️ Tempo: 1h15min | 📅 Prazo: Hoje
+   └ 1h15min trabalhadas
 
-Total: 2 tarefas ativas
+🎯 Seleção Interativa:
+• Digite 1, 2, 3... para ver ações da tarefa
+• 1 iniciar - Iniciar timer da tarefa 1
+• 2 concluir - Finalizar tarefa 2
+• 3 lancamento 2h - Lançar tempo na tarefa 3
+```
+
+### Seleção Interativa por Número
+Após listar tarefas, você pode usar:
+
+**Comando: `1`** (ver menu da tarefa)
+```
+📋 Desenvolvimento Frontend
+ID: 15
+📝 Criar interface responsiva
+⏱️ Tempo trabalhado: 2h 30min
+📅 Prazo: 03/07/2025
+
+🎯 Ações disponíveis:
+• 15 iniciar - Iniciar timer
+• 15 lancamento [tempo] - Lançar horas
+• 15 concluir - Finalizar tarefa
+
+💡 Exemplo: 15 lancamento 1h30min
+```
+
+**Comando: `2 iniciar`** (ação direta)
+```
+✅ Timer iniciado para "Reunião com Cliente"!
+
+⏱️ Cronômetro rodando...
+
+Use parar 16 para finalizar.
 ```
 
 ### Comando: `status`
