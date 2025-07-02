@@ -995,6 +995,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // WhatsApp Integration routes
+  app.get("/api/whatsapp/integration/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const integration = await storage.getWhatsappIntegration(userId);
+      
+      if (!integration) {
+        return res.status(404).json({ message: "Integração WhatsApp não encontrada" });
+      }
+      
+      // Não retornar a API key por segurança
+      const { apiKey, ...safeIntegration } = integration;
+      res.json(safeIntegration);
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao buscar integração WhatsApp" });
+    }
+  });
+
+  app.post("/api/whatsapp/integration", async (req, res) => {
+    try {
+      const validatedData = insertWhatsappIntegrationSchema.parse(req.body);
+      
+      // Verificar se já existe integração ativa para este usuário
+      const existing = await storage.getWhatsappIntegration(validatedData.userId);
+      if (existing) {
+        return res.status(400).json({ message: "Usuário já possui integração WhatsApp ativa" });
+      }
+      
+      const integration = await storage.createWhatsappIntegration(validatedData);
+      
+      // Não retornar a API key
+      const { apiKey, ...safeIntegration } = integration;
+      res.status(201).json(safeIntegration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Falha ao criar integração WhatsApp" });
+    }
+  });
+
+  app.put("/api/whatsapp/integration/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const integration = await storage.updateWhatsappIntegration(id, updates);
+      
+      if (!integration) {
+        return res.status(404).json({ message: "Integração não encontrada" });
+      }
+      
+      const { apiKey, ...safeIntegration } = integration;
+      res.json(safeIntegration);
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao atualizar integração WhatsApp" });
+    }
+  });
+
+  app.delete("/api/whatsapp/integration/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteWhatsappIntegration(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Integração não encontrada" });
+      }
+      
+      res.json({ message: "Integração removida com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao remover integração WhatsApp" });
+    }
+  });
+
+  // Webhook para receber mensagens do WhatsApp (sem autenticação para permitir Evolution API)
+  app.post("/api/whatsapp/webhook/:instanceName", async (req, res) => {
+    try {
+      const { instanceName } = req.params;
+      const { event, data } = req.body;
+      
+      console.log('📱 Webhook WhatsApp recebido:', { instanceName, event, data });
+      
+      // Processar apenas mensagens de texto recebidas
+      if (event === 'messages.upsert' && data?.messages?.[0]?.messageType === 'conversation') {
+        const message = data.messages[0];
+        const phoneNumber = message.key.remoteJid.replace('@s.whatsapp.net', '');
+        const messageText = message.message.conversation;
+        
+        // Buscar integração por instanceName
+        const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
+        
+        if (integration && integration.instanceName === instanceName) {
+          await whatsappService.processIncomingMessage(
+            integration.id,
+            phoneNumber,
+            messageText,
+            message.key.id
+          );
+        }
+      }
+      
+      res.status(200).json({ status: 'ok' });
+    } catch (error) {
+      console.error('❌ Erro no webhook WhatsApp:', error);
+      res.status(500).json({ message: "Erro no webhook" });
+    }
+  });
+
+  // Logs do WhatsApp
+  app.get("/api/whatsapp/logs/:integrationId", async (req, res) => {
+    try {
+      const integrationId = parseInt(req.params.integrationId);
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const logs = await storage.getWhatsappLogs(integrationId, limit);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao buscar logs WhatsApp" });
+    }
+  });
+
+  // Notification Settings routes
+  app.get("/api/notifications/settings/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const settings = await storage.getNotificationSettings(userId);
+      
+      if (!settings) {
+        return res.status(404).json({ message: "Configurações de notificação não encontradas" });
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao buscar configurações de notificação" });
+    }
+  });
+
+  app.post("/api/notifications/settings", async (req, res) => {
+    try {
+      const validatedData = insertNotificationSettingsSchema.parse(req.body);
+      const settings = await storage.createNotificationSettings(validatedData);
+      res.status(201).json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+      }
+      res.status(500).json({ message: "Falha ao criar configurações de notificação" });
+    }
+  });
+
+  app.put("/api/notifications/settings/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const updates = req.body;
+      
+      const settings = await storage.updateNotificationSettings(userId, updates);
+      
+      if (!settings) {
+        return res.status(404).json({ message: "Configurações não encontradas" });
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Falha ao atualizar configurações de notificação" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -11,6 +11,7 @@ const pageTitles: Record<string, string> = {
   "/timer": "Controle de Tempo",
   "/reports": "Relatórios",
   "/history": "Histórico",
+  "/whatsapp": "WhatsApp",
 };
 
 interface LayoutProps {

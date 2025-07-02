@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Clock, BarChart3, Timer, ListTodo, History } from "lucide-react";
+import { Clock, BarChart3, Timer, ListTodo, History, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -8,6 +8,7 @@ const navigation = [
   { name: "Controle de Tempo", href: "/timer", icon: Timer },
   { name: "Relatórios", href: "/reports", icon: BarChart3 },
   { name: "Histórico", href: "/history", icon: History },
+  { name: "WhatsApp", href: "/whatsapp", icon: Smartphone },
 ];
 
 interface SidebarProps {

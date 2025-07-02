@@ -9,6 +9,7 @@ import Tasks from "@/pages/tasks";
 import Timer from "@/pages/timer";
 import Reports from "@/pages/reports";
 import History from "@/pages/history";
+import WhatsAppPage from "@/pages/whatsapp";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";         // <= importe
 import { useAuth } from "@/hooks/useAuth";     // <= importe
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/timer" component={Timer} />
         <Route path="/reports" component={Reports} />
         <Route path="/history" component={History} />
+        <Route path="/whatsapp" component={WhatsAppPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
