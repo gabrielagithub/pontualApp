@@ -2,8 +2,8 @@
 
 echo "🧪 Testando webhook WhatsApp via Postman..."
 
-# Teste 1: Mensagem de grupo autorizado (nome será "Gabriela Santos")
-echo "Teste 1: Grupo autorizado..."
+# Teste 1: Mensagem de grupo autorizado (JID: 120363419788242278@g.us)
+echo "Teste 1: Grupo autorizado (JID correto)..."
 curl -X POST http://localhost:5000/api/whatsapp/webhook/pontualApp \
   -H "Content-Type: application/json" \
   -d '{

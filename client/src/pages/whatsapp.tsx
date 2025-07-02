@@ -24,6 +24,7 @@ const integrationSchema = z.object({
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
   allowedGroupName: z.string().optional(),
+  allowedGroupJid: z.string().optional(),
   restrictToGroup: z.boolean().default(false),
 });
 
@@ -55,6 +56,7 @@ export default function WhatsAppPage() {
       phoneNumber: "",
       webhookUrl: `${window.location.origin}/api/whatsapp/webhook/`,
       allowedGroupName: "",
+      allowedGroupJid: "",
       restrictToGroup: false,
     },
   });
@@ -165,6 +167,7 @@ export default function WhatsAppPage() {
         phoneNumber: integration.phoneNumber || "",
         webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
         allowedGroupName: integration.allowedGroupName || "",
+        allowedGroupJid: integration.allowedGroupJid || "",
         restrictToGroup: integration.restrictToGroup || false,
       });
     }
@@ -374,6 +377,25 @@ export default function WhatsAppPage() {
                               </FormControl>
                               <FormDescription>
                                 Nome exato do grupo do WhatsApp (case-sensitive)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {integrationForm.watch("restrictToGroup") && (
+                        <FormField
+                          control={integrationForm.control}
+                          name="allowedGroupJid"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>JID do Grupo (Obrigatório)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="120363419788242278@g.us" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                Identificador único do grupo. Exemplo: 120363419788242278@g.us
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
