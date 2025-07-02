@@ -7,14 +7,38 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Credenciais Basic Auth
-const authCredentials = btoa('admin:admin123');
+// Função para obter credenciais Basic Auth do usuário
+function getBasicAuthCredentials(): string | null {
+  // Tentar obter credenciais armazenadas
+  const storedCredentials = localStorage.getItem('pontual_auth_credentials');
+  if (storedCredentials) {
+    return storedCredentials;
+  }
+
+  // Se não tem credenciais, solicitar ao usuário
+  const username = prompt('Digite seu nome de usuário:');
+  const password = prompt('Digite sua senha:');
+  
+  if (username && password) {
+    const credentials = btoa(`${username}:${password}`);
+    localStorage.setItem('pontual_auth_credentials', credentials);
+    return credentials;
+  }
+  
+  return null;
+}
 
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<any> {
+  const authCredentials = getBasicAuthCredentials();
+  
+  if (!authCredentials) {
+    throw new Error('Credenciais necessárias para acessar a API');
+  }
+
   const headers: Record<string, string> = {
     'Authorization': `Basic ${authCredentials}`,
   };
@@ -30,6 +54,12 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  // Se retornar 401, limpar credenciais e tentar novamente
+  if (res.status === 401) {
+    localStorage.removeItem('pontual_auth_credentials');
+    throw new Error('401: Credenciais inválidas. Recarregue a página para tentar novamente.');
+  }
+
   await throwIfResNotOk(res);
   return await res.json();
 }
@@ -40,6 +70,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const authCredentials = getBasicAuthCredentials();
+    
+    if (!authCredentials) {
+      throw new Error('Credenciais necessárias para acessar a API');
+    }
+
     const res = await fetch(queryKey[0] as string, {
       headers: {
         'Authorization': `Basic ${authCredentials}`,
@@ -47,8 +83,12 @@ export const getQueryFn: <T>(options: {
       credentials: "include",
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      localStorage.removeItem('pontual_auth_credentials');
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
+      throw new Error('401: Credenciais inválidas. Recarregue a página para tentar novamente.');
     }
 
     await throwIfResNotOk(res);
