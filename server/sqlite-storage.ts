@@ -180,11 +180,17 @@ export class SQLiteStorage implements IStorage {
       // Check and add WhatsApp integration columns
       const whatsappTableInfo = this.db.prepare("PRAGMA table_info(whatsapp_integrations)").all() as any[];
       const hasAllowedGroupName = whatsappTableInfo.some((col: any) => col.name === 'allowed_group_name');
+      const hasAllowedGroupJid = whatsappTableInfo.some((col: any) => col.name === 'allowed_group_jid');
       const hasRestrictToGroup = whatsappTableInfo.some((col: any) => col.name === 'restrict_to_group');
       
       if (!hasAllowedGroupName) {
         console.log("Adicionando coluna allowed_group_name à tabela whatsapp_integrations...");
         this.db.exec("ALTER TABLE whatsapp_integrations ADD COLUMN allowed_group_name TEXT");
+      }
+
+      if (!hasAllowedGroupJid) {
+        console.log("Adicionando coluna allowed_group_jid à tabela whatsapp_integrations...");
+        this.db.exec("ALTER TABLE whatsapp_integrations ADD COLUMN allowed_group_jid TEXT");
       }
 
       if (!hasRestrictToGroup) {
@@ -951,6 +957,7 @@ export class SQLiteStorage implements IStorage {
       isActive: !!result.is_active,
       webhookUrl: result.webhook_url,
       allowedGroupName: result.allowed_group_name,
+      allowedGroupJid: result.allowed_group_jid,
       restrictToGroup: !!result.restrict_to_group,
       lastConnection: result.last_connection ? new Date(result.last_connection) : null,
       createdAt: new Date(result.created_at),
@@ -960,8 +967,8 @@ export class SQLiteStorage implements IStorage {
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
     const stmt = this.db.prepare(`
-      INSERT INTO whatsapp_integrations (user_id, instance_name, api_url, api_key, phone_number, webhook_url, allowed_group_name, restrict_to_group, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO whatsapp_integrations (user_id, instance_name, api_url, api_key, phone_number, webhook_url, allowed_group_name, allowed_group_jid, restrict_to_group, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     `);
     
     const result = stmt.run(
@@ -972,6 +979,7 @@ export class SQLiteStorage implements IStorage {
       integration.phoneNumber,
       integration.webhookUrl,
       integration.allowedGroupName || null,
+      (integration as any).allowedGroupJid || null,
       integration.restrictToGroup ? 1 : 0
     );
 
@@ -987,6 +995,7 @@ export class SQLiteStorage implements IStorage {
       isActive: !!created.is_active,
       webhookUrl: created.webhook_url,
       allowedGroupName: created.allowed_group_name,
+      allowedGroupJid: created.allowed_group_jid,
       restrictToGroup: !!created.restrict_to_group,
       lastConnection: created.last_connection ? new Date(created.last_connection) : null,
       createdAt: new Date(created.created_at),
@@ -1064,6 +1073,7 @@ export class SQLiteStorage implements IStorage {
         isActive: !!updated.is_active,
         webhookUrl: updated.webhook_url,
         allowedGroupName: updated.allowed_group_name,
+        allowedGroupJid: updated.allowed_group_jid,
         restrictToGroup: !!updated.restrict_to_group,
         lastConnection: updated.last_connection ? new Date(updated.last_connection) : null,
         createdAt: new Date(updated.created_at),

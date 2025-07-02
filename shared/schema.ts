@@ -51,6 +51,7 @@ export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   isActive: boolean("is_active").notNull().default(true),
   webhookUrl: text("webhook_url"), // URL para receber webhooks
   allowedGroupName: text("allowed_group_name"), // nome do grupo específico
+  allowedGroupJid: text("allowed_group_jid"), // JID do grupo (ex: 120363419788242278@g.us)
   restrictToGroup: boolean("restrict_to_group").notNull().default(false), // filtrar apenas mensagens do grupo
   lastConnection: timestamp("last_connection"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
