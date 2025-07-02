@@ -42,6 +42,9 @@ export class WhatsappService {
 
   private async sendMessage(integration: WhatsappIntegration, phoneNumber: string, message: string): Promise<boolean> {
     try {
+      console.log(`📤 ENVIANDO MENSAGEM: ${phoneNumber} -> "${message.substring(0, 50)}..."`);
+      console.log(`📤 URL: ${integration.apiUrl}/message/sendText/${integration.instanceName}`);
+      
       const response = await fetch(`${integration.apiUrl}/message/sendText/${integration.instanceName}`, {
         method: 'POST',
         headers: {
@@ -53,6 +56,9 @@ export class WhatsappService {
           text: message
         })
       });
+
+      const responseText = await response.text();
+      console.log(`📤 RESPOSTA EVOLUTION API: ${response.status} - ${responseText}`);
 
       return response.ok;
     } catch (error) {
@@ -162,7 +168,10 @@ export class WhatsappService {
           response = `❓ Comando não reconhecido: "${message}"\n\nDigite *ajuda* para ver os comandos disponíveis.`;
       }
 
-      await this.sendMessage(integration, phoneNumber, response);
+      console.log(`📱 COMANDO PROCESSADO: "${command.action}" -> resposta: "${response.substring(0, 100)}..."`);
+      
+      const enviado = await this.sendMessage(integration, phoneNumber, response);
+      console.log(`📱 MENSAGEM ENVIADA: ${enviado ? 'SUCESSO' : 'FALHA'}`);
 
       // Log da interação
       await storage.createWhatsappLog({
