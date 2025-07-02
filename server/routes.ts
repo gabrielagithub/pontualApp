@@ -23,15 +23,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { instanceName } = req.params;
       const { event, data } = req.body;
       
-      // Debug simplificado - apenas para mensagens com dados
-      if (data && Object.keys(data).length > 0) {
-        console.log('📱 WEBHOOK RECEBIDO:', {
-          instanceName,
-          event,
-          hasMessages: !!data?.messages?.length,
-          messageCount: data?.messages?.length || 0
-        });
-      }
+      // Debug completo para entender estrutura
+      console.log('📱 WEBHOOK RECEBIDO:', {
+        instanceName,
+        event,
+        dataKeys: data ? Object.keys(data) : [],
+        fullData: JSON.stringify(data, null, 2)
+      });
       
       // Processar mensagens UPSERT (novas mensagens)
       if (event === 'messages.upsert' && data?.messages?.[0]) {
