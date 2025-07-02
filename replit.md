@@ -194,6 +194,13 @@ Changelog:
   * Created intelligent parsing for numeric responses with action detection
   * Users can now: list tasks, select by number, perform actions without remembering IDs
   * Greatly simplified WhatsApp workflow: "tarefas" → "1" → see menu → "1 iniciar"
+- July 02, 2025 (05:23): Enhanced webhook debugging and case-insensitive commands:
+  * Added comprehensive webhook logging to diagnose message reception issues
+  * Implemented support for commands with first letter capitalized (Tarefas, Nova, Ajuda, etc.)
+  * Added detection and filtering of bot's own messages to prevent loops
+  * Enhanced debugging output with detailed message processing steps
+  * Created webhook test script for development debugging
+  * Improved error handling and logging throughout the WhatsApp integration pipeline
 ```
 
 ## User Preferences
