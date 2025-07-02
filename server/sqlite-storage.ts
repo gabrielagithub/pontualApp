@@ -947,8 +947,7 @@ export class SQLiteStorage implements IStorage {
     const result = this.db.prepare('SELECT * FROM whatsapp_integrations WHERE user_id = ? AND is_active = 1').get(userId) as any;
     if (!result) return undefined;
     
-    console.log(`🔍 RESULTADO BRUTO DO BANCO:`, result);
-    console.log(`🔍 CAMPO allowed_group_jid:`, result.allowed_group_jid, typeof result.allowed_group_jid);
+    // Debug removido - funcionando corretamente
     
     return {
       id: result.id,
