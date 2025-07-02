@@ -23,6 +23,8 @@ const integrationSchema = z.object({
   apiKey: z.string().min(1, "API Key é obrigatória"),
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
+  allowedGroupName: z.string().optional(),
+  restrictToGroup: z.boolean().default(false),
 });
 
 const notificationSchema = z.object({
@@ -52,6 +54,8 @@ export default function WhatsAppPage() {
       apiKey: "",
       phoneNumber: "",
       webhookUrl: `${window.location.origin}/api/whatsapp/webhook/`,
+      allowedGroupName: "",
+      restrictToGroup: false,
     },
   });
 
@@ -327,6 +331,47 @@ export default function WhatsAppPage() {
                       )}
                     />
 
+                    <div className="space-y-4 border-t pt-4">
+                      <h4 className="font-medium text-gray-900">Filtro de Grupo</h4>
+                      
+                      <FormField
+                        control={integrationForm.control}
+                        name="restrictToGroup"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <div className="space-y-0.5">
+                              <FormLabel>Restringir a Grupo Específico</FormLabel>
+                              <FormDescription>
+                                Processar comandos apenas de um grupo do WhatsApp
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      {integrationForm.watch("restrictToGroup") && (
+                        <FormField
+                          control={integrationForm.control}
+                          name="allowedGroupName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome do Grupo</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Meu Grupo de Trabalho" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                Nome exato do grupo do WhatsApp (case-sensitive)
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+
                     <div className="flex gap-3">
                       <Button 
                         type="submit" 
@@ -578,13 +623,25 @@ export default function WhatsAppPage() {
                     <div className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                       <div>
                         <code className="font-mono text-sm">tarefas</code>
-                        <p className="text-sm text-gray-600 mt-1">Listar todas as tarefas</p>
+                        <p className="text-sm text-gray-600 mt-1">Listar tarefas ativas</p>
                       </div>
                     </div>
                     <div className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                       <div>
                         <code className="font-mono text-sm">nova [nome da tarefa]</code>
                         <p className="text-sm text-gray-600 mt-1">Criar nova tarefa</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <code className="font-mono text-sm">concluir [tarefa]</code>
+                        <p className="text-sm text-gray-600 mt-1">Finalizar tarefa (para timer ativo também)</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <code className="font-mono text-sm">reabrir [tarefa]</code>
+                        <p className="text-sm text-gray-600 mt-1">Reativar tarefa concluída</p>
                       </div>
                     </div>
                   </div>
@@ -615,6 +672,12 @@ export default function WhatsAppPage() {
                       <div>
                         <code className="font-mono text-sm">lancamento [tarefa] [tempo]</code>
                         <p className="text-sm text-gray-600 mt-1">Lançar horas manualmente (ex: lancamento 1 2h)</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <code className="font-mono text-sm">lancar-concluir [tarefa] [tempo]</code>
+                        <p className="text-sm text-gray-600 mt-1">Lançar horas e finalizar tarefa</p>
                       </div>
                     </div>
                   </div>

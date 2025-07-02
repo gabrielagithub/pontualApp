@@ -161,6 +161,14 @@ Changelog:
   * Database file now included in Git repository for deploy persistence
   * Backup system remains active for data protection
   * Solution ensures no data loss between Render deploys while maintaining simplicity
+- July 02, 2025 (04:06): Enhanced WhatsApp integration with advanced filtering and task management:
+  * Added group-specific filtering - restricts bot responses to configured WhatsApp group only
+  * Implemented new commands: concluir (complete task), reabrir (reopen task), lancar-concluir (log time and complete)
+  * Updated task listing to show only active tasks with enhanced information (time worked, deadlines)
+  * Enhanced webhook processing to detect group vs individual messages
+  * Added group name extraction and filtering logic in message processing
+  * Updated frontend configuration to include group filtering settings
+  * All WhatsApp commands now work with task IDs for better precision
 ```
 
 ## User Preferences

@@ -1080,8 +1080,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Processar apenas mensagens de texto recebidas
       if (event === 'messages.upsert' && data?.messages?.[0]?.messageType === 'conversation') {
         const message = data.messages[0];
-        const phoneNumber = message.key.remoteJid.replace('@s.whatsapp.net', '');
+        const remoteJid = message.key.remoteJid;
         const messageText = message.message.conversation;
+        
+        // Extrair informações da mensagem
+        let phoneNumber = '';
+        let groupName = null;
+        
+        if (remoteJid.includes('@g.us')) {
+          // Mensagem de grupo
+          groupName = data.pushName || 'Grupo Desconhecido';
+          phoneNumber = message.key.participant?.replace('@s.whatsapp.net', '') || '';
+        } else {
+          // Mensagem individual
+          phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
+        }
         
         // Buscar integração por instanceName
         const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
@@ -1091,7 +1104,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             integration.id,
             phoneNumber,
             messageText,
-            message.key.id
+            message.key.id,
+            groupName
           );
         }
       }
