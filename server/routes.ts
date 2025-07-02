@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (remoteJid.includes('@g.us')) {
           // Mensagem de grupo - usar participant como phoneNumber
-          groupName = 'Pontual'; // Nome fixo do grupo autorizado
+          groupName = message.pushName || 'Grupo Desconhecido'; // Nome do remetente no grupo
           phoneNumber = message.key.participant?.replace('@s.whatsapp.net', '') || '';
         } else {
           // Mensagem individual
@@ -88,6 +88,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         if (integration && integration.instanceName === instanceName) {
+          // Verificar filtro de grupo se configurado
+          if (integration.restrictToGroup && remoteJid.includes('@g.us')) {
+            // Para grupos, comparar com o nome configurado
+            if (groupName !== integration.allowedGroupName) {
+              console.log('📱 MENSAGEM IGNORADA - grupo não autorizado:', groupName, 'esperado:', integration.allowedGroupName);
+              return res.status(200).json({ status: 'ignored - unauthorized group' });
+            }
+          } else if (integration.restrictToGroup && !remoteJid.includes('@g.us')) {
+            // Se restrito a grupo mas recebeu mensagem individual
+            console.log('📱 MENSAGEM IGNORADA - mensagem individual mas restrito a grupo');
+            return res.status(200).json({ status: 'ignored - individual message' });
+          }
           console.log('📱 PROCESSANDO MENSAGEM para:', phoneNumber);
           await whatsappService.processIncomingMessage(
             integration.id,
