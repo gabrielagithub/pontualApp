@@ -68,8 +68,12 @@ export class WhatsappService {
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
-    const integration = await storage.getWhatsappIntegration(integrationId);
-    if (!integration) return;
+    // Para compatibilidade, ainda usando userId = 1 por enquanto
+    const integration = await storage.getWhatsappIntegration(1);
+    if (!integration) {
+      console.log(`📱 INTEGRAÇÃO NÃO ENCONTRADA para userId: 1`);
+      return;
+    }
 
     console.log(`📱 DEBUG FILTRO: restrictToGroup=${integration.restrictToGroup}, allowedGroupJid="${integration.allowedGroupJid}", receivedJid="${groupJid}"`);
 
