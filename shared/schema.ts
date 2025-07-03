@@ -166,7 +166,7 @@ export const insertWhatsappIntegrationSchema = createInsertSchema(whatsappIntegr
     } catch {
       return false;
     }
-  }, "Deve ser um JSON array de números válidos (ex: [\"5531999999999@c.us\"])"),
+  }, "Deve ser um JSON array de números válidos (ex: [\"5599999999999@c.us\"])"),
 
 });
 

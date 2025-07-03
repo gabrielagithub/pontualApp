@@ -16,10 +16,10 @@ describe('Sistema Ultra Restritivo - Teste Básico', () => {
     expect(parsed.length).toBe(0);
     
     // Teste 3: Número autorizado deve permitir
-    const validConfig = '["5531999999999@c.us"]';
+    const validConfig = '["5599999999999@c.us"]';
     const validNumbers = JSON.parse(validConfig);
-    expect(validNumbers.includes('5531999999999@c.us')).toBe(true);
-    expect(validNumbers.includes('5531888888888@c.us')).toBe(false);
+    expect(validNumbers.includes('5599999999999@c.us')).toBe(true);
+    expect(validNumbers.includes('5588888888888@c.us')).toBe(false);
   });
 
   it('should validate JSON parsing safety', () => {
@@ -28,7 +28,7 @@ describe('Sistema Ultra Restritivo - Teste Básico', () => {
     expect(() => JSON.parse(invalidJson)).toThrow();
     
     // Teste de JSON válido
-    const validJson = '["5531999999999@c.us"]';
+    const validJson = '["5599999999999@c.us"]';
     expect(() => JSON.parse(validJson)).not.toThrow();
     
     const numbers = JSON.parse(validJson);

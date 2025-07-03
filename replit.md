@@ -325,6 +325,12 @@ Changelog:
   * Criado DEPLOY_UNIVERSAL.md com instruções completas para Heroku, Railway, AWS, etc.
   * Atualizado README.md com instruções universais de instalação e deploy
   * Sistema agora suporta: desenvolvimento local, servidores próprios, todos os cloud providers
+- July 03, 2025 (13:37): Remoção de números reais por segurança:
+  * Removidos todos os números reais do banco de dados e código
+  * Substituídos por exemplos claramente fictícios (5599999999999@c.us)
+  * Atualizada validação e documentação com números fictícios
+  * Eliminado risco de envios incorretos para números reais
+  * Sistema mantém funcionalidade com dados de exemplo seguros
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)

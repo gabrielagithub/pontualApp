@@ -15,8 +15,8 @@ curl -X POST https://db5526d1-39d7-4465-aa3c-8fff59a35924-00-28kinqyzkeuy7.janew
         "conversation": "Tarefas"
       },
       "key": {
-        "remoteJid": "120363123456789@g.us",
-        "participant": "5511999999999@s.whatsapp.net",
+        "remoteJid": "120363999999999@g.us",
+        "participant": "5599999999999@s.whatsapp.net",
         "fromMe": false,
         "id": "test-group-message-id"
       }
@@ -38,7 +38,7 @@ curl -X POST https://db5526d1-39d7-4465-aa3c-8fff59a35924-00-28kinqyzkeuy7.janew
         "conversation": "Tarefas"
       },
       "key": {
-        "remoteJid": "5511999999999@s.whatsapp.net",
+        "remoteJid": "5599999999999@s.whatsapp.net",
         "fromMe": false,
         "id": "test-individual-message-id"
       }

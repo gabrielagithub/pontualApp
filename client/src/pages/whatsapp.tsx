@@ -205,7 +205,7 @@ export default function WhatsAppPage() {
       } catch (error) {
         toast({
           title: "Formato inválido",
-          description: "Números autorizados devem estar no formato: [\"5531999999999@c.us\", \"5531888888888@c.us\"]",
+          description: "Números autorizados devem estar no formato: [\"5599999999999@c.us\", \"5588888888888@c.us\"]",
           variant: "destructive",
         });
         return;
@@ -394,14 +394,14 @@ export default function WhatsAppPage() {
                             <FormLabel>Números Autorizados</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder='["5531999999999@c.us", "5531888888888@c.us"]' 
+                                placeholder='["5599999999999@c.us", "5588888888888@c.us"]' 
                                 {...field} 
                                 className="min-h-[80px] font-mono text-sm"
                               />
                             </FormControl>
                             <FormDescription>
                               <strong>Formato obrigatório:</strong> Array JSON com números no formato internacional + @c.us<br/>
-                              <strong>Exemplo:</strong> ["5531999999999@c.us", "5531888888888@c.us"]<br/>
+                              <strong>Exemplo:</strong> ["5599999999999@c.us", "5588888888888@c.us"]<br/>
                               <strong>Importante:</strong> Use aspas duplas e inclua @c.us no final de cada número
                             </FormDescription>
                             <FormMessage />
