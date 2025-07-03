@@ -1161,31 +1161,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/whatsapp/integration", async (req, res) => {
     try {
-      console.log("🔄 Criando integração WhatsApp:", req.body);
+      console.log("🔄 Criando integração WhatsApp:", JSON.stringify(req.body, null, 2));
       
+      // Validação com logging detalhado
       const validatedData = insertWhatsappIntegrationSchema.parse(req.body);
-      console.log("✅ Dados validados:", validatedData);
+      console.log("✅ Dados validados:", JSON.stringify(validatedData, null, 2));
       
       // Verificar se já existe integração ativa para este usuário
       const existing = await storage.getWhatsappIntegration(validatedData.userId);
       if (existing) {
+        console.log("❌ Usuário já possui integração:", existing.id);
         return res.status(400).json({ message: "Usuário já possui integração WhatsApp ativa" });
       }
       
       console.log("🔄 Criando no banco de dados...");
       const integration = await storage.createWhatsappIntegration(validatedData);
-      console.log("✅ Integração criada:", integration);
+      console.log("✅ Integração criada com sucesso:", integration.id);
       
       // Não retornar a API key
       const { apiKey, ...safeIntegration } = integration;
       res.status(201).json(safeIntegration);
-    } catch (error) {
-      console.error("❌ Erro ao criar integração:", error);
+    } catch (error: any) {
+      console.error("❌ ERRO DETALHADO ao criar integração:");
+      console.error("Tipo do erro:", error?.constructor?.name || 'unknown');
+      console.error("Mensagem:", error?.message || 'no message');
+      console.error("Stack:", error?.stack || 'no stack');
+      
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
+        console.error("Erros de validação Zod:", error.errors);
+        return res.status(400).json({ 
+          message: "Dados inválidos", 
+          errors: error.errors,
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        });
       }
+      
       const errorMessage = error instanceof Error ? error.message : String(error);
-      res.status(500).json({ message: "Falha ao criar integração WhatsApp", error: errorMessage });
+      res.status(500).json({ 
+        message: "Falha ao criar integração WhatsApp", 
+        error: errorMessage,
+        type: error?.constructor?.name || 'unknown'
+      });
     }
   });
 

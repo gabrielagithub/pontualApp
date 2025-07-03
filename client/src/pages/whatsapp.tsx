@@ -101,9 +101,18 @@ export default function WhatsAppPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/integration/1"] });
     },
     onError: (error: any) => {
+      console.error("❌ Erro detalhado na criação:", error);
+      
+      let errorMessage = error.message || "Erro desconhecido";
+      
+      // Se for erro de validação Zod, mostrar detalhes
+      if (error.details && Array.isArray(error.details)) {
+        errorMessage = error.details.join(", ");
+      }
+      
       toast({
         title: "Erro ao criar integração",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -114,7 +123,14 @@ export default function WhatsAppPage() {
       apiRequest("PUT", `/api/whatsapp/integration/${integration.id}`, data),
     onSuccess: () => {
       toast({ title: "Integração WhatsApp atualizada!" });
+      console.log("🔄 Invalidando cache após atualização...");
+      // Invalidar todas as queries relacionadas
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/integration/1"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/logs"] });
+      // Também forçar refetch
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ["/api/whatsapp/integration/1"] });
+      }, 100);
     },
     onError: (error: any) => {
       toast({
@@ -159,6 +175,7 @@ export default function WhatsAppPage() {
   // Load existing data into forms
   useEffect(() => {
     if (integration) {
+      console.log("🔄 Carregando dados no formulário:", integration);
       integrationForm.reset({
         userId: integration.userId || 1,
         instanceName: integration.instanceName || "",
@@ -167,6 +184,7 @@ export default function WhatsAppPage() {
         phoneNumber: integration.phoneNumber || "",
         webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
         authorizedNumbers: integration.authorizedNumbers || "",
+        responseMode: integration.responseMode || "individual",
       });
     }
   }, [integration, integrationForm]);
