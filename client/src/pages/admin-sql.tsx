@@ -1,0 +1,1 @@
+// Arquivo removido - não necessário para ajuste via pgAdmin

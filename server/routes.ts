@@ -17,6 +17,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+
+
   // Sistema simplificado - sem autenticação para single-user
   // Apenas webhook do WhatsApp precisa de tratamento especial (já sem auth)
 
