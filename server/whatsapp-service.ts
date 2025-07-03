@@ -356,16 +356,17 @@ export class WhatsappService {
     });
 
     // ✅ VALIDAÇÃO DE SEGURANÇA AVANÇADA (agora por número individual)
-    console.log(`🔧 TESTE NORMALIZAÇÃO:`, {
+    console.log(`🔧 TESTE NORMALIZAÇÃO DIRETO:`, {
       phoneNumber,
       authorizedNumbers: integration.authorizedNumbers,
-      normalized: this.normalizePhoneNumber(phoneNumber)
+      normalized: phoneNumber.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', ''),
+      authorizedParsed: JSON.parse(integration.authorizedNumbers || '[]'),
+      match: JSON.parse(integration.authorizedNumbers || '[]').map((n: string) => n.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', '')).includes(phoneNumber.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', ''))
     });
     
     const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);
     if (!securityValidation.isValid) {
       console.log(`🚫 MENSAGEM BLOQUEADA: ${securityValidation.reason}`);
-      // await this.logSecurityEvent(integration.id, phoneNumber, message, `BLOCKED_INCOMING: ${securityValidation.reason}`);
       return;
     }
 
