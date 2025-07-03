@@ -530,7 +530,7 @@ export class SQLiteStorage implements IStorage {
         t.created_at as task_created_at
       FROM time_entries te
       JOIN tasks t ON te.task_id = t.id
-      WHERE te.is_running = 1 OR (te.is_running = 0 AND te.end_time IS NOT NULL AND te.end_time > datetime('now', '-4 hours') AND datetime(te.start_time) <= datetime(te.end_time))
+      WHERE te.is_running = 1
       ORDER BY te.start_time
     `);
     

@@ -238,6 +238,12 @@ Changelog:
   * Implemented automatic case-insensitive command processing (TAREFAS = tarefas = Tarefas)
   * Removed technical jargon in favor of natural Portuguese language throughout interface
   * User workflow now streamlined: "tarefas" → see numbered list → "1" → see simple menu → "iniciar"
+- July 03, 2025 (03:37): Fixed WhatsApp manual time logging behavior to match web interface:
+  * Corrected getRunningTimeEntries() SQL query that incorrectly included manual time entries as active sessions
+  * Manual time logging via WhatsApp (e.g., "2 lancamento 45min") now correctly creates finished entries in history
+  * Fixed logic to only show truly running timers (is_running = 1) in active sessions, not completed entries
+  * WhatsApp behavior now identical to web interface - manual entries go directly to history without appearing as active
+  * Validated with comprehensive testing: manual entries create proper historical records without session interference
 ```
 
 ## User Preferences
