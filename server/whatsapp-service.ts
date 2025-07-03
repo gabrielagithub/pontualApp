@@ -107,47 +107,69 @@ export class WhatsappService {
       const responseMode = integration.responseMode || 'individual';
       
       if (responseMode === 'group') {
-        // 📢 MODO GRUPO: Validar se destino é o grupo autorizado
+        // 📢 MODO GRUPO: APENAS o JID específico configurado
+        if (!integration.allowedGroupJid) {
+          console.error(`🚫 ENVIO BLOQUEADO: Modo grupo mas JID não configurado`);
+          await this.logSecurityEvent(integration.id, phoneNumber, '', 'BLOCKED_NO_GROUP_CONFIGURED');
+          return false;
+        }
+        
         if (phoneNumber.includes('@g.us')) {
           if (phoneNumber === integration.allowedGroupJid) {
-            console.log(`✅ ENVIO AUTORIZADO PARA GRUPO: ${phoneNumber}`);
+            console.log(`✅ ENVIO AUTORIZADO PARA GRUPO CONFIGURADO: ${phoneNumber}`);
             return true;
           } else {
-            console.error(`🚫 ENVIO BLOQUEADO: Grupo não autorizado (${phoneNumber})`);
+            console.error(`🚫 ENVIO BLOQUEADO: Grupo diferente do configurado (${phoneNumber}) - Configurado: ${integration.allowedGroupJid}`);
             await this.logSecurityEvent(integration.id, phoneNumber, '', 'BLOCKED_UNAUTHORIZED_GROUP');
             return false;
           }
         }
-        // Se não é grupo, validar número individual
-      }
-      
-      // 📱 MODO INDIVIDUAL ou validação de número individual no modo grupo
-      if (phoneNumber.includes('@g.us') && responseMode === 'individual') {
-        console.error(`🚫 ENVIO BLOQUEADO: Destino é grupo mas modo é individual (${phoneNumber})`);
-        await this.logSecurityEvent(integration.id, phoneNumber, '', 'BLOCKED_GROUP_IN_INDIVIDUAL_MODE');
-        return false;
-      }
+        
+        // No modo grupo, ainda permite mensagens individuais para números autorizados
+        if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
+          console.error(`🚫 ENVIO BLOQUEADO: Números autorizados não configurados`);
+          return false;
+        }
 
-      // Validar números autorizados para mensagens individuais
-      if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
-        console.error(`🚫 ENVIO BLOQUEADO: Nenhum número autorizado configurado`);
-        return false;
-      }
+        const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
+        
+        if (!authorizedNumbers.includes(phoneNumber)) {
+          console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
+          return false;
+        }
 
-      const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
-      
-      if (!Array.isArray(authorizedNumbers) || authorizedNumbers.length === 0) {
-        console.error(`🚫 ENVIO BLOQUEADO: Lista de números está vazia`);
-        return false;
-      }
+        console.log(`✅ ENVIO AUTORIZADO PARA INDIVIDUAL NO MODO GRUPO: "${phoneNumber}"`);
+        return true;
+        
+      } else {
+        // 📱 MODO INDIVIDUAL: NUNCA envia para grupos
+        if (phoneNumber.includes('@g.us')) {
+          console.error(`🚫 ENVIO BLOQUEADO: Tentativa de envio para grupo no modo individual (${phoneNumber})`);
+          await this.logSecurityEvent(integration.id, phoneNumber, '', 'BLOCKED_GROUP_IN_INDIVIDUAL_MODE');
+          return false;
+        }
 
-      if (!authorizedNumbers.includes(phoneNumber)) {
-        console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
-        return false;
-      }
+        // Validar números autorizados
+        if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
+          console.error(`🚫 ENVIO BLOQUEADO: Números autorizados não configurados`);
+          return false;
+        }
 
-      console.log(`✅ ENVIO AUTORIZADO PARA INDIVIDUAL: "${phoneNumber}"`);
-      return true;
+        const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
+        
+        if (!Array.isArray(authorizedNumbers) || authorizedNumbers.length === 0) {
+          console.error(`🚫 ENVIO BLOQUEADO: Lista de números está vazia`);
+          return false;
+        }
+
+        if (!authorizedNumbers.includes(phoneNumber)) {
+          console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
+          return false;
+        }
+
+        console.log(`✅ ENVIO AUTORIZADO PARA INDIVIDUAL: "${phoneNumber}"`);
+        return true;
+      }
       
     } catch (error) {
       console.error(`🚫 ENVIO BLOQUEADO: Erro na validação - ${error}`);
@@ -177,7 +199,9 @@ export class WhatsappService {
   // 🔒 VALIDAÇÃO ULTRA RESTRITIVA: Só processa se número estiver configurado
   private validateIncomingMessage(integration: WhatsappIntegration, senderNumber: string, groupJid?: string, message?: string): { isValid: boolean; reason: string } {
     try {
-      // 🚫 REGRA 1: Se não tem números configurados, BLOQUEAR TUDO
+      const responseMode = integration.responseMode || 'individual';
+      
+      // Validar se há números autorizados configurados
       if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
         return {
           isValid: false,
@@ -187,7 +211,6 @@ export class WhatsappService {
 
       const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
       
-      // 🚫 REGRA 2: Se array está vazio, BLOQUEAR TUDO
       if (!Array.isArray(authorizedNumbers) || authorizedNumbers.length === 0) {
         return {
           isValid: false,
@@ -195,7 +218,7 @@ export class WhatsappService {
         };
       }
 
-      // 🚫 REGRA 3: Se número não está na lista, BLOQUEAR
+      // Validar se número está autorizado
       if (!authorizedNumbers.includes(senderNumber)) {
         return {
           isValid: false,
@@ -203,7 +226,7 @@ export class WhatsappService {
         };
       }
 
-      // 🚫 REGRA 4: Mensagem deve ter conteúdo
+      // Validar mensagem
       if (!message || message.trim().length === 0) {
         return {
           isValid: false,
@@ -211,14 +234,36 @@ export class WhatsappService {
         };
       }
 
-      // ✅ ÚNICA FORMA DE PASSAR: Número na lista E mensagem válida
-      return {
-        isValid: true,
-        reason: `Número ${senderNumber} autorizado e mensagem válida`
-      };
+      if (responseMode === 'individual') {
+        // 📱 MODO INDIVIDUAL: Só aceita mensagens diretas (sem grupo)
+        if (groupJid) {
+          return {
+            isValid: false,
+            reason: `Modo individual: mensagens de grupo são ignoradas (grupo: ${groupJid})`
+          };
+        }
+        
+        return {
+          isValid: true,
+          reason: `Modo individual: mensagem direta aceita de ${senderNumber}`
+        };
+        
+      } else {
+        // 📢 MODO GRUPO: Aceita de qualquer lugar, mas responde no grupo configurado
+        if (!integration.allowedGroupJid) {
+          return {
+            isValid: false,
+            reason: 'Modo grupo: JID do grupo não configurado'
+          };
+        }
+        
+        return {
+          isValid: true,
+          reason: `Modo grupo: comando aceito de ${senderNumber}, resposta será no grupo ${integration.allowedGroupJid}`
+        };
+      }
       
     } catch (error) {
-      // 🚫 QUALQUER ERRO = BLOQUEAR
       return {
         isValid: false,
         reason: 'Erro na validação - sistema bloqueado por segurança'

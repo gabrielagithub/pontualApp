@@ -344,6 +344,13 @@ Changelog:
   * Script migrate.js com auto-instalação do drizzle-kit para máxima compatibilidade
   * Comando final: npm install && npx vite build && npx esbuild && node migrate.js
   * Deploy agora deve funcionar completamente no Render com todas as correções aplicadas
+- July 03, 2025 (18:15): Implementação de sistema dual de respostas WhatsApp:
+  * Adicionado modo Individual: só aceita mensagens diretas, ignora comandos de grupos
+  * Adicionado modo Grupo: aceita comandos de membros autorizados, responde no grupo configurado
+  * Interface atualizada com seleção de modo e campo JID do grupo
+  * Sistema ultra restritivo: nunca envia para grupo diferente do configurado
+  * Modo individual: mensagens de grupo são completamente ignoradas mesmo de números autorizados
+  * Validação robusta: sem JID configurado no modo grupo = sem envios para grupos
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)
