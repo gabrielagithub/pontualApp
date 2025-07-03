@@ -23,18 +23,7 @@ const integrationSchema = z.object({
   apiKey: z.string().optional(), // Tornando opcional para permitir manter chave existente
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
-  allowedGroupName: z.string().optional(),
-  allowedGroupJid: z.string().optional(),
-  restrictToGroup: z.boolean().default(false),
-}).refine((data) => {
-  // Se restrictToGroup está ativo, allowedGroupJid é obrigatório
-  if (data.restrictToGroup && (!data.allowedGroupJid || data.allowedGroupJid.trim() === '')) {
-    return false;
-  }
-  return true;
-}, {
-  message: "JID do grupo é obrigatório quando 'Restringir a grupo' está ativado",
-  path: ["allowedGroupJid"]
+  authorizedNumbers: z.string().optional(),
 });
 
 const notificationSchema = z.object({
@@ -64,9 +53,7 @@ export default function WhatsAppPage() {
       apiKey: "",
       phoneNumber: "",
       webhookUrl: `${window.location.origin}/api/whatsapp/webhook/`,
-      allowedGroupName: "",
-      allowedGroupJid: "",
-      restrictToGroup: false,
+      authorizedNumbers: "",
     },
   });
 
@@ -175,9 +162,7 @@ export default function WhatsAppPage() {
         apiKey: integration.hasApiKey ? "••••••••••••••••" : "", // Mostrar placeholder se já tem chave salva
         phoneNumber: integration.phoneNumber || "",
         webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
-        allowedGroupName: integration.allowedGroupName || "",
-        allowedGroupJid: integration.allowedGroupJid || "",
-        restrictToGroup: integration.restrictToGroup || false,
+        authorizedNumbers: integration.authorizedNumbers || "",
       });
     }
   }, [integration, integrationForm]);
@@ -379,63 +364,27 @@ export default function WhatsAppPage() {
                     />
 
                     <div className="space-y-4 border-t pt-4">
-                      <h4 className="font-medium text-gray-900">Filtro de Grupo</h4>
+                      <h4 className="font-medium text-gray-900">Controle de Acesso</h4>
                       
                       <FormField
                         control={integrationForm.control}
-                        name="restrictToGroup"
+                        name="authorizedNumbers"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Restringir a Grupo Específico</FormLabel>
-                              <FormDescription>
-                                Processar comandos apenas de um grupo do WhatsApp
-                              </FormDescription>
-                            </div>
+                          <FormItem>
+                            <FormLabel>Números Autorizados</FormLabel>
                             <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                              <Input 
+                                placeholder='["5531999999999@c.us", "5531888888888@c.us"]' 
+                                {...field} 
+                              />
                             </FormControl>
+                            <FormDescription>
+                              Lista de números autorizados no formato JSON. Apenas estes números poderão interagir com o bot.
+                            </FormDescription>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {integrationForm.watch("restrictToGroup") && (
-                        <FormField
-                          control={integrationForm.control}
-                          name="allowedGroupName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nome do Grupo</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Meu Grupo de Trabalho" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Nome exato do grupo do WhatsApp (case-sensitive)
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-
-                      {integrationForm.watch("restrictToGroup") && (
-                        <FormField
-                          control={integrationForm.control}
-                          name="allowedGroupJid"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>JID do Grupo (Obrigatório)</FormLabel>
-                              <FormControl>
-                                <Input placeholder="120363419788242278@g.us" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Identificador único do grupo. Exemplo: 120363419788242278@g.us
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
                     </div>
 
                     <div className="flex gap-3">

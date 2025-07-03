@@ -11,13 +11,14 @@ npm install
 echo "🔧 Compilando aplicação..."
 npm run build
 
-# Aplicar migrations se DATABASE_URL existir
-if [ -n "$DATABASE_URL" ]; then
-  echo "🐘 Aplicando migrations do banco..."
-  npm run db:push
-else
-  echo "⚠️ DATABASE_URL não definida, usando SQLite local"
+# Aplicar migrations - DATABASE_URL é obrigatória
+if [ -z "$DATABASE_URL" ]; then
+  echo "❌ DATABASE_URL é obrigatória. Configure uma conexão PostgreSQL."
+  exit 1
 fi
+
+echo "🐘 Aplicando migrations do banco..."
+npm run db:push
 
 echo "✅ Build concluído com sucesso!"
 echo "📝 Para iniciar: npm start"

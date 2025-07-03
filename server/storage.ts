@@ -535,15 +535,12 @@ export class MemStorage implements IStorage {
 }
 
 import { DatabaseStorage } from "./database-storage.js";
-import { SQLiteStorage } from "./sqlite-storage.js";
 
-// Usar PostgreSQL se DATABASE_URL estiver definida, caso contrário SQLite
-const usePostgreSQL = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('sqlite');
-
-if (usePostgreSQL) {
-  console.log("🐘 Usando PostgreSQL");
-} else {
-  console.log("📁 Usando SQLite"); 
+// Usar apenas PostgreSQL
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL é obrigatória. Configure uma conexão PostgreSQL.");
 }
 
-export const storage = usePostgreSQL ? new DatabaseStorage() : new SQLiteStorage();
+console.log("🐘 Usando PostgreSQL");
+
+export const storage = new DatabaseStorage();

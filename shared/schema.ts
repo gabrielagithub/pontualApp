@@ -52,24 +52,22 @@ export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   webhookUrl: text("webhook_url"), // URL para receber webhooks
   authorizedNumbers: text("authorized_numbers"), // números autorizados (JSON array: ["5531999999999@c.us"])
   restrictToNumbers: boolean("restrict_to_numbers").notNull().default(true), // filtrar apenas mensagens dos números autorizados
-  responseMode: text("response_mode").notNull().default("private_only"), // private_only, group_reply, original_chat
   lastConnection: timestamp("last_connection"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Log de comandos e mensagens WhatsApp
+// Log de comandos e mensagens WhatsApp - Apenas números individuais
 export const whatsappLogs = pgTable("whatsapp_logs", {
   id: serial("id").primaryKey(),
   integrationId: integer("integration_id").notNull().references(() => whatsappIntegrations.id),
-  messageId: text("message_id"), // ID da mensagem no WhatsApp
-  messageType: text("message_type").notNull(), // text, audio, image, etc.
-  messageContent: text("message_content"), // conteúdo da mensagem
-  command: text("command"), // comando extraído
-  response: text("response"), // resposta enviada
-  success: boolean("success").notNull().default(true),
-  errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  command: text("command"),
+  response: text("response"),
+  phoneNumber: text("phone_number").notNull(),
+  eventType: text("event_type").notNull(),
+  details: text("details"),
+  destination: text("destination"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
 // Configurações de notificações automáticas
@@ -169,12 +167,12 @@ export const insertWhatsappIntegrationSchema = createInsertSchema(whatsappIntegr
       return false;
     }
   }, "Deve ser um JSON array de números válidos (ex: [\"5531999999999@c.us\"])"),
-  responseMode: z.enum(["private_only", "group_reply", "original_chat"]).default("private_only"),
+
 });
 
 export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs).omit({
   id: true,
-  createdAt: true,
+  timestamp: true,
 });
 
 export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({

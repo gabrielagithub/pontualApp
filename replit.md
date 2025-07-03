@@ -325,6 +325,14 @@ Changelog:
   * Criado DEPLOY_UNIVERSAL.md com instruções completas para Heroku, Railway, AWS, etc.
   * Atualizado README.md com instruções universais de instalação e deploy
   * Sistema agora suporta: desenvolvimento local, servidores próprios, todos os cloud providers
+- July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
+  * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
+  * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)
+  * Interface WhatsApp simplificada para controle apenas por números individuais autorizados
+  * Schema atualizado com nova estrutura de logs focada em segurança individual
+  * Scripts de build e start atualizados para exigir DATABASE_URL obrigatória
+  * Sistema ultra restritivo mantido mas sem complexidade de grupos
+  * Frontend simplificado com apenas campo "authorizedNumbers" para controle de acesso
 ```
 
 ## User Preferences

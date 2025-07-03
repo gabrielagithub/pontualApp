@@ -40,7 +40,7 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 
 - **Frontend**: React.js, TypeScript, Tailwind CSS
 - **Backend**: Node.js, Express
-- **Banco de Dados**: SQLite com Drizzle ORM
+- **Banco de Dados**: PostgreSQL com Drizzle ORM
 - **Interface**: shadcn/ui, Lucide React
 - **Ferramentas**: Vite, TanStack Query
 
@@ -48,7 +48,7 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 
 ### Pré-requisitos
 - Node.js (versão 18 ou superior)
-- PostgreSQL (opcional - SQLite usado como fallback)
+- PostgreSQL (obrigatório)
 
 ### Instalação Rápida
 
@@ -59,12 +59,12 @@ cd pontual
 npm install
 ```
 
-#### 2. Variáveis de Ambiente (opcional)
+#### 2. Variáveis de Ambiente (obrigatórias)
 ```bash
 # .env
-DATABASE_URL=postgresql://user:password@localhost/pontual  # PostgreSQL
-SESSION_SECRET=sua-chave-secreta-forte                     # Produção
-PORT=3000                                                   # Porta personalizada
+DATABASE_URL=postgresql://user:password@localhost/pontual  # PostgreSQL (obrigatório)
+SESSION_SECRET=sua-chave-secreta-forte                     # Produção (obrigatório)
+PORT=3000                                                   # Porta personalizada (opcional)
 ```
 
 #### 3. Execute
@@ -81,10 +81,9 @@ npm run dev
 ```
 
 ### Deploy Universal
-A aplicação funciona em qualquer ambiente:
-- **Desenvolvimento local**: SQLite automático
+A aplicação funciona em qualquer ambiente com PostgreSQL:
 - **Heroku, Railway, Render**: Suporte nativo
-- **AWS, Azure, GCP**: Compatible
+- **AWS, Azure, GCP**: Compatible  
 - **Servidores próprios**: PM2, Docker, etc.
 
 📖 **Documentação completa**: [DEPLOY_UNIVERSAL.md](DEPLOY_UNIVERSAL.md)

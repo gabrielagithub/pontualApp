@@ -12,17 +12,17 @@ fi
 # Configurar porta padrão se não definida
 export PORT=${PORT:-5000}
 
-# Verificar tipo de banco
-if [ -n "$DATABASE_URL" ]; then
-    echo "🐘 Usando PostgreSQL"
-    
-    # Verificar SESSION_SECRET apenas para PostgreSQL
-    if [ -z "$SESSION_SECRET" ]; then
-        echo "⚠️ SESSION_SECRET não definida, usando padrão para desenvolvimento"
-        export SESSION_SECRET="dev-secret-key-change-in-production"
-    fi
-else
-    echo "📁 Usando SQLite local"
+# Verificar DATABASE_URL obrigatória
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ DATABASE_URL é obrigatória. Configure uma conexão PostgreSQL."
+    exit 1
+fi
+
+echo "🐘 Usando PostgreSQL"
+
+# Verificar SESSION_SECRET
+if [ -z "$SESSION_SECRET" ]; then
+    echo "⚠️ SESSION_SECRET não definida, usando padrão para desenvolvimento"
     export SESSION_SECRET="dev-secret-key-change-in-production"
 fi
 
