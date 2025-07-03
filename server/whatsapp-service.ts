@@ -356,6 +356,12 @@ export class WhatsappService {
     });
 
     // ✅ VALIDAÇÃO DE SEGURANÇA AVANÇADA (agora por número individual)
+    console.log(`🔧 TESTE NORMALIZAÇÃO:`, {
+      phoneNumber,
+      authorizedNumbers: integration.authorizedNumbers,
+      normalized: this.normalizePhoneNumber(phoneNumber)
+    });
+    
     const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);
     if (!securityValidation.isValid) {
       console.log(`🚫 MENSAGEM BLOQUEADA: ${securityValidation.reason}`);
