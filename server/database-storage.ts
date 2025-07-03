@@ -378,7 +378,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
-    try {
+    return await this.retryOperation(async () => {
       console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", integration);
       
       const [created] = await db
@@ -388,10 +388,40 @@ export class DatabaseStorage implements IStorage {
       
       console.log("✅ DatabaseStorage.createWhatsappIntegration - Created:", created);
       return created;
-    } catch (error) {
-      console.error("❌ DatabaseStorage.createWhatsappIntegration - Error:", error);
-      throw error;
+    }, "createWhatsappIntegration");
+  }
+
+  // Método para retry em operações críticas
+  private async retryOperation<T>(operation: () => Promise<T>, operationName: string, maxRetries = 2): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await operation();
+        if (attempt > 1) {
+          console.log(`✅ ${operationName} - Sucesso na tentativa ${attempt}`);
+        }
+        return result;
+      } catch (error: any) {
+        lastError = error;
+        console.error(`❌ ${operationName} - Erro na tentativa ${attempt}:`, error.message);
+        
+        // Se for erro de conexão e não for a última tentativa, aguardar
+        if (error.message?.includes('fetch failed') || error.message?.includes('connect') || error.constructor.name === 'NeonDbError') {
+          if (attempt < maxRetries) {
+            const delayMs = 1500; // 1.5s fixo
+            console.log(`⏳ Aguardando ${delayMs}ms antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+          }
+        } else {
+          // Se não for erro de conexão, não retry
+          throw error;
+        }
+      }
     }
+    
+    console.error(`❌ ${operationName} - Todas as tentativas falharam`);
+    throw lastError;
   }
 
   async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
