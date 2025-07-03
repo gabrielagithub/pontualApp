@@ -17,7 +17,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-
+  // Endpoint para testar WhatsApp manualmente
+  app.post("/api/whatsapp/test", async (req, res) => {
+    try {
+      const { phoneNumber, message } = req.body;
+      
+      console.log('🧪 TESTE MANUAL WHATSAPP:', { phoneNumber, message });
+      
+      const integration = await storage.getWhatsappIntegration();
+      
+      if (!integration) {
+        return res.status(404).json({ error: 'Integração não encontrada' });
+      }
+      
+      await whatsappService.processIncomingMessage(
+        integration.id,
+        phoneNumber,
+        message,
+        'test-id',
+        phoneNumber // remoteJid igual ao phoneNumber para teste individual
+      );
+      
+      res.json({ success: true, message: 'Teste executado' });
+      
+    } catch (error: any) {
+      console.error('❌ Erro no teste:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Sistema simplificado - sem autenticação para single-user
   // Apenas webhook do WhatsApp precisa de tratamento especial (já sem auth)
@@ -28,12 +55,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { instanceName } = req.params;
       const { event, data } = req.body;
       
-      // Debug simplificado
-      console.log('📱 WEBHOOK:', {
+      // Debug completo
+      console.log('🔥 WEBHOOK RECEBIDO:', {
+        instanceName,
         event,
+        dataKeys: Object.keys(data || {}),
         hasKey: !!data?.key,
         hasMessage: !!data?.message,
-        messageType: data?.messageType
+        messageType: data?.messageType,
+        fullData: JSON.stringify(data, null, 2)
       });
       
       // Processar mensagens UPSERT (Evolution API envia mensagem diretamente na raiz)

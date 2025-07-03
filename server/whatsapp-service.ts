@@ -321,12 +321,21 @@ export class WhatsappService {
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
+    console.log(`🔥 INICIANDO PROCESSAMENTO:`, { integrationId, phoneNumber, message, groupJid });
+    
     // Single instance approach
     const integration = await storage.getWhatsappIntegration();
     if (!integration) {
       console.log(`📱 INTEGRAÇÃO NÃO ENCONTRADA`);
       return;
     }
+
+    console.log(`📱 INTEGRAÇÃO ENCONTRADA:`, {
+      id: integration.id,
+      responseMode: integration.responseMode,
+      authorizedNumbers: integration.authorizedNumbers,
+      allowedGroupJid: integration.allowedGroupJid
+    });
 
     // ✅ VALIDAÇÃO DE SEGURANÇA AVANÇADA (agora por número individual)
     const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);
