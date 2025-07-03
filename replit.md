@@ -365,6 +365,9 @@ Changelog:
   * Adicionado logging detalhado para diagnóstico de problemas de produção
   * Funciona perfeitamente local, problema específico do ambiente Render
   * Solução: executar correção do schema no banco PostgreSQL do Render
+  * Criada migração Drizzle adequada: 0001_fix_whatsapp_schema.sql
+  * Script migrate.js atualizado com fallback inteligente para migração manual
+  * Sistema agora aplicará migração automaticamente no próximo deploy
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)

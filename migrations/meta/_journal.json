@@ -8,6 +8,13 @@
       "when": 1751515650412,
       "tag": "0000_majestic_misty_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1751569576000,
+      "tag": "0001_fix_whatsapp_schema",
+      "breakpoints": true
     }
   ]
 }

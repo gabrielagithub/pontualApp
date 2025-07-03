@@ -24,27 +24,32 @@ response_mode text
 
 ## Solução
 
-### Opção 1: Script Automático (Recomendado)
+### Opção 1: Migração Automática (Recomendado)
 
-Execute no Render Console:
+O sistema agora tem migração Drizzle adequada:
+- Migração `0001_fix_whatsapp_schema.sql` criada
+- Script `migrate.js` atualizado para aplicar automaticamente
+- Fallback para migração manual se drizzle-kit falhar
+
+**No próximo deploy do Render:**
 ```bash
-node fix-render-schema.js
+node migrate.js
 ```
 
-### Opção 2: SQL Manual
+### Opção 2: Migração Manual
+
+Se a migração automática falhar:
+```bash
+node apply-migration.js
+```
+
+### Opção 3: SQL Direto
 
 Execute no banco PostgreSQL do Render:
 ```sql
 ALTER TABLE whatsapp_integrations ADD COLUMN authorized_numbers text;
 ALTER TABLE whatsapp_integrations ADD COLUMN restrict_to_numbers boolean DEFAULT true NOT NULL;
 ALTER TABLE whatsapp_integrations ADD COLUMN response_mode text DEFAULT 'individual' NOT NULL;
-```
-
-### Opção 3: Novo Deploy
-
-1. Atualize o build command no render.yaml:
-```yaml
-buildCommand: npm install && npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node fix-render-schema.js
 ```
 
 ## Verificação

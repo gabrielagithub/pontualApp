@@ -19,18 +19,31 @@ async function runMigrations() {
 
     console.log('🐘 Executando migrations do banco...');
     
-    // Instalar drizzle-kit se não estiver disponível
-    await execAsync('npm install drizzle-kit');
-    
-    const { stdout, stderr } = await execAsync('npx drizzle-kit push');
-    
-    if (stderr && !stderr.includes('Warning')) {
-      console.error('❌ Erro nas migrations:', stderr);
-      process.exit(1);
+    // Primeira tentativa: usar drizzle-kit migrate
+    try {
+      await execAsync('npm install drizzle-kit');
+      const { stdout, stderr } = await execAsync('npx drizzle-kit migrate');
+      
+      if (stderr && !stderr.includes('Warning')) {
+        throw new Error(stderr);
+      }
+      
+      console.log('✅ Migrations executadas com sucesso via drizzle-kit!');
+      console.log(stdout);
+    } catch (error) {
+      console.log('⚠️ Erro com drizzle-kit, tentando migração manual...');
+      
+      // Segunda tentativa: aplicar apenas a migração nova
+      const { stdout, stderr } = await execAsync('node apply-migration.js');
+      
+      if (stderr && !stderr.includes('Warning')) {
+        console.error('❌ Erro nas migrations:', stderr);
+        process.exit(1);
+      }
+      
+      console.log('✅ Migração manual aplicada com sucesso!');
+      console.log(stdout);
     }
-    
-    console.log('✅ Migrations executadas com sucesso!');
-    console.log(stdout);
     
   } catch (error) {
     console.error('❌ Falha ao executar migrations:', error.message);
