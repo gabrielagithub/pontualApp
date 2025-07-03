@@ -250,6 +250,14 @@ Changelog:
   * Validated identical behavior: lançamentos manuais, timer operations, status reports, task completion, interactive selection
   * WhatsApp integration now provides complete feature parity with web interface - users can perform any operation via chat
   * All commands work with case-insensitive input, simplified menus, and natural Portuguese language throughout
+- July 03, 2025 (04:04): Updated WhatsApp command vocabulary for better Portuguese localization:
+  * Changed "lancamento" to "apontar" as primary command for manual time logging
+  * Changed "lancar-concluir" to "apontar-concluir" for log time and complete task action
+  * Changed "relatorio" to "resumo" as primary command for reports (resumo, resumo semanal, resumo mensal)
+  * Updated help message to show new vocabulary: "📝 APONTAMENTO" and "📊 RESUMOS" sections
+  * Updated individual task menus to show "apontar 2h" instead of "lancamento 2h"
+  * Maintained backward compatibility - old commands still work alongside new ones
+  * Enhanced API key form UX - shows when key is saved and allows empty updates to preserve existing key
 ```
 
 ## User Preferences

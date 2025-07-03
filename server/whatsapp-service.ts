@@ -158,6 +158,7 @@ export class WhatsappService {
           response = await this.resumeTimer(command.params);
           break;
 
+        case 'apontar':
         case 'lancamento':
         case 'lancar':
           response = await this.logTime(command.params);
@@ -173,11 +174,13 @@ export class WhatsappService {
           response = await this.reopenTask(command.params);
           break;
 
+        case 'apontar-concluir':
         case 'lancar-concluir':
         case 'finalizar-com-tempo':
           response = await this.logTimeAndComplete(command.params);
           break;
 
+        case 'resumo':
         case 'relatorio':
         case 'report':
           response = await this.generateReport(command.params);
@@ -294,10 +297,11 @@ export class WhatsappService {
       case 'reopen':
         return await this.reopenTaskById(selectedTask.id);
       
+      case 'apontar':
       case 'lancamento':
       case 'log':
         if (!selection.params || selection.params.length === 0) {
-          return `❌ Informe o tempo para lançamento.\n\n*Exemplo:* ${selection.taskNumber} lancamento 2h`;
+          return `❌ Informe o tempo para apontamento.\n\n*Exemplo:* ${selection.taskNumber} apontar 2h`;
         }
         return await this.logTimeForTask(selectedTask, selection.params[0]);
       
@@ -323,7 +327,7 @@ export class WhatsappService {
     }
     
     menu += `• *concluir* - Finaliza\n`;
-    menu += `• *lancamento 2h* - Adiciona tempo`;
+    menu += `• *apontar 2h* - Adiciona tempo`;
     
     return menu;
   }
@@ -363,18 +367,18 @@ export class WhatsappService {
 • *pausar [nome]* - Pausar timer
 • *retomar [nome]* - Retomar timer pausado
 
-📝 *LANÇAMENTO:*
-• *lancamento [nome] [tempo]* - Adicionar tempo manual
-• *lancar-concluir [nome] [tempo]* - Adicionar tempo e finalizar
+📝 *APONTAMENTO:*
+• *apontar [nome] [tempo]* - Adicionar tempo manual
+• *apontar-concluir [nome] [tempo]* - Adicionar tempo e finalizar
 
 ✅ *TAREFAS:*
 • *concluir [nome]* - Marcar como concluída
 • *reabrir [nome]* - Reativar tarefa concluída
 
-📊 *RELATÓRIOS:*
-• *relatorio* - Relatório de hoje
-• *relatorio semanal* - Relatório semanal
-• *relatorio mensal* - Relatório mensal
+📊 *RESUMOS:*
+• *resumo* - Resumo de hoje
+• *resumo semanal* - Resumo semanal
+• *resumo mensal* - Resumo mensal
 
 🔧 *AVANÇADO:*
 • *nova --desc "descrição" --tempo 2h --prazo 2025-01-15 --cor azul Nome da Tarefa*
