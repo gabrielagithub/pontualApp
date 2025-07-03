@@ -13,27 +13,31 @@ O Render tentava executar `npm run migrate` mas o script não existia.
 
 ## ✅ Soluções Implementadas
 
-### 1. **Script migrate.js Independente**
-```javascript
-// migrate.js - Executa migrations apenas quando DATABASE_URL existe
-import { exec } from 'child_process';
+### 1. **Dependências Corrigidas**
+```bash
+# Adicionadas como dependências principais:
+npm install vite drizzle-kit
+```
 
+### 2. **Build Command com npx**
+```yaml
+# render.yaml - CORRIGIDO FINAL
+buildCommand: npm install && npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node migrate.js
+```
+
+### 3. **Script migrate.js com Auto-instalação**
+```javascript
+// migrate.js - Garante drizzle-kit está disponível
 async function runMigrations() {
   if (!process.env.DATABASE_URL) {
     console.log('⚠️ DATABASE_URL não definida, pulando migrations');
     return;
   }
+  
+  // Auto-instalar drizzle-kit se necessário
+  await execAsync('npm install drizzle-kit');
   await execAsync('npx drizzle-kit push');
 }
-```
-
-### 2. **Build Command Simplificado**
-```yaml
-# render.yaml - ANTES
-buildCommand: chmod +x render-build.sh && ./render-build.sh
-
-# render.yaml - DEPOIS  
-buildCommand: npm install && npm run build && node migrate.js
 ```
 
 ### 3. **Processo Linear Garantido**

@@ -338,6 +338,12 @@ Changelog:
   * Removida dependência de scripts shell complexos
   * Deploy agora funciona de forma linear e previsível no Render
   * Processo otimizado: install → build → migrate (se DATABASE_URL) → start
+- July 03, 2025 (18:00): Correção final do deploy no Render - Dependências e npx:
+  * Adicionadas dependências faltantes: vite e drizzle-kit como dependências principais
+  * Build command corrigido: usa npx para garantir disponibilidade de ferramentas
+  * Script migrate.js com auto-instalação do drizzle-kit para máxima compatibilidade
+  * Comando final: npm install && npx vite build && npx esbuild && node migrate.js
+  * Deploy agora deve funcionar completamente no Render com todas as correções aplicadas
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)

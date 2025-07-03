@@ -19,6 +19,9 @@ async function runMigrations() {
 
     console.log('🐘 Executando migrations do banco...');
     
+    // Instalar drizzle-kit se não estiver disponível
+    await execAsync('npm install drizzle-kit');
+    
     const { stdout, stderr } = await execAsync('npx drizzle-kit push');
     
     if (stderr && !stderr.includes('Warning')) {
