@@ -96,6 +96,15 @@ node migrate.js
 psql postgresql://pontual:pontual123@postgres:5432/pontual
 ```
 
+### Erro "Cannot find package 'vite'"
+Este erro indica build incorreto do container:
+```bash
+# Limpeza completa e rebuild
+docker-compose down -v
+docker system prune -f
+./docker-start.sh --clean
+```
+
 ### Limpar tudo e recomeçar
 ```bash
 docker-compose down -v

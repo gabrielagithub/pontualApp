@@ -1,0 +1,32 @@
+2025-07-03 17:36:54 pontual-postgres  | 
+2025-07-03 17:37:30 pontual-app       | 🐳 Executando migrations do banco (Docker)...
+2025-07-03 17:36:54 pontual-postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+2025-07-03 17:36:54 pontual-postgres  | 
+2025-07-03 17:37:30 pontual-app       | ✅ Migrations executadas com sucesso!
+2025-07-03 17:36:54 pontual-postgres  | 2025-07-03 20:36:54.248 UTC [1] LOG:  starting PostgreSQL 15.13 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+2025-07-03 17:37:30 pontual-app       | 
+2025-07-03 17:37:30 pontual-app       | > rest-express@1.0.0 start
+2025-07-03 17:37:30 pontual-app       | > NODE_ENV=production node dist/index.js
+2025-07-03 17:37:30 pontual-app       | 
+2025-07-03 17:36:54 pontual-postgres  | 2025-07-03 20:36:54.249 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-07-03 17:37:30 pontual-app       | node:internal/modules/esm/resolve:873
+2025-07-03 17:36:54 pontual-postgres  | 2025-07-03 20:36:54.249 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-07-03 17:36:54 pontual-postgres  | 2025-07-03 20:36:54.256 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-07-03 17:37:30 pontual-app       |   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+2025-07-03 17:37:30 pontual-app       |         ^
+2025-07-03 17:37:30 pontual-app       | 
+2025-07-03 17:37:30 pontual-app       | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /app/dist/index.js
+2025-07-03 17:36:54 pontual-postgres  | 2025-07-03 20:36:54.270 UTC [29] LOG:  database system was shut down at 2025-07-03 20:30:23 UTC
+2025-07-03 17:37:30 pontual-app       |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+2025-07-03 17:37:30 pontual-app       |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+2025-07-03 17:36:54 pontual-postgres  | 2025-07-03 20:36:54.283 UTC [1] LOG:  database system is ready to accept connections
+2025-07-03 17:37:30 pontual-app       |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+2025-07-03 17:37:30 pontual-app       |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:642:12)
+2025-07-03 17:37:30 pontual-app       |     at #cachedDefaultResolve (node:internal/modules/esm/loader:591:25)
+2025-07-03 17:37:30 pontual-app       |     at ModuleLoader.resolve (node:internal/modules/esm/loader:574:38)
+2025-07-03 17:37:30 pontual-app       |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:236:38)
+2025-07-03 17:37:30 pontual-app       |     at ModuleJob._link (node:internal/modules/esm/module_job:130:49) {
+2025-07-03 17:37:30 pontual-app       |   code: 'ERR_MODULE_NOT_FOUND'
+2025-07-03 17:37:30 pontual-app       | }
+2025-07-03 17:37:30 pontual-app       | 
+2025-07-03 17:37:30 pontual-app       | Node.js v20.19.3

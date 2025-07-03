@@ -19,8 +19,8 @@ COPY . .
 # Build da aplicação
 RUN npm run build
 
-# Limpar dependências dev após build
-RUN npm prune --production
+# Não fazer prune para manter vite disponível no container
+# RUN npm prune --production
 
 # Expor porta
 EXPOSE 5000
