@@ -1,4 +1,4 @@
-import { users, tasks, taskItems, timeEntries, type User, type InsertUser, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TaskWithStats, type TimeEntryWithTask } from "@shared/schema";
+import { users, tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings, type User, type InsertUser, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TaskWithStats, type TimeEntryWithTask, type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog, type NotificationSettings, type InsertNotificationSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, isNull, desc, asc } from "drizzle-orm";
 import { IStorage } from "./storage";
@@ -80,7 +80,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const result = await db.delete(tasks).where(eq(tasks.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async completeTask(id: number): Promise<Task | undefined> {
@@ -130,13 +130,13 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTaskItem(id: number): Promise<boolean> {
     const result = await db.delete(taskItems).where(eq(taskItems.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async completeAllTaskItems(taskId: number): Promise<void> {
     await db
       .update(taskItems)
-      .set({ isCompleted: true })
+      .set({ completed: true })
       .where(eq(taskItems.taskId, taskId));
   }
 
@@ -240,12 +240,12 @@ export class DatabaseStorage implements IStorage {
     }
     
     const result = await db.delete(timeEntries).where(eq(timeEntries.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async deleteAllTimeEntries(): Promise<boolean> {
     const result = await db.delete(timeEntries);
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async getDashboardStats(): Promise<{
@@ -302,7 +302,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTimeByTask(startDate?: Date, endDate?: Date): Promise<Array<{ task: Task; totalTime: number }>> {
-    let query = db
+    const baseQuery = db
       .select({
         task: tasks,
         entry: timeEntries
@@ -310,14 +310,15 @@ export class DatabaseStorage implements IStorage {
       .from(timeEntries)
       .leftJoin(tasks, eq(timeEntries.taskId, tasks.id));
 
+    let results;
     if (startDate || endDate) {
       const conditions = [];
       if (startDate) conditions.push(gte(timeEntries.startTime, startDate));
       if (endDate) conditions.push(lte(timeEntries.startTime, endDate));
-      query = query.where(and(...conditions));
+      results = await baseQuery.where(and(...conditions));
+    } else {
+      results = await baseQuery;
     }
-
-    const results = await query;
     
     const taskTimeMap = new Map<number, { task: Task; totalTime: number }>();
     
@@ -368,5 +369,71 @@ export class DatabaseStorage implements IStorage {
     }
     
     return result;
+  }
+
+  // WhatsApp Integration methods
+  async getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined> {
+    const [integration] = await db.select().from(whatsappIntegrations).where(eq(whatsappIntegrations.userId, userId));
+    return integration || undefined;
+  }
+
+  async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
+    const [created] = await db
+      .insert(whatsappIntegrations)
+      .values(integration)
+      .returning();
+    return created;
+  }
+
+  async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
+    const [updated] = await db
+      .update(whatsappIntegrations)
+      .set(updates)
+      .where(eq(whatsappIntegrations.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteWhatsappIntegration(id: number): Promise<boolean> {
+    const result = await db.delete(whatsappIntegrations).where(eq(whatsappIntegrations.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog> {
+    const [created] = await db
+      .insert(whatsappLogs)
+      .values(log)
+      .returning();
+    return created;
+  }
+
+  async getWhatsappLogs(integrationId: number, limit: number = 50): Promise<WhatsappLog[]> {
+    return await db.select().from(whatsappLogs)
+      .where(eq(whatsappLogs.integrationId, integrationId))
+      .orderBy(desc(whatsappLogs.createdAt))
+      .limit(limit);
+  }
+
+  // Notification Settings methods
+  async getNotificationSettings(userId: number): Promise<NotificationSettings | undefined> {
+    const [settings] = await db.select().from(notificationSettings).where(eq(notificationSettings.userId, userId));
+    return settings || undefined;
+  }
+
+  async createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings> {
+    const [created] = await db
+      .insert(notificationSettings)
+      .values(settings)
+      .returning();
+    return created;
+  }
+
+  async updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
+    const [updated] = await db
+      .update(notificationSettings)
+      .set(updates)
+      .where(eq(notificationSettings.userId, userId))
+      .returning();
+    return updated || undefined;
   }
 }

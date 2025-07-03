@@ -321,6 +321,9 @@ export class MemStorage implements IStorage {
     completedTasks: number;
     overdueTasks: number;
     overTimeTasks: number;
+    dueTodayTasks: number;
+    dueTomorrowTasks: number;
+    nearingLimitTasks: number;
   }> {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -425,7 +428,7 @@ export class MemStorage implements IStorage {
       activeTasks,
       weekTime,
       monthTime,
-      completedTasks: runningEntries,
+      completedTasks: tasks.filter(task => !task.isActive).length,
       overdueTasks,
       overTimeTasks,
       dueTodayTasks,
@@ -531,7 +534,16 @@ export class MemStorage implements IStorage {
   }
 }
 
+import { DatabaseStorage } from "./database-storage.js";
 import { SQLiteStorage } from "./sqlite-storage.js";
 
-console.log("📁 Usando SQLite");
-export const storage = new SQLiteStorage();
+// Usar PostgreSQL se DATABASE_URL estiver definida, caso contrário SQLite
+const usePostgreSQL = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('sqlite');
+
+if (usePostgreSQL) {
+  console.log("🐘 Usando PostgreSQL");
+} else {
+  console.log("📁 Usando SQLite"); 
+}
+
+export const storage = usePostgreSQL ? new DatabaseStorage() : new SQLiteStorage();
