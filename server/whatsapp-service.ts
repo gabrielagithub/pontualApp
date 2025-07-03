@@ -42,7 +42,15 @@ export class WhatsappService {
 
   private async sendMessage(integration: WhatsappIntegration, phoneNumber: string, message: string): Promise<boolean> {
     try {
-      console.log(`📤 ENVIANDO MENSAGEM: ${phoneNumber} -> "${message.substring(0, 50)}..."`);
+      // ✅ VALIDAÇÃO DE SEGURANÇA - Verificar se o destino é autorizado
+      const isValidDestination = await this.validateMessageDestination(integration, phoneNumber);
+      if (!isValidDestination) {
+        console.error(`🚫 ENVIO BLOQUEADO: Destino não autorizado "${phoneNumber}"`);
+        await this.logSecurityEvent(integration.id, phoneNumber, message, 'BLOCKED_UNAUTHORIZED_DESTINATION');
+        return false;
+      }
+
+      console.log(`📤 ENVIANDO MENSAGEM SEGURA: ${phoneNumber} -> "${message.substring(0, 50)}..."`);
       
       // Detectar se é um grupo (contém @g.us)
       const isGroup = phoneNumber.includes('@g.us');
@@ -51,6 +59,7 @@ export class WhatsappService {
       
       console.log(`📤 URL: ${url}`);
       console.log(`📤 TIPO: ${isGroup ? 'GRUPO' : 'INDIVIDUAL'}`);
+      console.log(`📤 AUTORIZADO: ${isValidDestination ? 'SIM' : 'NÃO'}`);
       
       // Para Evolution API, sempre usar "number" (funciona para grupos e individuais)
       const payload = {
@@ -59,6 +68,9 @@ export class WhatsappService {
       };
       
       console.log(`📤 PAYLOAD:`, JSON.stringify(payload));
+      
+      // ✅ LOG DE AUDITORIA antes do envio
+      await this.logSecurityEvent(integration.id, phoneNumber, message, 'MESSAGE_SENT');
       
       const response = await fetch(url, {
         method: 'POST',
@@ -75,8 +87,99 @@ export class WhatsappService {
       return response.ok;
     } catch (error) {
       console.error('❌ Erro ao enviar mensagem WhatsApp:', error);
+      await this.logSecurityEvent(integration.id, phoneNumber, message, 'SEND_ERROR');
       return false;
     }
+  }
+
+  // ✅ NOVA FUNÇÃO: Validação de destino autorizado
+  private async validateMessageDestination(integration: WhatsappIntegration, phoneNumber: string): Promise<boolean> {
+    // Se restrictToGroup não está ativo, permitir qualquer destino (modo desenvolvimento)
+    if (!integration.restrictToGroup) {
+      console.log(`🔓 MODO ABERTO: Permitindo envio para qualquer destino (restrictToGroup = false)`);
+      return true;
+    }
+
+    // Se restrictToGroup está ativo, validar JID autorizado
+    if (!integration.allowedGroupJid || integration.allowedGroupJid.trim() === '' || integration.allowedGroupJid === 'null') {
+      console.error(`🚫 JID VAZIO: restrictToGroup ativo mas allowedGroupJid não configurado`);
+      return false;
+    }
+
+    // Validar se o phoneNumber é exatamente o JID autorizado
+    const isAuthorized = phoneNumber === integration.allowedGroupJid;
+    
+    if (!isAuthorized) {
+      console.error(`🚫 JID NÃO AUTORIZADO: "${phoneNumber}" != "${integration.allowedGroupJid}"`);
+    } else {
+      console.log(`✅ JID AUTORIZADO: "${phoneNumber}" confirmado`);
+    }
+
+    return isAuthorized;
+  }
+
+  // ✅ NOVA FUNÇÃO: Log de eventos de segurança
+  private async logSecurityEvent(integrationId: number, destination: string, message: string, event: string): Promise<void> {
+    try {
+      const logEntry = {
+        integrationId,
+        messageType: 'security_event',
+        messageContent: `[${event}] Destino: ${destination} | Mensagem: ${message.substring(0, 100)}`,
+        command: event,
+        success: !event.includes('BLOCKED') && !event.includes('ERROR')
+      };
+      
+      await storage.createWhatsappLog(logEntry);
+      console.log(`🔒 LOG SEGURANÇA: ${event} registrado`);
+    } catch (error) {
+      console.error('❌ Erro ao registrar log de segurança:', error);
+    }
+  }
+
+  // ✅ NOVA FUNÇÃO: Validação completa de mensagens recebidas
+  private validateIncomingMessage(integration: WhatsappIntegration, phoneNumber: string, groupJid?: string, message?: string): { isValid: boolean; reason: string } {
+    // Validação 1: Verificar se restrictToGroup está ativo
+    if (integration.restrictToGroup) {
+      // Validação 2: JID deve estar configurado
+      if (!integration.allowedGroupJid || integration.allowedGroupJid === 'null' || integration.allowedGroupJid.trim() === '') {
+        return {
+          isValid: false,
+          reason: 'JID não configurado na integração'
+        };
+      }
+      
+      // Validação 3: Mensagem deve ser de grupo autorizado
+      if (!groupJid || groupJid !== integration.allowedGroupJid) {
+        return {
+          isValid: false,
+          reason: `JID "${groupJid}" não autorizado. Permitido: "${integration.allowedGroupJid}"`
+        };
+      }
+    }
+
+    // Validação 4: Verificar se não é mensagem vazia ou spam
+    if (!message || message.trim().length === 0) {
+      return {
+        isValid: false,
+        reason: 'Mensagem vazia'
+      };
+    }
+
+    // Validação 5: Evitar mensagens muito longas (possível spam)
+    if (message.length > 1000) {
+      return {
+        isValid: false,
+        reason: 'Mensagem muito longa (possível spam)'
+      };
+    }
+
+    // ✅ Mensagem válida
+    return {
+      isValid: true,
+      reason: integration.restrictToGroup ? 
+        `Grupo autorizado: ${integration.allowedGroupJid}` : 
+        'Modo aberto (restrictToGroup = false)'
+    };
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
@@ -87,20 +190,15 @@ export class WhatsappService {
       return;
     }
 
-    // Sistema funcionando corretamente
-
-    // Filtrar por JID do grupo - SEMPRE obrigatório quando restrictToGroup está ativo
-    if (integration.restrictToGroup) {
-      if (!integration.allowedGroupJid || integration.allowedGroupJid === 'null' || integration.allowedGroupJid.trim() === '') {
-        console.log(`📱 Mensagem ignorada - JID não configurado na integração`);
-        return;
-      }
-      
-      if (!groupJid || groupJid !== integration.allowedGroupJid) {
-        console.log(`📱 Mensagem ignorada - JID "${groupJid}" não autorizado. Permitido: "${integration.allowedGroupJid}"`);
-        return;
-      }
+    // ✅ VALIDAÇÃO DE SEGURANÇA AVANÇADA
+    const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);
+    if (!securityValidation.isValid) {
+      console.log(`🚫 MENSAGEM BLOQUEADA: ${securityValidation.reason}`);
+      await this.logSecurityEvent(integration.id, phoneNumber, message, `BLOCKED_INCOMING: ${securityValidation.reason}`);
+      return;
     }
+
+    console.log(`✅ MENSAGEM AUTORIZADA: ${securityValidation.reason}`);
 
     // Verificar se é uma resposta numérica para seleção interativa
     const numericResponse = this.parseNumericResponse(message);
