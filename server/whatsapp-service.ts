@@ -359,7 +359,7 @@ export class WhatsappService {
     const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);
     if (!securityValidation.isValid) {
       console.log(`🚫 MENSAGEM BLOQUEADA: ${securityValidation.reason}`);
-      await this.logSecurityEvent(integration.id, phoneNumber, message, `BLOCKED_INCOMING: ${securityValidation.reason}`);
+      // await this.logSecurityEvent(integration.id, phoneNumber, message, `BLOCKED_INCOMING: ${securityValidation.reason}`);
       return;
     }
 
