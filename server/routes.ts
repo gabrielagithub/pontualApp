@@ -1163,6 +1163,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("🔄 Criando integração WhatsApp:", JSON.stringify(req.body, null, 2));
       
+      // Verificar se usuário existe antes da validação
+      const userId = req.body.userId;
+      console.log("🔍 Verificando se usuário existe - ID:", userId);
+      
+      if (userId) {
+        const user = await storage.getUser(userId);
+        console.log("👤 Usuário encontrado:", user ? "SIM" : "NÃO", user);
+      }
+      
       // Validação com logging detalhado
       const validatedData = insertWhatsappIntegrationSchema.parse(req.body);
       console.log("✅ Dados validados:", JSON.stringify(validatedData, null, 2));
