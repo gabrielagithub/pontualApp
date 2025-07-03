@@ -43,18 +43,30 @@ export class WhatsappService {
   private async sendMessage(integration: WhatsappIntegration, phoneNumber: string, message: string): Promise<boolean> {
     try {
       console.log(`📤 ENVIANDO MENSAGEM: ${phoneNumber} -> "${message.substring(0, 50)}..."`);
-      console.log(`📤 URL: ${integration.apiUrl}/message/sendText/${integration.instanceName}`);
       
-      const response = await fetch(`${integration.apiUrl}/message/sendText/${integration.instanceName}`, {
+      // Detectar se é um grupo (contém @g.us)
+      const isGroup = phoneNumber.includes('@g.us');
+      const endpoint = isGroup ? 'sendText' : 'sendText';
+      const url = `${integration.apiUrl}/message/${endpoint}/${integration.instanceName}`;
+      
+      console.log(`📤 URL: ${url}`);
+      console.log(`📤 TIPO: ${isGroup ? 'GRUPO' : 'INDIVIDUAL'}`);
+      
+      // Para Evolution API, sempre usar "number" (funciona para grupos e individuais)
+      const payload = {
+        number: phoneNumber,
+        text: message
+      };
+      
+      console.log(`📤 PAYLOAD:`, JSON.stringify(payload));
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': integration.apiKey,
         },
-        body: JSON.stringify({
-          number: phoneNumber,
-          text: message
-        })
+        body: JSON.stringify(payload)
       });
 
       const responseText = await response.text();

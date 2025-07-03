@@ -84,17 +84,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Extrair informações da mensagem
         let phoneNumber = '';
         let groupName = null;
+        let isGroupMessage = false;
         
         if (remoteJid.includes('@g.us')) {
-          // Mensagem de grupo - usar participant como phoneNumber
+          // Mensagem de grupo - enviar resposta para o grupo
+          isGroupMessage = true;
           groupName = message.pushName || 'Grupo Desconhecido'; // Nome do remetente no grupo
-          phoneNumber = message.key.participant?.replace('@s.whatsapp.net', '') || '';
+          phoneNumber = remoteJid; // Para grupos, usar o JID do grupo completo
         } else {
           // Mensagem individual
           phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
         }
         
-        console.log('📱 DADOS EXTRAÍDOS:', { phoneNumber, groupName });
+        console.log('📱 DADOS EXTRAÍDOS:', { phoneNumber, groupName, isGroupMessage });
         
         // Buscar integração por instanceName
         const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
