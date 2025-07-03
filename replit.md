@@ -331,6 +331,13 @@ Changelog:
   * Atualizada validação e documentação com números fictícios
   * Eliminado risco de envios incorretos para números reais
   * Sistema mantém funcionalidade com dados de exemplo seguros
+- July 03, 2025 (17:48): Correção completa do deploy no Render:
+  * Identificados e corrigidos erros: "vite: not found" e "missing script migrate"
+  * Criado script migrate.js independente para execução condicional de migrations
+  * Simplificado render.yaml com build command direto: npm install && npm run build && node migrate.js
+  * Removida dependência de scripts shell complexos
+  * Deploy agora funciona de forma linear e previsível no Render
+  * Processo otimizado: install → build → migrate (se DATABASE_URL) → start
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)

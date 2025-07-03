@@ -1,0 +1,118 @@
+All logs
+Search
+Search
+
+Live tail
+GMT-3
+
+Menu
+
+==> Cloning from https://github.com/gabrielagithub/pontualApp
+==> Checking out commit 22e9c1feab820f16c7d9f65fa7d58f334b3569e4 in branch main
+==> Downloading cache...
+==> Transferred 515MB in 9s. Extraction took 11s.
+==> Using Node.js version 22.14.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Using Bun version 1.1.0 (default)
+==> Docs on specifying a Bun version: https://render.com/docs/bun-version
+==> Running build command 'npm install; npm run build; npm run migrate'...
+up to date, audited 829 packages in 2s
+100 packages are looking for funding
+  run npm fund for details
+1 low severity vulnerability
+To address all issues, run:
+  npm audit fix
+Run npm audit for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+sh: 1: vite: not found
+npm error Missing script: "migrate"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: /opt/render/.cache/_logs/2025-07-03T17_45_26_446Z-debug-0.log
+==> Build failed 😞
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+
+
+O ChatGPT disse:
+Gabriela, seu deploy no Render falhou por dois motivos principais, que vamos resolver rapidamente:
+
+❌ Erros identificados
+1. sh: 1: vite: not found
+Você está rodando o script vite build, mas o Vite não está instalado como dependência no seu projeto.
+
+2. npm error Missing script: "migrate"
+O Render está tentando executar npm run migrate, mas esse script não existe no seu package.json.
+
+✅ Soluções passo a passo
+✅ 1. Adicione o Vite como dependência de desenvolvimento
+Rode no seu projeto local:
+
+bash
+Copiar
+Editar
+npm install --save-dev vite
+Se quiser usar também o Vite no modo desenvolvimento local (opcional):
+
+bash
+Copiar
+Editar
+npm install --save-dev @vitejs/plugin-react
+Isso resolve o erro: sh: 1: vite: not found
+
+✅ 2. Crie o script migrate se for necessário — ou remova do Render
+Se o seu projeto não precisa de um passo de migração, remova npm run migrate da configuração de build no Render.
+
+Se usa Drizzle, crie esse script no package.json:
+
+json
+Copiar
+Editar
+"scripts": {
+  "migrate": "drizzle-kit push"
+}
+Mas só se estiver usando Drizzle mesmo. Se não usa, remova npm run migrate da Build Command no Render.
+
+✅ 3. Verifique a Build Command no Render
+No Render.com:
+
+Vá no seu serviço → Settings
+
+Na seção Build & Deploy, encontre o campo Build Command
+
+Substitua por:
+
+bash
+Copiar
+Editar
+npm install && npm run build
+Ou, se você quiser manter a migração:
+
+bash
+Copiar
+Editar
+npm install && npm run build && npm run migrate
+(Só se o migrate fizer sentido pro seu projeto.)
+
+✅ 4. Confirme seu package.json contém:
+json
+Copiar
+Editar
+"scripts": {
+  "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+  "dev": "cross-env NODE_ENV=development tsx server/index.ts",
+  "db:push": "drizzle-kit push"
+}
+Adapte conforme necessário.
+
+🔁 Depois de ajustar tudo
+Faça commit das alterações:
+
+bash
+Copiar
+Editar
+git add .
+git commit -m "fix: add vite and optional migrate script"
+git push
+O Render vai redeployar automaticamente com base no novo commit.

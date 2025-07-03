@@ -3,7 +3,7 @@ services:
     name: pontual
     env: node
     plan: free
-    buildCommand: chmod +x render-build.sh && ./render-build.sh
+    buildCommand: npm install && npm run build && node migrate.js
     startCommand: npm start
     envVars:
       - key: NODE_ENV

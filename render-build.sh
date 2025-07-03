@@ -1,22 +1,14 @@
 #!/bin/bash
 
-# Script de build para Render
+# Script de build para Render - Versão Corrigida
 echo "🚀 Iniciando build para Render..."
 
 # Instalar dependências
 echo "📦 Instalando dependências..."
 npm install
 
-# Build completo (frontend + backend) usando npx
+# Build completo (frontend + backend)
 echo "🔧 Compilando aplicação..."
-npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
-
-# Aplicar migrations se DATABASE_URL existir
-if [ -n "$DATABASE_URL" ]; then
-  echo "🐘 Aplicando migrations do banco..."
-  npx drizzle-kit push
-else
-  echo "⚠️ DATABASE_URL não definida, pulando migrations"
-fi
+npm run build
 
 echo "✅ Build concluído com sucesso!"
