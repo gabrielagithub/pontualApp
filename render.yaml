@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pontual
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build && npm run db:push
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
