@@ -97,16 +97,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let isGroupMessage = false;
         
         if (remoteJid.includes('@g.us')) {
-          // Mensagem de grupo - enviar resposta para o grupo
+          // 🔒 MENSAGEM DE GRUPO: Usar participant (número individual) para validação
           isGroupMessage = true;
-          groupName = message.pushName || 'Grupo Desconhecido'; // Nome do remetente no grupo
-          phoneNumber = remoteJid; // Para grupos, usar o JID do grupo completo
+          groupName = message.pushName || 'Grupo Desconhecido';
+          phoneNumber = message.key.participant || remoteJid; // USAR PARTICIPANT (número que enviou)
+          console.log('🔍 DEBUG GRUPO:', { 
+            remoteJid, 
+            participant: message.key.participant,
+            phoneNumberFinal: phoneNumber
+          });
         } else {
           // Mensagem individual
-          phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
+          phoneNumber = remoteJid;
         }
         
-        console.log('📱 DADOS EXTRAÍDOS:', { phoneNumber, groupName, isGroupMessage });
+        console.log('📱 DADOS EXTRAÍDOS (ANTES DA CORREÇÃO):', { phoneNumber, groupName, isGroupMessage });
+        
+        // 🔒 CORREÇÃO CRÍTICA: Para grupos, sempre usar o participant
+        if (isGroupMessage && message.key.participant) {
+          phoneNumber = message.key.participant;
+          console.log('🔧 CORREÇÃO APLICADA - phoneNumber atualizado para participant:', phoneNumber);
+        }
+        
+        console.log('📱 DADOS FINAIS:', { phoneNumber, groupName, isGroupMessage });
         
         // Buscar integração por instanceName
         const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
@@ -119,24 +132,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         if (integration && integration.instanceName === instanceName) {
-          // Verificar filtro de grupo se configurado
-          if (integration.restrictToGroup) {
-            if (!remoteJid.includes('@g.us')) {
-              // Se restrito a grupo mas recebeu mensagem individual
-              console.log('📱 MENSAGEM IGNORADA - mensagem individual mas restrito a grupo');
-              return res.status(200).json({ status: 'ignored - individual message' });
-            } else if (integration.allowedGroupJid && remoteJid !== integration.allowedGroupJid) {
-              // Para grupos, comparar com o JID exato configurado
-              console.log('📱 MENSAGEM IGNORADA - grupo JID não autorizado:', remoteJid, 'esperado:', integration.allowedGroupJid);
-              return res.status(200).json({ status: 'ignored - unauthorized group' });
-            }
-          }
+          // 🔒 SISTEMA ULTRA RESTRITIVO: Validação agora é por número individual
           console.log('📱 PROCESSANDO MENSAGEM para:', phoneNumber);
           await whatsappService.processIncomingMessage(
             integration.id,
             phoneNumber,
             messageText,
-            message.key.id,
+            message.key?.id || 'no-id',
             remoteJid
           );
         } else {

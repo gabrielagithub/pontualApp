@@ -92,27 +92,36 @@ export class WhatsappService {
     }
   }
 
-  // ✅ NOVA FUNÇÃO: Validação de destino autorizado (agora por número individual)
+  // 🔒 VALIDAÇÃO ULTRA RESTRITIVA: Só envia para números configurados
   private async validateMessageDestination(integration: WhatsappIntegration, phoneNumber: string): Promise<boolean> {
-    // NOVA ABORDAGEM: Sempre enviar para números individuais autorizados
-    // responseMode determina como responder
-    
     try {
-      const authorizedNumbers = integration.authorizedNumbers ? JSON.parse(integration.authorizedNumbers) : [];
-      
-      // Verificar se o número está autorizado para RECEBER respostas
-      const isAuthorizedForResponse = authorizedNumbers.includes(phoneNumber);
-      
-      if (isAuthorizedForResponse) {
-        console.log(`✅ NÚMERO AUTORIZADO PARA RECEBER: "${phoneNumber}"`);
-        return true;
-      } else {
-        console.error(`🚫 NÚMERO NÃO AUTORIZADO PARA RECEBER: "${phoneNumber}"`);
+      // 🚫 REGRA 1: Se não tem números configurados, NUNCA ENVIAR
+      if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
+        console.error(`🚫 ENVIO BLOQUEADO: Nenhum número autorizado configurado`);
         return false;
       }
+
+      const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
+      
+      // 🚫 REGRA 2: Se array está vazio, NUNCA ENVIAR
+      if (!Array.isArray(authorizedNumbers) || authorizedNumbers.length === 0) {
+        console.error(`🚫 ENVIO BLOQUEADO: Lista de números está vazia`);
+        return false;
+      }
+
+      // 🚫 REGRA 3: Só enviar se número estiver na lista
+      if (!authorizedNumbers.includes(phoneNumber)) {
+        console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
+        return false;
+      }
+
+      // ✅ ÚNICA FORMA DE ENVIAR: Número está na lista
+      console.log(`✅ ENVIO AUTORIZADO: "${phoneNumber}" está na lista`);
+      return true;
       
     } catch (error) {
-      console.error(`🚫 ERRO AO VALIDAR NÚMEROS AUTORIZADOS:`, error);
+      // 🚫 QUALQUER ERRO = NUNCA ENVIAR
+      console.error(`🚫 ENVIO BLOQUEADO: Erro na validação - ${error}`);
       return false;
     }
   }
@@ -135,31 +144,36 @@ export class WhatsappService {
     }
   }
 
-  // ✅ NOVA FUNÇÃO: Validação completa de mensagens recebidas (por número individual)
+  // 🔒 VALIDAÇÃO ULTRA RESTRITIVA: Só processa se número estiver configurado
   private validateIncomingMessage(integration: WhatsappIntegration, senderNumber: string, groupJid?: string, message?: string): { isValid: boolean; reason: string } {
     try {
-      // Validação 1: Verificar se restrictToNumbers está ativo
-      if (integration.restrictToNumbers) {
-        // Validação 2: Números autorizados devem estar configurados
-        if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
-          return {
-            isValid: false,
-            reason: 'Números autorizados não configurados na integração'
-          };
-        }
-        
-        const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
-        
-        // Validação 3: Mensagem deve ser de número autorizado
-        if (!authorizedNumbers.includes(senderNumber)) {
-          return {
-            isValid: false,
-            reason: `Número "${senderNumber}" não autorizado. Autorizados: ${authorizedNumbers.join(', ')}`
-          };
-        }
+      // 🚫 REGRA 1: Se não tem números configurados, BLOQUEAR TUDO
+      if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
+        return {
+          isValid: false,
+          reason: 'Nenhum número autorizado configurado - sistema bloqueado'
+        };
       }
 
-      // Validação 4: Verificar se não é mensagem vazia ou spam
+      const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
+      
+      // 🚫 REGRA 2: Se array está vazio, BLOQUEAR TUDO
+      if (!Array.isArray(authorizedNumbers) || authorizedNumbers.length === 0) {
+        return {
+          isValid: false,
+          reason: 'Lista de números autorizados está vazia - sistema bloqueado'
+        };
+      }
+
+      // 🚫 REGRA 3: Se número não está na lista, BLOQUEAR
+      if (!authorizedNumbers.includes(senderNumber)) {
+        return {
+          isValid: false,
+          reason: `Número "${senderNumber}" não autorizado`
+        };
+      }
+
+      // 🚫 REGRA 4: Mensagem deve ter conteúdo
       if (!message || message.trim().length === 0) {
         return {
           isValid: false,
@@ -167,51 +181,27 @@ export class WhatsappService {
         };
       }
 
-      // Validação 5: Evitar mensagens muito longas (possível spam)
-      if (message.length > 1000) {
-        return {
-          isValid: false,
-          reason: 'Mensagem muito longa (possível spam)'
-        };
-      }
-
-      // ✅ Mensagem válida
+      // ✅ ÚNICA FORMA DE PASSAR: Número na lista E mensagem válida
       return {
         isValid: true,
-        reason: integration.restrictToNumbers ? 
-          `Número autorizado: ${senderNumber}` : 
-          'Modo aberto (restrictToNumbers = false)'
+        reason: `Número ${senderNumber} autorizado e mensagem válida`
       };
       
     } catch (error) {
+      // 🚫 QUALQUER ERRO = BLOQUEAR
       return {
         isValid: false,
-        reason: 'Erro ao validar números autorizados: ' + error
+        reason: 'Erro na validação - sistema bloqueado por segurança'
       };
     }
   }
 
-  // ✅ NOVA FUNÇÃO: Determinar destino da resposta (sempre número individual)
+  // 🎯 SIMPLES: Sempre responder para quem enviou (número individual)
   private determineResponseTarget(integration: WhatsappIntegration, senderNumber: string, groupJid?: string): string {
-    // SEGURANÇA MÁXIMA: Sempre responder para o número individual
-    // Isso elimina 100% da possibilidade de enviar para grupo errado
-    
-    switch (integration.responseMode) {
-      case 'private_only':
-      default:
-        // SEMPRE responder privadamente para o número que enviou o comando
-        return senderNumber;
-        
-      case 'group_reply':
-        // Para compatibilidade futura: ainda responder individualmente por segurança
-        console.log(`⚠️ MODO group_reply detectado, mas respondendo privadamente por segurança`);
-        return senderNumber;
-        
-      case 'original_chat':
-        // Para compatibilidade futura: ainda responder individualmente por segurança  
-        console.log(`⚠️ MODO original_chat detectado, mas respondendo privadamente por segurança`);
-        return senderNumber;
-    }
+    // REGRA ÚNICA: Sempre responder para o número individual que enviou
+    // Não importa de onde veio (grupo ou privado), resposta sempre individual
+    console.log(`📱 RESPOSTA SERÁ ENVIADA PARA: ${senderNumber} (individual)`);
+    return senderNumber;
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
