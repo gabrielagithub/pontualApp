@@ -23,6 +23,8 @@ const integrationSchema = z.object({
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
   authorizedNumbers: z.string().optional(),
+  responseMode: z.string().default("individual"),
+  allowedGroupJid: z.string().optional(),
 });
 
 const notificationSchema = z.object({
@@ -51,6 +53,8 @@ export default function WhatsAppPage() {
       phoneNumber: "",
       webhookUrl: `${window.location.origin}/api/whatsapp/webhook/`,
       authorizedNumbers: "",
+      responseMode: "individual",
+      allowedGroupJid: "",
     },
   });
 
@@ -175,6 +179,8 @@ export default function WhatsAppPage() {
         phoneNumber: integration.phoneNumber || "",
         webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
         authorizedNumbers: integration.authorizedNumbers || "",
+        responseMode: integration.responseMode || "individual",
+        allowedGroupJid: integration.allowedGroupJid || "",
       });
     }
   }, [integration, integrationForm]);
@@ -403,7 +409,55 @@ export default function WhatsAppPage() {
                     <div className="space-y-4 border-t pt-4">
                       <h4 className="font-medium text-gray-900">Controle de Acesso</h4>
                       
+                      <FormField
+                        control={integrationForm.control}
+                        name="responseMode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Modo de Resposta</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o modo de resposta" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="individual">Individual - Resposta privada para cada usuário</SelectItem>
+                                <SelectItem value="group">Grupo - Resposta no grupo configurado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              <strong>Individual:</strong> Respostas sempre enviadas no privado, mesmo se comando veio de grupo<br/>
+                              <strong>Grupo:</strong> Respostas enviadas para o grupo configurado quando comando vem de membro autorizado
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
+                      {integrationForm.watch("responseMode") === "group" && (
+                        <FormField
+                          control={integrationForm.control}
+                          name="allowedGroupJid"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>JID do Grupo Autorizado</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="120363419788242278@g.us" 
+                                  {...field} 
+                                  className="font-mono text-sm"
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                <strong>Formato:</strong> números@g.us (ex: 120363419788242278@g.us)<br/>
+                                <strong>Obtenção:</strong> Use webhook/logs para capturar o JID real do grupo
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                       
                       <FormField
                         control={integrationForm.control}

@@ -45,9 +45,12 @@ export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   phoneNumber: text("phone_number").notNull(), // número conectado
   isActive: boolean("is_active").notNull().default(true),
   webhookUrl: text("webhook_url"), // URL para receber webhooks
-  // Configuração por números individuais (sistema simplificado)
+  // Configuração por números individuais
   authorizedNumbers: text("authorized_numbers"), // números autorizados (JSON array: ["5531999999999@c.us"])
   restrictToNumbers: boolean("restrict_to_numbers").notNull().default(true), // filtrar apenas mensagens dos números autorizados
+  // Configuração por grupo
+  allowedGroupJid: text("allowed_group_jid"), // JID do grupo autorizado (ex: 120363419788242278@g.us)
+  responseMode: text("response_mode").notNull().default("individual"), // "individual" ou "group"
   lastConnection: timestamp("last_connection"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

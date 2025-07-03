@@ -5,11 +5,14 @@
 ALTER TABLE "whatsapp_integrations" DROP COLUMN IF EXISTS "user_id";
 ALTER TABLE "notification_settings" DROP COLUMN IF EXISTS "user_id";
 
--- Remove campos de grupo não utilizados no sistema simplificado
-ALTER TABLE "whatsapp_integrations" DROP COLUMN IF EXISTS "allowed_group_jid";
-ALTER TABLE "whatsapp_integrations" DROP COLUMN IF EXISTS "response_mode";
+-- Remove apenas campos obsoletos, mantém funcionalidade de grupo
 ALTER TABLE "whatsapp_integrations" DROP COLUMN IF EXISTS "allowed_group_name";
 ALTER TABLE "whatsapp_integrations" DROP COLUMN IF EXISTS "restrict_to_group";
+
+-- Adiciona campos de volta se foram removidos incorretamente
+ALTER TABLE "whatsapp_integrations" 
+ADD COLUMN IF NOT EXISTS "allowed_group_jid" text,
+ADD COLUMN IF NOT EXISTS "response_mode" text DEFAULT 'individual';
 
 -- Remove tabela users se não estiver sendo usada
 DROP TABLE IF EXISTS "users";
