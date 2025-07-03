@@ -1,19 +1,21 @@
-import { WhatsappService } from '../server/whatsapp-service';
-import { DatabaseStorage } from '../server/database-storage';
+import { whatsappService } from '../server/whatsapp-service';
+import { storage } from '../server/storage';
 
 // Mock fetch para testes
-global.fetch = jest.fn();
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: false,
+    status: 404,
+    json: () => Promise.resolve({ error: 'Mock error' }),
+  } as Response)
+);
 
-describe('WhatsApp Service Tests', () => {
-  let whatsappService: WhatsappService;
-  let storage: DatabaseStorage;
+describe('WhatsApp Ultra Restrictive System Tests', () => {
+  let testIntegrationId: number;
 
-  beforeEach(async () => {
-    storage = new DatabaseStorage();
-    whatsappService = new WhatsappService();
-    
-    // Criar integração de teste com números autorizados
-    await storage.createWhatsappIntegration({
+  beforeAll(async () => {
+    // Criar integração de teste
+    const integration = await storage.createWhatsappIntegration({
       userId: 1,
       instanceName: 'test-instance',
       apiKey: 'test-key',
@@ -22,26 +24,42 @@ describe('WhatsApp Service Tests', () => {
       restrictToNumbers: true,
       responseMode: 'private_only'
     });
-    
+    testIntegrationId = integration.id;
+  });
+
+  beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
   });
 
-  describe('Message Processing', () => {
-    it('should process help command', async () => {
-      const messageData = {
-        key: { fromMe: false, id: 'test123' },
-        message: { conversation: 'ajuda' },
-        messageTimestamp: Date.now(),
-        pushName: 'Test User'
-      };
+  afterAll(async () => {
+    // Cleanup
+    if (testIntegrationId) {
+      await storage.deleteWhatsappIntegration(testIntegrationId);
+    }
+  });
 
-      const response = await whatsappService.processMessage(messageData, 1);
-      
-      expect(response).toBeTruthy();
-      expect(response).toContain('🤖 *PONTUAL - COMANDOS DISPONÍVEIS*');
-      expect(response).toContain('📋 TAREFAS');
-      expect(response).toContain('⏱️ CRONÔMETRO');
+  describe('Ultra Restrictive Security - Core Validation', () => {
+    it('should block messages when no numbers are configured', async () => {
+      // Configurar sistema sem números autorizados
+      await storage.updateWhatsappIntegration(testIntegrationId, {
+        authorizedNumbers: ''
+      });
+
+      // Simular processamento de mensagem
+      await whatsappService.processIncomingMessage(
+        testIntegrationId,
+        '5531999999999@c.us',
+        'tarefas',
+        'test123',
+        '120363419788242278@g.us'
+      );
+
+      // Verificar se foi registrado como bloqueado
+      const logs = await storage.getWhatsappLogs(testIntegrationId, 5);
+      const blockedLog = logs.find(log => log.eventType === 'BLOCKED_INCOMING');
+      expect(blockedLog).toBeTruthy();
+      expect(blockedLog?.details).toContain('número autorizado configurado');
     });
 
     it('should process task listing command', async () => {

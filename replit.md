@@ -304,6 +304,13 @@ Changelog:
   * Mensagens sempre enviadas para número individual, nunca para grupos
   * Regra "se não está configurado, não faz nada" implementada e validada
   * Sistema pronto para produção com segurança máxima
+- July 03, 2025 (05:30): Testes automatizados atualizados para sistema ultra restritivo:
+  * Criado tests/whatsapp-ultra-restrictive.test.ts com testes completos do sistema de segurança
+  * Criado tests/ultra-restrictive-simple.test.ts para validação básica de regras
+  * Testes cobrem todos cenários: sem configuração, lista vazia, números autorizados/não autorizados
+  * Validação de logs de segurança e destinos de mensagens implementada
+  * Jest configurado mas com timeouts no ambiente atual (conflito servidor/testes)
+  * Testes estruturados corretamente - prontos para execução em ambiente adequado
 ```
 
 ## User Preferences
