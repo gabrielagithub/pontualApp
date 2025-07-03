@@ -339,7 +339,7 @@ export class WhatsappService {
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
-    console.log(`🔥 INICIANDO PROCESSAMENTO:`, { integrationId, phoneNumber, message, groupJid });
+    console.log(`🔥 INICIANDO PROCESSAMENTO:`, { integrationId, phoneNumber, message, groupJid, isGroupMessage: !!groupJid });
     
     // Single instance approach
     const integration = await storage.getWhatsappIntegration();

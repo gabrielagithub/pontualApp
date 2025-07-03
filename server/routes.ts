@@ -174,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             phoneNumber,
             messageText,
             message.key?.id || 'no-id',
-            remoteJid
+            isGroupMessage ? remoteJid : undefined
           );
         } else {
           console.log('📱 MENSAGEM NÃO PROCESSADA - integração não encontrada ou instance diferente');
