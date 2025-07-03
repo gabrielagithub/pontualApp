@@ -286,6 +286,16 @@ Changelog:
   * System now prevents any message from being sent to wrong groups with 100% certainty
   * All outgoing messages validated against allowed JID before sending
   * Complete audit trail maintained for security compliance and monitoring
+- July 03, 2025 (05:05): Migrated WhatsApp security to individual number control eliminating group risks:
+  * Replaced group JID control with individual number authorization system
+  * Updated schema: authorizedNumbers, restrictToNumbers, responseMode fields added
+  * Implemented determineResponseTarget() to ALWAYS respond privately to individual numbers
+  * Created comprehensive validation preventing any group-based responses
+  * System now guarantees 100% private responses eliminating group message risks
+  * Added PostgreSQL tables for WhatsApp with new security-first schema
+  * All responses now sent to individual numbers regardless of command source
+  * Created NUMERO_INDIVIDUAL_SECURITY.md and TESTE_NUMERO_INDIVIDUAL.md documentation
+  * Maximum security achieved: impossible to send responses to wrong groups
 ```
 
 ## User Preferences

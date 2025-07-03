@@ -50,9 +50,9 @@ export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   phoneNumber: text("phone_number").notNull(), // número conectado
   isActive: boolean("is_active").notNull().default(true),
   webhookUrl: text("webhook_url"), // URL para receber webhooks
-  allowedGroupName: text("allowed_group_name"), // nome do grupo específico
-  allowedGroupJid: text("allowed_group_jid"), // JID do grupo (ex: 120363419788242278@g.us)
-  restrictToGroup: boolean("restrict_to_group").notNull().default(false), // filtrar apenas mensagens do grupo
+  authorizedNumbers: text("authorized_numbers"), // números autorizados (JSON array: ["5531999999999@c.us"])
+  restrictToNumbers: boolean("restrict_to_numbers").notNull().default(true), // filtrar apenas mensagens dos números autorizados
+  responseMode: text("response_mode").notNull().default("private_only"), // private_only, group_reply, original_chat
   lastConnection: timestamp("last_connection"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -160,6 +160,16 @@ export const insertWhatsappIntegrationSchema = createInsertSchema(whatsappIntegr
 }).extend({
   apiUrl: z.string().url("URL da Evolution API deve ser válida"),
   phoneNumber: z.string().min(10, "Número de telefone deve ter pelo menos 10 dígitos"),
+  authorizedNumbers: z.string().optional().refine((val) => {
+    if (!val) return true;
+    try {
+      const numbers = JSON.parse(val);
+      return Array.isArray(numbers) && numbers.every(n => typeof n === 'string' && n.includes('@c.us'));
+    } catch {
+      return false;
+    }
+  }, "Deve ser um JSON array de números válidos (ex: [\"5531999999999@c.us\"])"),
+  responseMode: z.enum(["private_only", "group_reply", "original_chat"]).default("private_only"),
 });
 
 export const insertWhatsappLogSchema = createInsertSchema(whatsappLogs).omit({
