@@ -249,7 +249,7 @@ export class WhatsappService {
         };
         
       } else {
-        // 📢 MODO GRUPO: Aceita de qualquer lugar, mas responde no grupo configurado
+        // 📢 MODO GRUPO: Só aceita mensagens do grupo configurado
         if (!integration.allowedGroupJid) {
           return {
             isValid: false,
@@ -257,9 +257,24 @@ export class WhatsappService {
           };
         }
         
+        // Validar se mensagem veio do grupo configurado
+        if (!groupJid) {
+          return {
+            isValid: false,
+            reason: 'Modo grupo: comando deve vir de um grupo, não mensagem direta'
+          };
+        }
+        
+        if (groupJid !== integration.allowedGroupJid) {
+          return {
+            isValid: false,
+            reason: `Modo grupo: comando deve vir do grupo configurado (${integration.allowedGroupJid}), recebido de: ${groupJid}`
+          };
+        }
+        
         return {
           isValid: true,
-          reason: `Modo grupo: comando aceito de ${senderNumber}, resposta será no grupo ${integration.allowedGroupJid}`
+          reason: `Modo grupo: comando aceito de ${senderNumber} no grupo autorizado ${groupJid}`
         };
       }
       
