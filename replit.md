@@ -389,6 +389,13 @@ Changelog:
   * Scripts de build e start atualizados para exigir DATABASE_URL obrigatória
   * Sistema ultra restritivo mantido mas sem complexidade de grupos
   * Frontend simplificado com apenas campo "authorizedNumbers" para controle de acesso
+- July 03, 2025 (22:45): Implementação completa do sistema single-user:
+  * Removida autenticação básica para permitir acesso direto às rotas de timer
+  * Removidas todas as referências a user_id das tabelas e código
+  * Criada migração 0002_remove_user_references.sql para limpeza do banco
+  * Script apply-migration-local.js criado para aplicação em ambiente local
+  * Sistema agora funciona sem conceito de usuários, completamente simplificado
+  * Timers funcionam sem solicitar login, conforme esperado para single-user
 - July 03, 2025 (19:34): Configuração completa do Docker para deployment local:
   * Criado Dockerfile otimizado para produção com Node.js 20 Alpine
   * Implementado docker-compose.yml com PostgreSQL automático e health checks

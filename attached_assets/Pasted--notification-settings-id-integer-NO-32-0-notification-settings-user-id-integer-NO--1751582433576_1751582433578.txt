@@ -1,0 +1,65 @@
+"notification_settings"	"id"	"integer"	"NO"		32	0
+"notification_settings"	"user_id"	"integer"	"NO"		32	0
+"notification_settings"	"enable_daily_report"	"boolean"	"NO"			
+"notification_settings"	"daily_report_time"	"text"	"YES"			
+"notification_settings"	"enable_weekly_report"	"boolean"	"NO"			
+"notification_settings"	"weekly_report_day"	"integer"	"YES"		32	0
+"notification_settings"	"enable_deadline_reminders"	"boolean"	"NO"			
+"notification_settings"	"reminder_hours_before"	"integer"	"YES"		32	0
+"notification_settings"	"enable_timer_reminders"	"boolean"	"NO"			
+"notification_settings"	"timer_reminder_interval"	"integer"	"YES"		32	0
+"notification_settings"	"created_at"	"timestamp without time zone"	"NO"			
+"notification_settings"	"updated_at"	"timestamp without time zone"	"NO"			
+"task_items"	"id"	"integer"	"NO"		32	0
+"task_items"	"task_id"	"integer"	"NO"		32	0
+"task_items"	"title"	"text"	"NO"			
+"task_items"	"completed"	"boolean"	"NO"			
+"task_items"	"created_at"	"timestamp without time zone"	"NO"			
+"tasks"	"id"	"integer"	"NO"		32	0
+"tasks"	"name"	"text"	"NO"			
+"tasks"	"description"	"text"	"YES"			
+"tasks"	"color"	"text"	"NO"			
+"tasks"	"estimated_hours"	"integer"	"YES"		32	0
+"tasks"	"deadline"	"timestamp without time zone"	"YES"			
+"tasks"	"is_active"	"boolean"	"NO"			
+"tasks"	"is_completed"	"boolean"	"NO"			
+"tasks"	"completed_at"	"timestamp without time zone"	"YES"			
+"tasks"	"created_at"	"timestamp without time zone"	"NO"			
+"time_entries"	"id"	"integer"	"NO"		32	0
+"time_entries"	"task_id"	"integer"	"NO"		32	0
+"time_entries"	"start_time"	"timestamp without time zone"	"NO"			
+"time_entries"	"end_time"	"timestamp without time zone"	"YES"			
+"time_entries"	"duration"	"integer"	"YES"		32	0
+"time_entries"	"is_running"	"boolean"	"NO"			
+"time_entries"	"notes"	"text"	"YES"			
+"time_entries"	"created_at"	"timestamp without time zone"	"NO"			
+"users"	"id"	"integer"	"NO"		32	0
+"users"	"username"	"text"	"NO"			
+"users"	"password"	"text"	"NO"			
+"whatsapp_integrations"	"id"	"integer"	"NO"		32	0
+"whatsapp_integrations"	"user_id"	"integer"	"NO"		32	0
+"whatsapp_integrations"	"instance_name"	"text"	"NO"			
+"whatsapp_integrations"	"api_url"	"text"	"NO"			
+"whatsapp_integrations"	"api_key"	"text"	"NO"			
+"whatsapp_integrations"	"phone_number"	"text"	"NO"			
+"whatsapp_integrations"	"is_active"	"boolean"	"NO"			
+"whatsapp_integrations"	"webhook_url"	"text"	"YES"			
+"whatsapp_integrations"	"allowed_group_name"	"text"	"YES"			
+"whatsapp_integrations"	"allowed_group_jid"	"text"	"YES"			
+"whatsapp_integrations"	"restrict_to_group"	"boolean"	"NO"			
+"whatsapp_integrations"	"last_connection"	"timestamp without time zone"	"YES"			
+"whatsapp_integrations"	"created_at"	"timestamp without time zone"	"NO"			
+"whatsapp_integrations"	"updated_at"	"timestamp without time zone"	"NO"			
+"whatsapp_integrations"	"authorized_numbers"	"text"	"YES"			
+"whatsapp_integrations"	"restrict_to_numbers"	"boolean"	"NO"			
+"whatsapp_integrations"	"response_mode"	"text"	"NO"			
+"whatsapp_logs"	"id"	"integer"	"NO"		32	0
+"whatsapp_logs"	"integration_id"	"integer"	"NO"		32	0
+"whatsapp_logs"	"message_id"	"text"	"YES"			
+"whatsapp_logs"	"message_type"	"text"	"NO"			
+"whatsapp_logs"	"message_content"	"text"	"YES"			
+"whatsapp_logs"	"command"	"text"	"YES"			
+"whatsapp_logs"	"response"	"text"	"YES"			
+"whatsapp_logs"	"success"	"boolean"	"NO"			
+"whatsapp_logs"	"error_message"	"text"	"YES"			
+"whatsapp_logs"	"created_at"	"timestamp without time zone"	"NO"			

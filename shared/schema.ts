@@ -2,11 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-});
+
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -40,7 +36,7 @@ export const timeEntries = pgTable("time_entries", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Configurações de integração WhatsApp por usuário
+// Configurações de integração WhatsApp (sistema single-user)
 export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   id: serial("id").primaryKey(),
   instanceName: text("instance_name").notNull(), // nome da instância Evolution API
@@ -49,13 +45,9 @@ export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   phoneNumber: text("phone_number").notNull(), // número conectado
   isActive: boolean("is_active").notNull().default(true),
   webhookUrl: text("webhook_url"), // URL para receber webhooks
-  // Configuração por números individuais
+  // Configuração por números individuais (sistema simplificado)
   authorizedNumbers: text("authorized_numbers"), // números autorizados (JSON array: ["5531999999999@c.us"])
   restrictToNumbers: boolean("restrict_to_numbers").notNull().default(true), // filtrar apenas mensagens dos números autorizados
-  
-  // Configuração por grupo
-  allowedGroupJid: text("allowed_group_jid"), // JID do grupo autorizado (ex: 120363419788242278@g.us)
-  responseMode: text("response_mode").notNull().default("individual"), // "individual" ou "group"
   lastConnection: timestamp("last_connection"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
