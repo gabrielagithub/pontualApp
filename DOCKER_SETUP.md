@@ -18,8 +18,10 @@ cd pontualApp
 
 ### 2. Iniciar com script automático
 ```bash
-./docker-start.sh
+./docker-start.sh --clean
 ```
+
+**Primeira execução sempre usar `--clean` para garantir build completo.**
 
 ### 3. Acessar a aplicação
 - **Frontend**: http://localhost:3000

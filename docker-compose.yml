@@ -36,7 +36,7 @@ services:
       # Para desenvolvimento, descomente a linha abaixo para hot reload
       # - .:/app
       - /app/node_modules
-    command: sh -c "sleep 5 && node migrate.js && npm start"
+    command: sh -c "sleep 5 && node migrate-docker.js && npm start"
 
 volumes:
   postgres_data:

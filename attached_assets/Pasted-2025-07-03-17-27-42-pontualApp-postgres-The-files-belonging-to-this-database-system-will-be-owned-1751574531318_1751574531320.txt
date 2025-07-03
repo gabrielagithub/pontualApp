@@ -1,0 +1,69 @@
+2025-07-03 17:27:42 pontualApp-postgres  | The files belonging to this database system will be owned by user "postgres".
+2025-07-03 17:27:42 pontualApp-postgres  | This user must also own the server process.
+2025-07-03 17:27:42 pontualApp-postgres  | 
+2025-07-03 17:27:42 pontualApp-postgres  | The database cluster will be initialized with locale "en_US.utf8".
+2025-07-03 17:27:42 pontualApp-postgres  | The default database encoding has accordingly been set to "UTF8".
+2025-07-03 17:27:42 pontualApp-postgres  | The default text search configuration will be set to "english".
+2025-07-03 17:27:42 pontualApp-postgres  | 
+2025-07-03 17:27:42 pontualApp-postgres  | Data page checksums are disabled.
+2025-07-03 17:27:42 pontualApp-postgres  | 
+2025-07-03 17:27:42 pontualApp-postgres  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2025-07-03 17:27:42 pontualApp-postgres  | creating subdirectories ... ok
+2025-07-03 17:27:42 pontualApp-postgres  | selecting dynamic shared memory implementation ... posix
+2025-07-03 17:27:42 pontualApp-postgres  | selecting default max_connections ... 100
+2025-07-03 17:27:42 pontualApp-postgres  | selecting default shared_buffers ... 128MB
+2025-07-03 17:27:42 pontualApp-postgres  | selecting default time zone ... UTC
+2025-07-03 17:27:42 pontualApp-postgres  | creating configuration files ... ok
+2025-07-03 17:27:42 pontualApp-postgres  | running bootstrap script ... ok
+2025-07-03 17:27:42 pontualApp-postgres  | sh: locale: not found
+2025-07-03 17:27:42 pontualApp-postgres  | 2025-07-03 20:27:42.624 UTC [35] WARNING:  no usable system locales were found
+2025-07-03 17:27:43 pontualApp-postgres  | performing post-bootstrap initialization ... ok
+2025-07-03 17:27:43 pontualApp-postgres  | initdb: warning: enabling "trust" authentication for local connections
+2025-07-03 17:27:43 pontualApp-postgres  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2025-07-03 17:27:43 pontualApp-postgres  | syncing data to disk ... ok
+2025-07-03 17:27:43 pontualApp-postgres  | 
+2025-07-03 17:27:43 pontualApp-postgres  | 
+2025-07-03 17:27:43 pontualApp-postgres  | Success. You can now start the database server using:
+2025-07-03 17:27:43 pontualApp-postgres  | 
+2025-07-03 17:27:43 pontualApp-postgres  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+2025-07-03 17:27:43 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | waiting for server to start....2025-07-03 20:27:44.043 UTC [41] LOG:  starting PostgreSQL 15.13 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.046 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.058 UTC [44] LOG:  database system was shut down at 2025-07-03 20:27:43 UTC
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.067 UTC [41] LOG:  database system is ready to accept connections
+2025-07-03 17:27:44 pontualApp-postgres  |  done
+2025-07-03 17:27:44 pontualApp-postgres  | server started
+2025-07-03 17:27:44 pontualApp-postgres  | CREATE DATABASE
+2025-07-03 17:27:44 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/init-db.sql
+2025-07-03 17:27:44 pontualApp-postgres  | CREATE EXTENSION
+2025-07-03 17:27:44 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | waiting for server to shut down...2025-07-03 20:27:44.361 UTC [41] LOG:  received fast shutdown request
+2025-07-03 17:27:44 pontualApp-postgres  | .2025-07-03 20:27:44.366 UTC [41] LOG:  aborting any active transactions
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.369 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.369 UTC [42] LOG:  shutting down
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.372 UTC [42] LOG:  checkpoint starting: shutdown immediate
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.559 UTC [42] LOG:  checkpoint complete: wrote 921 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.023 s, sync=0.153 s, total=0.190 s; sync files=301, longest=0.118 s, average=0.001 s; distance=4248 kB, estimate=4248 kB
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.566 UTC [41] LOG:  database system is shut down
+2025-07-03 17:27:44 pontualApp-postgres  |  done
+2025-07-03 17:27:44 pontualApp-postgres  | server stopped
+2025-07-03 17:27:44 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | PostgreSQL init process complete; ready for start up.
+2025-07-03 17:27:44 pontualApp-postgres  | 
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.694 UTC [1] LOG:  starting PostgreSQL 15.13 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.695 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.695 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.703 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.713 UTC [59] LOG:  database system was shut down at 2025-07-03 20:27:44 UTC
+2025-07-03 17:27:44 pontualApp-postgres  | 2025-07-03 20:27:44.722 UTC [1] LOG:  database system is ready to accept connections
+2025-07-03 17:28:17 pontual-app          | 🐘 Executando migrations do banco...
+2025-07-03 17:28:28 pontual-app          | ⚠️ Erro com drizzle-kit, tentando migração manual...
+2025-07-03 17:28:28 pontual-app          | ❌ Falha ao executar migrations: Command failed: node apply-migration.js
+2025-07-03 17:28:28 pontual-app          | ❌ Erro ao aplicar migração: Error: All attempts to open a WebSocket to connect to the database failed. Please refer to https://github.com/neondatabase/serverless/blob/main/CONFIG.md#websocketconstructor-typeof-websocket--undefined. Details: fetch failed
+2025-07-03 17:28:28 pontual-app          |     at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74
+2025-07-03 17:28:28 pontual-app          |     at async applyMigration (file:///app/apply-migration.js:32:32)
+2025-07-03 17:28:28 pontual-app          | 
+2036-01-01 00:00:00 
+pontual-app exited with code 1
