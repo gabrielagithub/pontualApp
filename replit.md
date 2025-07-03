@@ -318,6 +318,13 @@ Changelog:
   * Adicionada verificação condicional de DATABASE_URL para migrations
   * Criado DEPLOY_FIXES.md com documentação completa das correções
   * Scripts de deploy agora alinhados com estrutura real do projeto
+- July 03, 2025 (12:35): Implementação de deploy universal para qualquer plataforma:
+  * Criados scripts universais build.sh e start.sh que funcionam em qualquer ambiente
+  * Removida dependência específica do Render - aplicação agora funciona em qualquer cloud provider
+  * Adicionado suporte automático para SQLite quando PostgreSQL não disponível
+  * Criado DEPLOY_UNIVERSAL.md com instruções completas para Heroku, Railway, AWS, etc.
+  * Atualizado README.md com instruções universais de instalação e deploy
+  * Sistema agora suporta: desenvolvimento local, servidores próprios, todos os cloud providers
 ```
 
 ## User Preferences

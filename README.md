@@ -48,6 +48,46 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 
 ### Pré-requisitos
 - Node.js (versão 18 ou superior)
+- PostgreSQL (opcional - SQLite usado como fallback)
+
+### Instalação Rápida
+
+#### 1. Clone e Configure
+```bash
+git clone <seu-repositorio>
+cd pontual
+npm install
+```
+
+#### 2. Variáveis de Ambiente (opcional)
+```bash
+# .env
+DATABASE_URL=postgresql://user:password@localhost/pontual  # PostgreSQL
+SESSION_SECRET=sua-chave-secreta-forte                     # Produção
+PORT=3000                                                   # Porta personalizada
+```
+
+#### 3. Execute
+
+**Desenvolvimento:**
+```bash
+npm run dev
+```
+
+**Produção:**
+```bash
+./build.sh    # Build da aplicação
+./start.sh    # Iniciar servidor
+```
+
+### Deploy Universal
+A aplicação funciona em qualquer ambiente:
+- **Desenvolvimento local**: SQLite automático
+- **Heroku, Railway, Render**: Suporte nativo
+- **AWS, Azure, GCP**: Compatible
+- **Servidores próprios**: PM2, Docker, etc.
+
+📖 **Documentação completa**: [DEPLOY_UNIVERSAL.md](DEPLOY_UNIVERSAL.md)
 - npm ou yarn
 
 ### Passos para instalação
