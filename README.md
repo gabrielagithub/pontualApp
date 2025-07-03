@@ -47,6 +47,26 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 
 ## Instalação e Execução
 
+### 🐳 Opção 1: Docker (Recomendado)
+
+**Instalação mais simples com PostgreSQL incluído:**
+
+```bash
+# 1. Clonar repositório
+git clone https://github.com/gabrielagithub/pontualApp.git
+cd pontualApp
+
+# 2. Iniciar com Docker
+./docker-start.sh
+
+# 3. Acessar aplicação
+# http://localhost:3000
+```
+
+Ver [DOCKER_SETUP.md](DOCKER_SETUP.md) para instruções completas.
+
+### 💻 Opção 2: Desenvolvimento Local
+
 ### Pré-requisitos
 - Node.js (versão 18 ou superior)
 - PostgreSQL (obrigatório)

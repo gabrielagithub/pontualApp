@@ -89,6 +89,13 @@ Pontual is a Brazilian Portuguese time tracking and task management application 
 
 ## Deployment Strategy
 
+### Docker Deployment (Recommended)
+- Complete Docker setup with PostgreSQL included
+- docker-compose.yml for orchestration
+- Automatic database initialization and migrations
+- Health checks and service dependencies
+- Persistent data volumes
+
 ### Development Environment
 - Vite dev server for frontend with HMR
 - tsx for TypeScript execution in development
@@ -100,7 +107,7 @@ Pontual is a Brazilian Portuguese time tracking and task management application 
 - Environment-specific configuration via environment variables
 
 ### Database Configuration
-- Drizzle configuration supports both PostgreSQL and SQLite
+- PostgreSQL with Drizzle ORM (primary)
 - Schema defined in shared directory for type consistency
 - Migration support via Drizzle Kit
 
@@ -382,6 +389,14 @@ Changelog:
   * Scripts de build e start atualizados para exigir DATABASE_URL obrigatória
   * Sistema ultra restritivo mantido mas sem complexidade de grupos
   * Frontend simplificado com apenas campo "authorizedNumbers" para controle de acesso
+- July 03, 2025 (19:34): Configuração completa do Docker para deployment local:
+  * Criado Dockerfile otimizado para produção com Node.js 20 Alpine
+  * Implementado docker-compose.yml com PostgreSQL automático e health checks
+  * Adicionado script docker-start.sh para inicialização automatizada
+  * Criada documentação completa DOCKER_SETUP.md com troubleshooting
+  * Configuração de volumes persistentes para dados do PostgreSQL
+  * Sistema pronto para executar localmente com comando único: ./docker-start.sh
+  * Aplicação disponível em localhost:3000 com banco PostgreSQL incluído
 ```
 
 ## User Preferences

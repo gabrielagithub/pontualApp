@@ -1,0 +1,44 @@
+# Docker Compose para desenvolvimento local
+version: '3.8'
+
+services:
+  # Banco PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: pontual-postgres
+    environment:
+      POSTGRES_USER: pontual
+      POSTGRES_PASSWORD: pontual123
+      POSTGRES_DB: pontual
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pontual"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Aplicação Pontual
+  app:
+    build: .
+    container_name: pontual-app
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://pontual:pontual123@postgres:5432/pontual
+      SESSION_SECRET: docker-session-secret-change-in-production
+    ports:
+      - "3000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Para desenvolvimento, descomente a linha abaixo para hot reload
+      # - .:/app
+      - /app/node_modules
+    command: sh -c "sleep 5 && node migrate.js && npm start"
+
+volumes:
+  postgres_data:
