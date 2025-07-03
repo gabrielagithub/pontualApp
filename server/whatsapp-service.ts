@@ -104,7 +104,31 @@ export class WhatsappService {
   // 🔒 VALIDAÇÃO ULTRA RESTRITIVA: Só envia para números configurados
   private async validateMessageDestination(integration: WhatsappIntegration, phoneNumber: string): Promise<boolean> {
     try {
-      // 🚫 REGRA 1: Se não tem números configurados, NUNCA ENVIAR
+      const responseMode = integration.responseMode || 'individual';
+      
+      if (responseMode === 'group') {
+        // 📢 MODO GRUPO: Validar se destino é o grupo autorizado
+        if (phoneNumber.includes('@g.us')) {
+          if (phoneNumber === integration.allowedGroupJid) {
+            console.log(`✅ ENVIO AUTORIZADO PARA GRUPO: ${phoneNumber}`);
+            return true;
+          } else {
+            console.error(`🚫 ENVIO BLOQUEADO: Grupo não autorizado (${phoneNumber})`);
+            await this.logSecurityEvent(integration.id, phoneNumber, '', 'BLOCKED_UNAUTHORIZED_GROUP');
+            return false;
+          }
+        }
+        // Se não é grupo, validar número individual
+      }
+      
+      // 📱 MODO INDIVIDUAL ou validação de número individual no modo grupo
+      if (phoneNumber.includes('@g.us') && responseMode === 'individual') {
+        console.error(`🚫 ENVIO BLOQUEADO: Destino é grupo mas modo é individual (${phoneNumber})`);
+        await this.logSecurityEvent(integration.id, phoneNumber, '', 'BLOCKED_GROUP_IN_INDIVIDUAL_MODE');
+        return false;
+      }
+
+      // Validar números autorizados para mensagens individuais
       if (!integration.authorizedNumbers || integration.authorizedNumbers.trim() === '') {
         console.error(`🚫 ENVIO BLOQUEADO: Nenhum número autorizado configurado`);
         return false;
@@ -112,24 +136,20 @@ export class WhatsappService {
 
       const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
       
-      // 🚫 REGRA 2: Se array está vazio, NUNCA ENVIAR
       if (!Array.isArray(authorizedNumbers) || authorizedNumbers.length === 0) {
         console.error(`🚫 ENVIO BLOQUEADO: Lista de números está vazia`);
         return false;
       }
 
-      // 🚫 REGRA 3: Só enviar se número estiver na lista
       if (!authorizedNumbers.includes(phoneNumber)) {
         console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
         return false;
       }
 
-      // ✅ ÚNICA FORMA DE ENVIAR: Número está na lista
-      console.log(`✅ ENVIO AUTORIZADO: "${phoneNumber}" está na lista`);
+      console.log(`✅ ENVIO AUTORIZADO PARA INDIVIDUAL: "${phoneNumber}"`);
       return true;
       
     } catch (error) {
-      // 🚫 QUALQUER ERRO = NUNCA ENVIAR
       console.error(`🚫 ENVIO BLOQUEADO: Erro na validação - ${error}`);
       return false;
     }
@@ -208,20 +228,36 @@ export class WhatsappService {
 
   // 🔒 ULTRA SEGURO: Sempre responder para número individual, NUNCA para grupo
   private determineResponseTarget(integration: WhatsappIntegration, senderNumber: string, groupJid?: string): string {
-    // 🚫 VALIDAÇÃO CRÍTICA: Se contém @g.us, É GRUPO - NUNCA RESPONDER
-    if (senderNumber.includes('@g.us')) {
-      console.error(`🚫 BLOQUEIO CRÍTICO: Tentativa de envio para GRUPO ${senderNumber} - NUNCA PERMITIDO`);
-      throw new Error(`SEGURANÇA: Bloqueado envio para grupo ${senderNumber}`);
-    }
+    // Verificar modo de resposta configurado
+    const responseMode = integration.responseMode || 'individual';
     
-    // ✅ ÚNICA REGRA SEGURA: Só números individuais (@c.us ou @s.whatsapp.net)
-    if (!senderNumber.includes('@c.us') && !senderNumber.includes('@s.whatsapp.net')) {
-      console.error(`🚫 BLOQUEIO CRÍTICO: Formato de número inválido ${senderNumber}`);
-      throw new Error(`SEGURANÇA: Formato de número inválido ${senderNumber}`);
+    if (responseMode === 'group') {
+      // 🔄 MODO GRUPO: Responder no grupo configurado
+      if (!integration.allowedGroupJid) {
+        console.error(`🚫 ERRO CONFIGURAÇÃO: Modo grupo ativo mas JID não configurado`);
+        throw new Error(`CONFIGURAÇÃO: JID do grupo não configurado`);
+      }
+      
+      // Validar se o JID é realmente um grupo
+      if (!integration.allowedGroupJid.includes('@g.us')) {
+        console.error(`🚫 ERRO CONFIGURAÇÃO: JID "${integration.allowedGroupJid}" não é um grupo válido`);
+        throw new Error(`CONFIGURAÇÃO: JID deve ser um grupo (@g.us)`);
+      }
+      
+      console.log(`📢 RESPOSTA PARA GRUPO: ${integration.allowedGroupJid}`);
+      return integration.allowedGroupJid;
+      
+    } else {
+      // 📱 MODO INDIVIDUAL: Responder sempre no privado
+      // Validar se é número individual válido
+      if (!senderNumber.includes('@c.us') && !senderNumber.includes('@s.whatsapp.net')) {
+        console.error(`🚫 BLOQUEIO: Formato de número inválido ${senderNumber}`);
+        throw new Error(`FORMATO: Número inválido ${senderNumber}`);
+      }
+      
+      console.log(`📱 RESPOSTA INDIVIDUAL PARA: ${senderNumber}`);
+      return senderNumber;
     }
-    
-    console.log(`✅ RESPOSTA SEGURA PARA NÚMERO INDIVIDUAL: ${senderNumber}`);
-    return senderNumber;
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {

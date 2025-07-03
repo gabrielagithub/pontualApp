@@ -23,7 +23,9 @@ const integrationSchema = z.object({
   apiKey: z.string().optional(), // Tornando opcional para permitir manter chave existente
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
+  responseMode: z.enum(["individual", "group"]).default("individual"),
   authorizedNumbers: z.string().optional(),
+  allowedGroupJid: z.string().optional(),
 });
 
 const notificationSchema = z.object({
@@ -53,7 +55,9 @@ export default function WhatsAppPage() {
       apiKey: "",
       phoneNumber: "",
       webhookUrl: `${window.location.origin}/api/whatsapp/webhook/`,
+      responseMode: "individual",
       authorizedNumbers: "",
+      allowedGroupJid: "",
     },
   });
 
@@ -388,6 +392,56 @@ export default function WhatsAppPage() {
                       
                       <FormField
                         control={integrationForm.control}
+                        name="responseMode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Modo de Resposta</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o modo de resposta" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="individual">Individual - Resposta privada para cada usuário</SelectItem>
+                                <SelectItem value="group">Grupo - Resposta no grupo configurado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              <strong>Individual:</strong> Respostas sempre enviadas no privado, mesmo se comando veio de grupo<br/>
+                              <strong>Grupo:</strong> Respostas enviadas para o grupo configurado quando comando vem de membro autorizado
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {integrationForm.watch("responseMode") === "group" && (
+                        <FormField
+                          control={integrationForm.control}
+                          name="allowedGroupJid"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>JID do Grupo Autorizado</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="120363419788242278@g.us" 
+                                  {...field} 
+                                  className="font-mono text-sm"
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                <strong>Formato:</strong> números@g.us (ex: 120363419788242278@g.us)<br/>
+                                <strong>Obtenção:</strong> Use webhook/logs para capturar o JID real do grupo
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                      
+                      <FormField
+                        control={integrationForm.control}
                         name="authorizedNumbers"
                         render={({ field }) => (
                           <FormItem>
@@ -402,6 +456,7 @@ export default function WhatsAppPage() {
                             <FormDescription>
                               <strong>Formato obrigatório:</strong> Array JSON com números no formato internacional + @c.us<br/>
                               <strong>Exemplo:</strong> ["5599999999999@c.us", "5588888888888@c.us"]<br/>
+                              <strong>Uso:</strong> Lista quem pode enviar comandos (individual ou como membro de grupo)<br/>
                               <strong>Importante:</strong> Use aspas duplas e inclua @c.us no final de cada número
                             </FormDescription>
                             <FormMessage />
