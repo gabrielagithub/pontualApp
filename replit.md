@@ -231,6 +231,13 @@ Changelog:
   * WhatsApp bot now fully operational - processes commands, sends responses, filters by group JID
   * Commands like "listar" working perfectly with 201 success responses from Evolution API
   * All data persistence issues resolved - JID and API configurations save correctly
+- July 03, 2025 (03:35): Simplified WhatsApp menu interface for maximum user clarity:
+  * Completely redesigned help message from verbose technical documentation to simple command guide
+  * Simplified task list options from complex descriptions to clear "Liga timer", "Para timer", "Finaliza"
+  * Enhanced menu individual de tarefas showing clear status (RODANDO/PARADO) with minimal options
+  * Implemented automatic case-insensitive command processing (TAREFAS = tarefas = Tarefas)
+  * Removed technical jargon in favor of natural Portuguese language throughout interface
+  * User workflow now streamlined: "tarefas" → see numbered list → "1" → see simple menu → "iniciar"
 ```
 
 ## User Preferences

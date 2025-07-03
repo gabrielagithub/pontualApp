@@ -230,31 +230,6 @@ export class WhatsappService {
     const action = words[0];
     const params = words.slice(1);
 
-    // Mapear comandos com maiúscula para minúscula
-    const commandMap: { [key: string]: string } = {
-      'tarefas': 'tarefas',
-      'Tarefas': 'tarefas', 
-      'TAREFAS': 'tarefas',
-      'ajuda': 'ajuda',
-      'Ajuda': 'ajuda',
-      'AJUDA': 'ajuda',
-      'nova': 'nova',
-      'Nova': 'nova',
-      'NOVA': 'nova',
-      'iniciar': 'iniciar',
-      'Iniciar': 'iniciar',
-      'INICIAR': 'iniciar',
-      'parar': 'parar',
-      'Parar': 'parar',
-      'PARAR': 'parar',
-      'status': 'status',
-      'Status': 'status',
-      'STATUS': 'status',
-      'relatorio': 'relatorio',
-      'Relatorio': 'relatorio',
-      'RELATORIO': 'relatorio'
-    };
-
     return { action, params };
   }
 
@@ -337,35 +312,18 @@ export class WhatsappService {
     const isRunning = task.activeEntries > 0;
     
     let menu = `📋 *${task.name}*\n`;
-    menu += `ID: ${task.id}\n`;
-    
-    if (task.description && task.description !== 'Criada via WhatsApp') {
-      menu += `📝 ${task.description}\n`;
-    }
-    
-    menu += `⏱️ Tempo trabalhado: ${hours}h ${minutes}min\n`;
-    
-    if (task.deadline) {
-      const deadline = new Date(task.deadline);
-      menu += `📅 Prazo: ${deadline.toLocaleDateString('pt-BR')}\n`;
-    }
-    
-    menu += `\n🎯 *Ações disponíveis:*\n`;
+    menu += `⏱️ ${hours}h ${minutes}min\n`;
     
     if (isRunning) {
-      menu += `• *${task.id} parar* - Parar timer\n`;
+      menu += `🔴 RODANDO\n\n`;
+      menu += `• *parar* - Para timer\n`;
     } else {
-      menu += `• *${task.id} iniciar* - Iniciar timer\n`;
+      menu += `⚪ PARADO\n\n`;
+      menu += `• *iniciar* - Liga timer\n`;
     }
     
-    menu += `• *${task.id} lancamento [tempo]* - Lançar horas\n`;
-    menu += `• *${task.id} concluir* - Finalizar tarefa\n`;
-    
-    if (task.isCompleted) {
-      menu += `• *${task.id} reabrir* - Reativar tarefa\n`;
-    }
-    
-    menu += `\n💡 *Exemplo:* ${task.id} lancamento 1h30min`;
+    menu += `• *concluir* - Finaliza\n`;
+    menu += `• *lancamento 2h* - Adiciona tempo`;
     
     return menu;
   }
@@ -391,49 +349,28 @@ export class WhatsappService {
   }
 
   private getHelpMessage(): string {
-    return `🤖 *Pontual - Comandos WhatsApp*
+    return `🤖 *PONTUAL - Comandos Simples*
 
-📋 *Gestão de Tarefas:*
-• *tarefas* - Listar tarefas ativas (com seleção interativa)
-• *nova [nome]* - Criar tarefa simples
-• *nova [nome] --desc "descrição" --tempo 2h --prazo 2025-07-05 --cor verde* - Criar tarefa completa
-• *concluir [tarefa]* - Finalizar tarefa
-• *reabrir [tarefa]* - Reativar tarefa concluída
+📋 *PRINCIPAIS:*
+• *tarefas* - Ver lista (depois digite 1, 2, 3...)
+• *nova [nome]* - Criar tarefa
+• *status* - Ver timers ativos
 
-🎯 *Seleção Interativa (após listar tarefas):*
-• *1* - Ver menu da tarefa 1
-• *2 iniciar* - Iniciar timer da tarefa 2  
-• *3 concluir* - Finalizar tarefa 3
-• *1 lancamento 2h* - Lançar tempo na tarefa 1
+⏱️ *TIMER:*
+• *iniciar [nome]* - Iniciar
+• *parar [nome]* - Parar
 
-⏱️ *Controle de Tempo:*
-• *iniciar [tarefa]* - Iniciar timer
-• *parar [tarefa]* - Parar timer
-• *pausar [tarefa]* - Pausar timer
-• *retomar [tarefa]* - Retomar timer
+📊 *RELATÓRIOS:*
+• *relatorio* - Hoje
+• *relatorio semanal* - Esta semana
 
-📝 *Lançamentos:*
-• *lancamento [tarefa] [tempo]* - Lançar horas
-• *lancar-concluir [tarefa] [tempo]* - Lançar e finalizar
+💡 *EXEMPLO:*
+1. Digite: *tarefas*
+2. Veja lista numerada
+3. Digite: *1 iniciar* (inicia timer da tarefa 1)
+4. Digite: *1 parar* (para timer da tarefa 1)
 
-📊 *Relatórios:*
-• *relatorio* - Relatório de hoje
-• *relatorio semanal* - Relatório da semana
-• *relatorio mensal* - Relatório do mês
-• *status* - Status atual dos timers
-
-📝 *Parâmetros para Nova Tarefa:*
-• *--desc*: Descrição da tarefa
-• *--tempo*: Tempo estimado (2h, 90min, 1h30min)
-• *--prazo*: Data limite (AAAA-MM-DD)
-• *--cor*: azul, verde, amarelo, vermelho, roxo
-
-💡 *Exemplos:*
-• nova Reunião Cliente
-• nova Projeto X --desc "Desenvolvimento da API" --tempo 4h --cor azul
-• iniciar 2 ou iniciar Reunião
-
-Digite qualquer comando para começar! 🚀`;
+Simples assim! 🚀`;
   }
 
   private async getTasksList(): Promise<{ response: string; tasks: TaskWithStats[] }> {
@@ -471,11 +408,10 @@ Digite qualquer comando para começar! 🚀`;
       }
     });
 
-    message += "\n🎯 *Seleção Interativa:*\n";
-    message += "• Digite *1*, *2*, *3*... para ver ações da tarefa\n";
-    message += "• *1 iniciar* - Iniciar timer da tarefa 1\n";
-    message += "• *2 concluir* - Finalizar tarefa 2\n";
-    message += "• *3 lancamento 2h* - Lançar tempo na tarefa 3";
+    message += "\n⚡ *COMO USAR:*\n";
+    message += "• *1 iniciar* - Liga timer\n";
+    message += "• *2 parar* - Para timer\n";
+    message += "• *3 concluir* - Finaliza tarefa";
     
     return {
       response: message,
