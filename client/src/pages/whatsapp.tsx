@@ -192,6 +192,26 @@ export default function WhatsAppPage() {
       return;
     }
 
+    // Validar formato dos números autorizados se preenchido
+    if (data.authorizedNumbers && data.authorizedNumbers.trim()) {
+      try {
+        const numbers = JSON.parse(data.authorizedNumbers);
+        if (!Array.isArray(numbers)) {
+          throw new Error("Deve ser um array");
+        }
+        if (!numbers.every(n => typeof n === 'string' && n.includes('@c.us'))) {
+          throw new Error("Todos os números devem ser strings e conter @c.us");
+        }
+      } catch (error) {
+        toast({
+          title: "Formato inválido",
+          description: "Números autorizados devem estar no formato: [\"5531999999999@c.us\", \"5531888888888@c.us\"]",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Se estamos atualizando e a API key está vazia, não enviar ela
     if (integration && (!data.apiKey || data.apiKey.trim() === '')) {
       const { apiKey, ...dataWithoutApiKey } = data;
@@ -373,13 +393,16 @@ export default function WhatsAppPage() {
                           <FormItem>
                             <FormLabel>Números Autorizados</FormLabel>
                             <FormControl>
-                              <Input 
+                              <Textarea 
                                 placeholder='["5531999999999@c.us", "5531888888888@c.us"]' 
                                 {...field} 
+                                className="min-h-[80px] font-mono text-sm"
                               />
                             </FormControl>
                             <FormDescription>
-                              Lista de números autorizados no formato JSON. Apenas estes números poderão interagir com o bot.
+                              <strong>Formato obrigatório:</strong> Array JSON com números no formato internacional + @c.us<br/>
+                              <strong>Exemplo:</strong> ["5531999999999@c.us", "5531888888888@c.us"]<br/>
+                              <strong>Importante:</strong> Use aspas duplas e inclua @c.us no final de cada número
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
