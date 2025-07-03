@@ -1041,6 +1041,10 @@ export class SQLiteStorage implements IStorage {
       fields.push('allowed_group_name = ?');
       values.push(updates.allowedGroupName);
     }
+    if (updates.allowedGroupJid !== undefined) {
+      fields.push('allowed_group_jid = ?');
+      values.push(updates.allowedGroupJid);
+    }
     if (updates.restrictToGroup !== undefined) {
       fields.push('restrict_to_group = ?');
       values.push(updates.restrictToGroup ? 1 : 0);

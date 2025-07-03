@@ -197,7 +197,11 @@ export default function WhatsAppPage() {
   }, [integrationForm.watch("instanceName"), integrationForm]);
 
   const onSubmitIntegration = (data: any) => {
-    if (integration) {
+    // Se estamos atualizando e a API key está vazia, não enviar ela
+    if (integration && (!data.apiKey || data.apiKey.trim() === '')) {
+      const { apiKey, ...dataWithoutApiKey } = data;
+      updateIntegrationMutation.mutate(dataWithoutApiKey);
+    } else if (integration) {
       updateIntegrationMutation.mutate(data);
     } else {
       createIntegrationMutation.mutate(data);
