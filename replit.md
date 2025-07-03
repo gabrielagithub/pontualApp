@@ -351,6 +351,13 @@ Changelog:
   * Sistema ultra restritivo: nunca envia para grupo diferente do configurado
   * Modo individual: mensagens de grupo são completamente ignoradas mesmo de números autorizados
   * Validação robusta: sem JID configurado no modo grupo = sem envios para grupos
+- July 03, 2025 (18:20): Consolidação e limpeza completa da documentação:
+  * Removidos 15+ documentos redundantes e obsoletos de WhatsApp e Deploy
+  * Criado WHATSAPP_INTEGRATION.md unificado com toda informação necessária
+  * Criado DEPLOYMENT.md consolidado para todos os provedores de cloud
+  * README.md atualizado e limpo, removendo duplicações
+  * Documentação final: README.md, WHATSAPP_INTEGRATION.md, DEPLOYMENT.md, API_DOCUMENTATION.md
+  * Estrutura simplificada e organizada para facilitar manutenção futura
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)

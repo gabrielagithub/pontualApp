@@ -31,9 +31,10 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 
 ### Integração WhatsApp
 - Controle completo via WhatsApp com Evolution API
+- Dois modos: Individual (privado) ou Grupo (respostas no grupo)
 - Comandos para criação, timer e gestão de tarefas
-- Filtro por grupo específico para ambientes corporativos
 - Relatórios automáticos e notificações personalizadas
+- Sistema de segurança ultra restritivo
 - Logs completos de interações
 
 ## Tecnologias Utilizadas
@@ -52,22 +53,22 @@ Sistema inteligente de gerenciamento de tempo e tarefas com recursos avançados 
 
 ### Instalação Rápida
 
-#### 1. Clone e Configure
+1. **Clone e Configure**
 ```bash
-git clone <seu-repositorio>
+git clone https://github.com/gabrielagithub/pontualApp.git
 cd pontual
 npm install
 ```
 
-#### 2. Variáveis de Ambiente (obrigatórias)
+2. **Variáveis de Ambiente**
 ```bash
 # .env
-DATABASE_URL=postgresql://user:password@localhost/pontual  # PostgreSQL (obrigatório)
-SESSION_SECRET=sua-chave-secreta-forte                     # Produção (obrigatório)
-PORT=3000                                                   # Porta personalizada (opcional)
+DATABASE_URL=postgresql://user:password@localhost/pontual
+SESSION_SECRET=sua-chave-secreta-forte
+PORT=3000
 ```
 
-#### 3. Execute
+3. **Execute**
 
 **Desenvolvimento:**
 ```bash
@@ -76,38 +77,18 @@ npm run dev
 
 **Produção:**
 ```bash
-./build.sh    # Build da aplicação
-./start.sh    # Iniciar servidor
+npm run build
+npm start
 ```
 
-### Deploy Universal
+## Deploy
+
 A aplicação funciona em qualquer ambiente com PostgreSQL:
-- **Heroku, Railway, Render**: Suporte nativo
-- **AWS, Azure, GCP**: Compatible  
+- **Render, Heroku, Railway**: Suporte nativo
+- **AWS, Azure, GCP**: Compatível
 - **Servidores próprios**: PM2, Docker, etc.
 
-📖 **Documentação completa**: [DEPLOY_UNIVERSAL.md](DEPLOY_UNIVERSAL.md)
-- npm ou yarn
-
-### Passos para instalação
-
-1. Clone o repositório:
-```bash
-git clone https://github.com/seu-usuario/pontual.git
-cd pontual
-```
-
-2. Instale as dependências:
-```bash
-npm install
-```
-
-3. Inicie o servidor de desenvolvimento:
-```bash
-npm run dev
-```
-
-4. Acesse a aplicação em: `http://localhost:5000`
+📖 **Documentação completa**: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## Estrutura do Projeto
 
@@ -122,69 +103,60 @@ pontual/
 ├── server/               # Backend Express
 │   ├── routes.ts         # Rotas da API
 │   ├── storage.ts        # Interface de armazenamento
-│   └── sqlite-storage.ts # Implementação SQLite
+│   ├── database-storage.ts # Implementação PostgreSQL
+│   └── whatsapp-service.ts # Serviço WhatsApp
 ├── shared/               # Código compartilhado
 │   └── schema.ts         # Esquemas de dados
-└── database.sqlite       # Banco de dados SQLite
+└── migrations/           # Migrations do banco
 ```
-
-## Scripts Disponíveis
-
-- `npm run dev`: Inicia o servidor de desenvolvimento
-- `npm run build`: Gera build de produção
-- `npm run preview`: Visualiza build de produção
-
-## Funcionalidades Principais
-
-### Timer Inteligente
-- Controle preciso de tempo com pause/resume
-- Acúmulo automático de sessões
-- Proteção contra perda de dados
-
-### Relatórios Avançados
-- Exportação em múltiplos formatos
-- Filtros por período
-- Visualização gráfica de produtividade
-
-### Timezone Brasileiro
-- Suporte completo ao fuso horário UTC-3
-- Cálculos precisos de data e hora
-- Interface adaptada ao formato brasileiro
 
 ## Integração WhatsApp
 
-O Pontual inclui integração completa com WhatsApp via Evolution API, permitindo controle total das tarefas e tempo via mensagens.
+O Pontual inclui integração completa com WhatsApp via Evolution API.
 
-### Configuração
-Para configurar a integração WhatsApp, consulte o guia detalhado:
-**[📱 WHATSAPP_SETUP.md](./WHATSAPP_SETUP.md)**
+📱 **Documentação completa**: [WHATSAPP_INTEGRATION.md](./WHATSAPP_INTEGRATION.md)
 
 ### Comandos Principais
 - `tarefas` - Listar tarefas ativas
 - `nova [nome]` - Criar nova tarefa
-- `iniciar [tarefa]` - Iniciar timer
-- `parar [tarefa]` - Parar timer
-- `concluir [tarefa]` - Finalizar tarefa
-- `relatorio` - Relatório do dia
+- `[número] iniciar` - Iniciar timer
+- `[número] parar` - Parar timer
+- `[número] concluir` - Finalizar tarefa
+- `resumo` - Relatório do dia
 - `ajuda` - Lista completa de comandos
 
-### Recursos Avançados
-- **Filtro por Grupo**: Configure para responder apenas em grupos específicos
-- **Notificações Automáticas**: Relatórios diários e semanais via WhatsApp
-- **Logs de Interação**: Monitoramento completo de comandos processados
-- **Múltiplos Formatos**: Aceita diferentes formatos de tempo (2h, 90min, 1h30min)
+### Modos de Operação
+- **Individual**: Respostas sempre no privado
+- **Grupo**: Respostas no grupo configurado
+
+## API Endpoints
+
+📚 **Documentação completa**: [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+
+### Principais Endpoints
+- `/api/tasks` - Gestão de tarefas
+- `/api/time-entries` - Controle de tempo
+- `/api/whatsapp/integration` - Configuração WhatsApp
+- `/api/dashboard/stats` - Estatísticas
+
+## Scripts Disponíveis
+
+- `npm run dev`: Desenvolvimento
+- `npm run build`: Build de produção
+- `npm start`: Iniciar servidor
+- `npm run db:push`: Atualizar schema do banco
 
 ## Contribuição
 
 1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
 5. Abra um Pull Request
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a licença MIT.
 
 ## Autor
 
