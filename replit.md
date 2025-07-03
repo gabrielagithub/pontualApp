@@ -223,6 +223,14 @@ Changelog:
   * Created database verification script to diagnose and fix JID storage issues
   * System now successfully captures and processes WhatsApp messages with proper group filtering
   * Only remaining issue: Evolution API instance "pontualApp" doesn't exist (404 error)
+- July 03, 2025 (03:10): Completely resolved WhatsApp integration data persistence and functionality:
+  * Fixed critical bug in updateWhatsappIntegration() - allowedGroupJid field was missing from SQL update
+  * Implemented smart API key handling - preserves existing key when field is empty during updates
+  * Corrected form validation to prevent overwriting saved data with empty values
+  * Successfully connected to Evolution API using correct instance name "pontulApp"
+  * WhatsApp bot now fully operational - processes commands, sends responses, filters by group JID
+  * Commands like "listar" working perfectly with 201 success responses from Evolution API
+  * All data persistence issues resolved - JID and API configurations save correctly
 ```
 
 ## User Preferences

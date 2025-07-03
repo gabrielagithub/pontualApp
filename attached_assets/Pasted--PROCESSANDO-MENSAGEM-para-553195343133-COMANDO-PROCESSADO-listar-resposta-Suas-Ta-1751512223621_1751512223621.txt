@@ -1,0 +1,81 @@
+📱 PROCESSANDO MENSAGEM para: 553195343133
+📱 COMANDO PROCESSADO: "listar" -> resposta: "📋 *Suas Tarefas Ativas:*
+1. Teste Atividade Nova 
+2. Tarefa Persistente 2 
+3. Tarefa Persistente 1..."
+📤 ENVIANDO MENSAGEM: 553195343133 -> "📋 *Suas Tarefas Ativas:*
+1. Teste Atividade Nova..."
+📤 URL: https://evolution.corvusmanager.com.br/message/sendText/pontulApp
+📤 RESPOSTA EVOLUTION API: 201 - {"key":{"remoteJid":"553195343133@s.whatsapp.net","fromMe":true,"id":"3EB01057661B786D3229EADA81BFC7FA2B7E0272"},"pushName":"","status":"PENDING","message":{"conversation":"📋 *Suas Tarefas Ativas:*\n\n1. Teste Atividade Nova \n2. Tarefa Persistente 2 \n3. Tarefa Persistente 1 \n\n🎯 *Seleção Interativa:*\n• Digite *1*, *2*, *3*... para ver ações da tarefa\n• *1 iniciar* - Iniciar timer da tarefa 1\n• *2 concluir* - Finalizar tarefa 2\n• *3 lancamento 2h* - Lançar tempo na tarefa 3"},"contextInfo":null,"messageType":"conversation","messageTimestamp":1751512016,"instanceId":"b1e26abb-cbf3-4c4a-aa51-ebb981d202cf","source":"unknown"}
+📱 MENSAGEM ENVIADA: SUCESSO
+3:06:58 AM [express] POST /api/whatsapp/webhook/pontulApp 200 in 2290ms :: {"status":"ok"}
+==> Detected service running on port 5000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+📱 WEBHOOK: {
+  event: 'messages.upsert',
+  hasKey: true,
+  hasMessage: true,
+  messageType: 'stickerMessage'
+}
+🔍 ESTRUTURA COMPLETA DA MENSAGEM: {
+  "key": {
+    "remoteJid": "553188972803-1406249977@g.us",
+    "fromMe": false,
+    "id": "3AF5B927D0DD84938508",
+    "participant": "553194420196@s.whatsapp.net"
+  },
+  "pushName": "Daniela Faria",
+  "status": "DELIVERY_ACK",
+  "message": {
+    "senderKeyDistributionMessage": {
+      "groupId": "553188972803-1406249977@g.us",
+      "axolotlSenderKeyDistributionMessage": "MwjEyurTBBAAGiAdEqpD9ZdRzfPdzGsKzLztuwXAaA2aH+lqE61kvJ6c2SIhBTb8eFBecHVJ+78j5jHKnhqNmM8kl5sG6fFsrWOvrmFe"
+    },
+    "messageContextInfo": {
+      "messageSecret": "C6GhBnWqe2bkbScZGSl88XgQ9+Bf2P6A1I3b+e8NVo4="
+    },
+    "stickerMessage": {
+      "url": "https://mmg.whatsapp.net/v/t62.15575-24/31102692_1235676808342425_3717941118861797658_n.enc?ccb=11-4&oh=01_Q5Aa1wHJq7dF7BXAPIbUmpCxZItZe8zfrTu2vdHq7xPKMwX_cg&oe=688D5166&_nc_sid=5e03e0&mms3=true",
+      "fileSha256": "2L26TY1mqvapf+0WJFAEoGrGrinciaCl+mdMSjMMzAo=",
+      "fileEncSha256": "TJKf5eRZYsVEWBRss6N3qKCCw9kjPPRAXJxe6UWqF0k=",
+      "mediaKey": "gug35xYiOyWoKLnmL7UncDAofOAn9YxEUbRhCRHj+BE=",
+      "mimetype": "image/webp",
+      "directPath": "/v/t62.15575-24/31102692_1235676808342425_3717941118861797658_n.enc?ccb=11-4&oh=01_Q5Aa1wHJq7dF7BXAPIbUmpCxZItZe8zfrTu2vdHq7xPKMwX_cg&oe=688D5166&_nc_sid=5e03e0",
+      "fileLength": "268962",
+      "mediaKeyTimestamp": "1751512074",
+      "firstFrameLength": 268552,
+      "firstFrameSidecar": "DWd/99LK9x0iKg==",
+      "isAnimated": true,
+      "contextInfo": {
+        "stanzaId": "D55BCBA9F5D80F8FBAA400B5E7E8E280",
+        "participant": "553188157643@s.whatsapp.net",
+        "quotedMessage": {
+          "conversation": "12/7 - 10h save the date"
+        }
+      },
+      "stickerSentTs": "1751512074644",
+      "isAvatar": false,
+      "isAiSticker": false,
+      "isLottie": false
+    }
+  },
+  "contextInfo": {
+    "stanzaId": "D55BCBA9F5D80F8FBAA400B5E7E8E280",
+    "participant": "553188157643@s.whatsapp.net",
+    "quotedMessage": {
+      "conversation": "12/7 - 10h save the date"
+    }
+  },
+  "messageType": "stickerMessage",
+  "messageTimestamp": 1751512076,
+  "instanceId": "b1e26abb-cbf3-4c4a-aa51-ebb981d202cf",
+  "source": "ios"
+}
+📱 MENSAGEM IDENTIFICADA: {
+  remoteJid: '553188972803-1406249977@g.us',
+  messageText: '',
+  fromMe: false,
+  hasText: false
+}
+📱 IGNORANDO - mensagem sem texto
+3:07:57 AM [express] POST /api/whatsapp/webhook/pontulApp 200 in 1ms :: {"status":"ignored - no text…
