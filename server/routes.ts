@@ -1161,7 +1161,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/whatsapp/integration", async (req, res) => {
     try {
+      console.log("🔄 Criando integração WhatsApp:", req.body);
+      
       const validatedData = insertWhatsappIntegrationSchema.parse(req.body);
+      console.log("✅ Dados validados:", validatedData);
       
       // Verificar se já existe integração ativa para este usuário
       const existing = await storage.getWhatsappIntegration(validatedData.userId);
@@ -1169,16 +1172,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Usuário já possui integração WhatsApp ativa" });
       }
       
+      console.log("🔄 Criando no banco de dados...");
       const integration = await storage.createWhatsappIntegration(validatedData);
+      console.log("✅ Integração criada:", integration);
       
       // Não retornar a API key
       const { apiKey, ...safeIntegration } = integration;
       res.status(201).json(safeIntegration);
     } catch (error) {
+      console.error("❌ Erro ao criar integração:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Dados inválidos", errors: error.errors });
       }
-      res.status(500).json({ message: "Falha ao criar integração WhatsApp" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ message: "Falha ao criar integração WhatsApp", error: errorMessage });
     }
   });
 

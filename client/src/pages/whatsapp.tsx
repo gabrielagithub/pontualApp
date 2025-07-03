@@ -186,6 +186,8 @@ export default function WhatsAppPage() {
   }, [integrationForm.watch("instanceName"), integrationForm]);
 
   const onSubmitIntegration = (data: any) => {
+    console.log("🔄 Enviando dados do formulário:", data);
+    
     // Validar API Key apenas se for nova integração ou se foi preenchida
     if (!integration && (!data.apiKey || data.apiKey.trim() === '')) {
       toast({
@@ -219,10 +221,13 @@ export default function WhatsAppPage() {
     // Se estamos atualizando e a API key está vazia, não enviar ela
     if (integration && (!data.apiKey || data.apiKey.trim() === '')) {
       const { apiKey, ...dataWithoutApiKey } = data;
+      console.log("📤 Dados finais (update sem API key):", dataWithoutApiKey);
       updateIntegrationMutation.mutate(dataWithoutApiKey);
     } else if (integration) {
+      console.log("📤 Dados finais (update com API key):", data);
       updateIntegrationMutation.mutate(data);
     } else {
+      console.log("📤 Dados finais (create):", data);
       createIntegrationMutation.mutate(data);
     }
   };
