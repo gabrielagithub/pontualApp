@@ -1,0 +1,34 @@
+Gabriela@DEV MINGW64 ~/Documents/Project/Pontual/pontualApp/pontualApp (main)
+$ ./docker-start.sh
+🐳 Iniciando Pontual App com Docker...
+🛑 Parando containers existentes...
+🔨 Construindo e iniciando serviços...
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+[+] Building 1.8s (12/12) FINISHED                         docker:desktop-linux
+ => [app internal] load build definition from Dockerfile                   0.0s
+ => => transferring dockerfile: 848B                                       0.0s
+ => [app internal] load metadata for docker.io/library/node:20-alpine      0.7s
+ => [app internal] load .dockerignore                                      0.0s
+ => => transferring context: 349B                                          0.0s
+ => [app 1/8] FROM docker.io/library/node:20-alpine@sha256:674181320f4f94  0.0s
+ => => resolve docker.io/library/node:20-alpine@sha256:674181320f4f94582c  0.0s
+ => [app internal] load build context                                      0.0s
+ => => transferring context: 9.08kB                                        0.0s
+ => CACHED [app 2/8] RUN apk add --no-cache python3 make g++               0.0s
+ => CACHED [app 3/8] WORKDIR /app                                          0.0s
+ => CACHED [app 4/8] COPY package*.json ./                                 0.0s
+ => CACHED [app 5/8] RUN npm ci                                            0.0s
+ => CACHED [app 6/8] COPY . .                                              0.0s
+ => CACHED [app 7/8] RUN npx vite build                                    0.0s
+ => ERROR [app 8/8] RUN npx esbuild server/index.ts --platform=node --pac  0.8s
+------
+ > [app 8/8] RUN npx esbuild server/index.ts --platform=node --packages=external --format=esm --outdir=dist --target=node20 --external:pg --external:@neondatabase/serverless --external:vite:
+0.710 ✘ [ERROR] Cannot use "external" without "bundle"
+0.710
+0.710 1 error
+------
+failed to solve: process "/bin/sh -c npx esbuild server/index.ts --platform=node --packages=external --format=esm --outdir=dist --target=node20 --external:pg --external:@neondatabase/serverless --external:vite" did not complete successfully: exit code: 1
+❌ Erro no build ou inicialização. Mostrando logs:
+
+Gabriela@DEV MINGW64 ~/Documents/Project/Pontual/pontualApp/pontualApp (main)
