@@ -378,9 +378,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
-    return await this.retryOperation(async () => {
-      console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", integration);
-      
+    console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", JSON.stringify(integration, null, 2));
+    console.log("🔍 Verificando userId:", integration.userId, "tipo:", typeof integration.userId);
+    
+    // Verificar se usuário existe antes de tentar inserir
+    const user = await this.getUser(integration.userId);
+    console.log("👤 Usuário encontrado no banco:", user ? "SIM" : "NÃO", user);
+    
+    try {
       const [created] = await db
         .insert(whatsappIntegrations)
         .values(integration)
@@ -388,7 +393,14 @@ export class DatabaseStorage implements IStorage {
       
       console.log("✅ DatabaseStorage.createWhatsappIntegration - Created:", created);
       return created;
-    }, "createWhatsappIntegration");
+    } catch (error: any) {
+      console.error("❌ ERRO DETALHADO no createWhatsappIntegration:");
+      console.error("Tipo:", error?.constructor?.name);
+      console.error("Mensagem:", error?.message);
+      console.error("Código:", error?.code);
+      console.error("Stack:", error?.stack);
+      throw error;
+    }
   }
 
   // Método para retry em operações críticas
