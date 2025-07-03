@@ -358,6 +358,13 @@ Changelog:
   * README.md atualizado e limpo, removendo duplicações
   * Documentação final: README.md, WHATSAPP_INTEGRATION.md, DEPLOYMENT.md, API_DOCUMENTATION.md
   * Estrutura simplificada e organizada para facilitar manutenção futura
+- July 03, 2025 (18:50): Identificação e correção do erro 500 no Render:
+  * Descoberto descompasso entre schema local e banco PostgreSQL do Render
+  * Migração inicial não incluiu campos novos: authorized_numbers, restrict_to_numbers, response_mode
+  * Criado script fix-render-schema.js para correção automática do schema
+  * Adicionado logging detalhado para diagnóstico de problemas de produção
+  * Funciona perfeitamente local, problema específico do ambiente Render
+  * Solução: executar correção do schema no banco PostgreSQL do Render
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)

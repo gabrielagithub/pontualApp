@@ -378,11 +378,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
-    const [created] = await db
-      .insert(whatsappIntegrations)
-      .values(integration)
-      .returning();
-    return created;
+    try {
+      console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", integration);
+      
+      const [created] = await db
+        .insert(whatsappIntegrations)
+        .values(integration)
+        .returning();
+      
+      console.log("✅ DatabaseStorage.createWhatsappIntegration - Created:", created);
+      return created;
+    } catch (error) {
+      console.error("❌ DatabaseStorage.createWhatsappIntegration - Error:", error);
+      throw error;
+    }
   }
 
   async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
