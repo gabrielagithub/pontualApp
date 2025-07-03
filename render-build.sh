@@ -7,14 +7,14 @@ echo "🚀 Iniciando build para Render..."
 echo "📦 Instalando dependências..."
 npm install
 
-# Build completo (frontend + backend)
+# Build completo (frontend + backend) usando npx
 echo "🔧 Compilando aplicação..."
-npm run build
+npx vite build && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
 # Aplicar migrations se DATABASE_URL existir
 if [ -n "$DATABASE_URL" ]; then
   echo "🐘 Aplicando migrations do banco..."
-  npm run db:push
+  npx drizzle-kit push
 else
   echo "⚠️ DATABASE_URL não definida, pulando migrations"
 fi
