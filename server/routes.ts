@@ -1136,9 +1136,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Integração WhatsApp não encontrada" });
       }
       
-      // Não retornar a API key por segurança
+      // Não retornar a API key por segurança, mas indicar se existe
       const { apiKey, ...safeIntegration } = integration;
-      res.json(safeIntegration);
+      res.json({
+        ...safeIntegration,
+        hasApiKey: !!(apiKey && apiKey.trim().length > 0)
+      });
     } catch (error) {
       res.status(500).json({ message: "Falha ao buscar integração WhatsApp" });
     }

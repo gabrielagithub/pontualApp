@@ -20,7 +20,7 @@ const integrationSchema = z.object({
   userId: z.number().default(1),
   instanceName: z.string().min(1, "Nome da instância é obrigatório"),
   apiUrl: z.string().url("URL deve ser válida"),
-  apiKey: z.string().min(1, "API Key é obrigatória"),
+  apiKey: z.string().optional(), // Tornando opcional para permitir manter chave existente
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
   allowedGroupName: z.string().optional(),
@@ -172,7 +172,7 @@ export default function WhatsAppPage() {
         userId: integration.userId || 1,
         instanceName: integration.instanceName || "",
         apiUrl: integration.apiUrl || "",
-        apiKey: "", // Não carregamos a API key por segurança
+        apiKey: integration.hasApiKey ? "••••••••••••••••" : "", // Mostrar placeholder se já tem chave salva
         phoneNumber: integration.phoneNumber || "",
         webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
         allowedGroupName: integration.allowedGroupName || "",
@@ -197,6 +197,16 @@ export default function WhatsAppPage() {
   }, [integrationForm.watch("instanceName"), integrationForm]);
 
   const onSubmitIntegration = (data: any) => {
+    // Validar API Key apenas se for nova integração ou se foi preenchida
+    if (!integration && (!data.apiKey || data.apiKey.trim() === '')) {
+      toast({
+        title: "API Key obrigatória",
+        description: "API Key é obrigatória para criar nova integração",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Se estamos atualizando e a API key está vazia, não enviar ela
     if (integration && (!data.apiKey || data.apiKey.trim() === '')) {
       const { apiKey, ...dataWithoutApiKey } = data;
@@ -330,10 +340,21 @@ export default function WhatsAppPage() {
                         <FormItem>
                           <FormLabel>API Key</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="sua-api-key" {...field} />
+                            <Input 
+                              type="password" 
+                              placeholder={
+                                integration?.hasApiKey 
+                                  ? "Digite nova chave ou deixe em branco para manter atual" 
+                                  : "sua-api-key"
+                              }
+                              {...field} 
+                            />
                           </FormControl>
                           <FormDescription>
-                            Chave de API da Evolution API
+                            {integration?.hasApiKey 
+                              ? "✅ API Key salva. Deixe em branco para manter ou digite nova chave para substituir."
+                              : "Chave de API da Evolution API"
+                            }
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

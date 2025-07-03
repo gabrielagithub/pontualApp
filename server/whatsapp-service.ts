@@ -349,28 +349,40 @@ export class WhatsappService {
   }
 
   private getHelpMessage(): string {
-    return `🤖 *PONTUAL - Comandos Simples*
+    return `🤖 *PONTUAL - Todos os Comandos*
 
-📋 *PRINCIPAIS:*
+📋 *BÁSICOS:*
 • *tarefas* - Ver lista (depois digite 1, 2, 3...)
-• *nova [nome]* - Criar tarefa
+• *nova [nome]* - Criar tarefa simples
 • *status* - Ver timers ativos
+• *ajuda* - Esta lista
 
 ⏱️ *TIMER:*
-• *iniciar [nome]* - Iniciar
-• *parar [nome]* - Parar
+• *iniciar [nome]* - Iniciar timer
+• *parar [nome]* - Parar timer
+• *pausar [nome]* - Pausar timer
+• *retomar [nome]* - Retomar timer pausado
+
+📝 *LANÇAMENTO:*
+• *lancamento [nome] [tempo]* - Adicionar tempo manual
+• *lancar-concluir [nome] [tempo]* - Adicionar tempo e finalizar
+
+✅ *TAREFAS:*
+• *concluir [nome]* - Marcar como concluída
+• *reabrir [nome]* - Reativar tarefa concluída
 
 📊 *RELATÓRIOS:*
-• *relatorio* - Hoje
-• *relatorio semanal* - Esta semana
+• *relatorio* - Relatório de hoje
+• *relatorio semanal* - Relatório semanal
+• *relatorio mensal* - Relatório mensal
 
-💡 *EXEMPLO:*
-1. Digite: *tarefas*
-2. Veja lista numerada
-3. Digite: *1 iniciar* (inicia timer da tarefa 1)
-4. Digite: *1 parar* (para timer da tarefa 1)
+🔧 *AVANÇADO:*
+• *nova --desc "descrição" --tempo 2h --prazo 2025-01-15 --cor azul Nome da Tarefa*
 
-Simples assim! 🚀`;
+💡 *SELEÇÃO RÁPIDA:*
+1. *tarefas* → vê lista numerada
+2. *1* → vê menu da tarefa 1
+3. *1 iniciar* → inicia timer da tarefa 1`;
   }
 
   private async getTasksList(): Promise<{ response: string; tasks: TaskWithStats[] }> {
