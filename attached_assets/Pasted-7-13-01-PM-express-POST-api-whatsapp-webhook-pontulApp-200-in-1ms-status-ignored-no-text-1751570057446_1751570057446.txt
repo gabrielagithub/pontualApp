@@ -1,0 +1,68 @@
+7:13:01 PM [express] POST /api/whatsapp/webhook/pontulApp 200 in 1ms :: {"status":"ignored - no text…
+🔄 Criando integração WhatsApp: {
+  userId: 1,
+  instanceName: 'pontulApp',
+  apiUrl: 'https://evolution.corvusmanager.com.br',
+  apiKey: 'A2B8C9EFB054-4BBC-8187-E8C577CC3622',
+  phoneNumber: '5531992126113',
+  webhookUrl: 'https://pontualapp.onrender.com/api/whatsapp/webhook/pontulApp',
+  responseMode: 'individual',
+  authorizedNumbers: '["5531995343133@c.us"]',
+  allowedGroupJid: ''
+}
+✅ Dados validados: {
+  userId: 1,
+  instanceName: 'pontulApp',
+  apiUrl: 'https://evolution.corvusmanager.com.br',
+  apiKey: 'A2B8C9EFB054-4BBC-8187-E8C577CC3622',
+  phoneNumber: '5531992126113',
+  webhookUrl: 'https://pontualapp.onrender.com/api/whatsapp/webhook/pontulApp',
+  authorizedNumbers: '["5531995343133@c.us"]',
+  allowedGroupJid: '',
+  responseMode: 'individual'
+}
+7:13:45 PM [express] POST /api/whatsapp/integration 500 in 6ms :: {"message":"Falha ao criar integra…
+❌ Erro ao criar integração: ErrorEvent {
+  [Symbol(kTarget)]: WebSocket {
+    _events: [Object: null prototype] {
+      error: [Function],
+      message: [Function],
+      close: [Function],
+      open: [Function]
+    },
+    _eventsCount: 4,
+    _maxListeners: undefined,
+    _binaryType: 'arraybuffer',
+    _closeCode: 1006,
+    _closeFrameReceived: false,
+    _closeFrameSent: false,
+    _closeMessage: <Buffer >,
+    _closeTimer: null,
+    _errorEmitted: true,
+    _extensions: {},
+    _paused: false,
+    _protocol: '',
+    _readyState: 3,
+    _receiver: null,
+    _sender: null,
+    _socket: null,
+    _bufferedAmount: 0,
+    _isServer: false,
+    _redirects: 0,
+    _autoPong: true,
+    _url: 'wss://dpg-d1j7a1mr433s73fuses0-a/v2',
+    _req: null,
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false
+  },
+  [Symbol(kType)]: 'error',
+  [Symbol(kError)]: Error: connect ECONNREFUSED 10.215.120.144:443
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16) {
+    errno: -111,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '10.215.120.144',
+    port: 443
+  },
+  [Symbol(kMessage)]: 'connect ECONNREFUSED 10.215.120.144:443'
+}

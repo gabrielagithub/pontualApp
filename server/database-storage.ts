@@ -419,7 +419,7 @@ export class DatabaseStorage implements IStorage {
   async getWhatsappLogs(integrationId: number, limit: number = 50): Promise<WhatsappLog[]> {
     return await db.select().from(whatsappLogs)
       .where(eq(whatsappLogs.integrationId, integrationId))
-      .orderBy(desc(whatsappLogs.createdAt))
+      .orderBy(desc(whatsappLogs.timestamp))
       .limit(limit);
   }
 

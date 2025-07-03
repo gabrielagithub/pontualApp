@@ -368,6 +368,12 @@ Changelog:
   * Criada migração Drizzle adequada: 0001_fix_whatsapp_schema.sql
   * Script migrate.js atualizado com fallback inteligente para migração manual
   * Sistema agora aplicará migração automaticamente no próximo deploy
+- July 03, 2025 (19:15): Confirmação da correção do schema e otimização da conexão PostgreSQL:
+  * Migração aplicada com sucesso no Render - erro 500 na criação de integração resolvido
+  * Corrigido erro de campo inexistente: whatsappLogs.createdAt → whatsappLogs.timestamp
+  * Otimizada configuração de conexão PostgreSQL para ambiente serverless (Render)
+  * Adicionadas configurações de pool, timeouts e cache para melhor performance
+  * WhatsApp integração agora funciona corretamente no ambiente de produção
 - July 03, 2025 (13:00): Simplificação radical - Removido SQLite e opções de grupos:
   * Removido suporte a SQLite - sistema agora usa apenas PostgreSQL
   * Removidos todos os campos relacionados a grupos (allowedGroupJid, restrictToGroup, responseMode)
