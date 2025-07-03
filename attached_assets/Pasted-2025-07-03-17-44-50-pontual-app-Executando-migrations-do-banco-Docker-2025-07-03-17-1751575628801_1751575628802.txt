@@ -1,0 +1,27 @@
+2025-07-03 17:44:50 pontual-app       | 🐳 Executando migrations do banco (Docker)...
+2025-07-03 17:44:50 pontual-app       | ✅ Migrations executadas com sucesso!
+2025-07-03 17:44:14 pontual-postgres  | 
+2025-07-03 17:44:50 pontual-app       | 
+2025-07-03 17:44:14 pontual-postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+2025-07-03 17:44:14 pontual-postgres  | 
+2025-07-03 17:44:14 pontual-postgres  | 2025-07-03 20:44:14.557 UTC [1] LOG:  starting PostgreSQL 15.13 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+2025-07-03 17:44:14 pontual-postgres  | 2025-07-03 20:44:14.557 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-07-03 17:44:14 pontual-postgres  | 2025-07-03 20:44:14.557 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-07-03 17:44:14 pontual-postgres  | 2025-07-03 20:44:14.568 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-07-03 17:44:14 pontual-postgres  | 2025-07-03 20:44:14.581 UTC [29] LOG:  database system was shut down at 2025-07-03 20:41:20 UTC
+2025-07-03 17:44:14 pontual-postgres  | 2025-07-03 20:44:14.602 UTC [1] LOG:  database system is ready to accept connections
+2025-07-03 17:44:50 pontual-app       | > rest-express@1.0.0 start
+2025-07-03 17:44:50 pontual-app       | > NODE_ENV=production node dist/index.js
+2025-07-03 17:44:50 pontual-app       | 
+2025-07-03 17:44:51 pontual-app       | file:///app/dist/index.js:6
+2025-07-03 17:44:51 pontual-app       |   throw Error('Dynamic require of "' + x + '" is not supported');
+2025-07-03 17:44:51 pontual-app       |         ^
+2025-07-03 17:44:51 pontual-app       | 
+2025-07-03 17:44:51 pontual-app       | Error: Dynamic require of "pg" is not supported
+2025-07-03 17:44:51 pontual-app       |     at file:///app/dist/index.js:6:9
+2025-07-03 17:44:51 pontual-app       |     at file:///app/dist/index.js:215:20
+2025-07-03 17:44:51 pontual-app       |     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-07-03 17:44:51 pontual-app       |     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-07-03 17:44:51 pontual-app       |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-07-03 17:44:51 pontual-app       | 
+2025-07-03 17:44:51 pontual-app       | Node.js v20.19.3

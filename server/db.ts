@@ -6,6 +6,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Imports estáticos para evitar problemas com ESM bundles
+import { Pool } from 'pg';
+import { drizzle as drizzleNodePg } from 'drizzle-orm/node-postgres';
+import { neon, neonConfig } from '@neondatabase/serverless';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
+
 // Detectar ambiente: Docker vs Render/Cloud
 const isDocker = process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('postgres:5432');
 
@@ -13,9 +19,6 @@ let db: any;
 
 if (isDocker) {
   // Configuração para Docker com PostgreSQL padrão
-  const { Pool } = require('pg');
-  const { drizzle } = require('drizzle-orm/node-postgres');
-  
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     max: 10,
@@ -23,17 +26,14 @@ if (isDocker) {
     connectionTimeoutMillis: 2000,
   });
   
-  db = drizzle(pool, { schema });
+  db = drizzleNodePg(pool, { schema });
   console.log('✅ PostgreSQL configurado para Docker (node-postgres)');
   
 } else {
   // Configuração para Render/Cloud com Neon
-  const { neon, neonConfig } = require('@neondatabase/serverless');
-  const { drizzle } = require('drizzle-orm/neon-http');
-  
   neonConfig.fetchConnectionCache = true;
   const sql = neon(process.env.DATABASE_URL);
-  db = drizzle(sql, { schema });
+  db = drizzleNeon(sql, { schema });
   console.log('✅ PostgreSQL configurado via Neon HTTP para cloud');
 }
 

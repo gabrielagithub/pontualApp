@@ -16,8 +16,11 @@ RUN npm ci
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação
-RUN npm run build
+# Build da aplicação frontend
+RUN npx vite build
+
+# Build do servidor com configuração específica para Docker
+RUN npx esbuild server/index.ts --platform=node --packages=external --format=esm --outdir=dist --target=node20 --external:pg --external:@neondatabase/serverless --external:vite
 
 # Não fazer prune para manter vite disponível no container
 # RUN npm prune --production

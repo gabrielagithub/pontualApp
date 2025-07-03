@@ -397,6 +397,14 @@ Changelog:
   * Configuração de volumes persistentes para dados do PostgreSQL
   * Sistema pronto para executar localmente com comando único: ./docker-start.sh
   * Aplicação disponível em localhost:3000 com banco PostgreSQL incluído
+- July 03, 2025 (20:48): Correção crítica dos erros Docker com detecção automática de ambiente:
+  * Resolvido erro "Cannot find package 'vite'" removendo npm prune --production do Dockerfile
+  * Corrigido erro "Dynamic require of 'pg' is not supported" usando imports estáticos
+  * Implementada detecção automática de ambiente Docker vs Cloud no server/db.ts
+  * Docker usa conexão PostgreSQL nativa, Cloud usa Neon HTTP
+  * Criado migrate-docker.js específico para PostgreSQL padrão
+  * Build separado: Vite para frontend, ESBuild customizado para servidor Docker
+  * Configuração robusta para ambientes containerizados e serverless
 ```
 
 ## User Preferences
