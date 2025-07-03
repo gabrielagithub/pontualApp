@@ -244,6 +244,12 @@ Changelog:
   * Fixed logic to only show truly running timers (is_running = 1) in active sessions, not completed entries
   * WhatsApp behavior now identical to web interface - manual entries go directly to history without appearing as active
   * Validated with comprehensive testing: manual entries create proper historical records without session interference
+- July 03, 2025 (03:41): Comprehensive testing confirms 100% behavior parity between WhatsApp and web interface:
+  * Tested all 11 core functionalities: task listing, creation (simple/advanced), timer control, manual logging, reports
+  * Fixed parseTaskCreationInput time conversion bug (seconds to hours) for estimated time in advanced task creation
+  * Validated identical behavior: lançamentos manuais, timer operations, status reports, task completion, interactive selection
+  * WhatsApp integration now provides complete feature parity with web interface - users can perform any operation via chat
+  * All commands work with case-insensitive input, simplified menus, and natural Portuguese language throughout
 ```
 
 ## User Preferences

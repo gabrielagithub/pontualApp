@@ -503,7 +503,7 @@ Simples assim! 🚀`;
     // Process estimated time
     if (params.tempo || params.time) {
       const timeStr = params.tempo || params.time;
-      result.estimatedHours = this.parseTimeString(timeStr);
+      result.estimatedHours = this.parseTimeString(timeStr) / 3600; // Converter segundos para horas
     }
     
     // Process deadline
