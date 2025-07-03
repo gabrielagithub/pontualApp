@@ -42,7 +42,21 @@ export class WhatsappService {
 
   private async sendMessage(integration: WhatsappIntegration, phoneNumber: string, message: string): Promise<boolean> {
     try {
-      // ✅ VALIDAÇÃO DE SEGURANÇA - Verificar se o destino é autorizado
+      // 🔒 PRIMEIRA CAMADA: Bloqueio absoluto de grupos
+      if (phoneNumber.includes('@g.us')) {
+        console.error(`🚫 BLOQUEIO ABSOLUTO: Tentativa de envio para GRUPO ${phoneNumber} - REJEITADO`);
+        await this.logSecurityEvent(integration.id, phoneNumber, message, 'BLOCKED_GROUP_SEND_ATTEMPT');
+        throw new Error(`SEGURANÇA CRÍTICA: Bloqueado envio para grupo ${phoneNumber}`);
+      }
+      
+      // 🔒 SEGUNDA CAMADA: Validar formato de número individual
+      if (!phoneNumber.includes('@c.us') && !phoneNumber.includes('@s.whatsapp.net')) {
+        console.error(`🚫 BLOQUEIO FORMATO: Número "${phoneNumber}" não é individual válido`);
+        await this.logSecurityEvent(integration.id, phoneNumber, message, 'BLOCKED_INVALID_NUMBER_FORMAT');
+        return false;
+      }
+
+      // 🔒 TERCEIRA CAMADA: Verificar se o destino é autorizado
       const isValidDestination = await this.validateMessageDestination(integration, phoneNumber);
       if (!isValidDestination) {
         console.error(`🚫 ENVIO BLOQUEADO: Destino não autorizado "${phoneNumber}"`);
@@ -50,24 +64,19 @@ export class WhatsappService {
         return false;
       }
 
-      console.log(`📤 ENVIANDO MENSAGEM SEGURA: ${phoneNumber} -> "${message.substring(0, 50)}..."`);
+      console.log(`✅ ENVIO SEGURO APROVADO: ${phoneNumber} -> "${message.substring(0, 50)}..."`);
       
-      // Detectar se é um grupo (contém @g.us)
-      const isGroup = phoneNumber.includes('@g.us');
-      const endpoint = isGroup ? 'sendText' : 'sendText';
-      const url = `${integration.apiUrl}/message/${endpoint}/${integration.instanceName}`;
+      // ✅ Confirmação: sempre será individual
+      console.log(`📤 TIPO CONFIRMADO: INDIVIDUAL (${phoneNumber})`);
       
-      console.log(`📤 URL: ${url}`);
-      console.log(`📤 TIPO: ${isGroup ? 'GRUPO' : 'INDIVIDUAL'}`);
-      console.log(`📤 AUTORIZADO: ${isValidDestination ? 'SIM' : 'NÃO'}`);
+      const url = `${integration.apiUrl}/message/sendText/${integration.instanceName}`;
       
-      // Para Evolution API, sempre usar "number" (funciona para grupos e individuais)
       const payload = {
         number: phoneNumber,
         text: message
       };
       
-      console.log(`📤 PAYLOAD:`, JSON.stringify(payload));
+      console.log(`📤 PAYLOAD SEGURO:`, JSON.stringify(payload));
       
       // ✅ LOG DE AUDITORIA antes do envio
       await this.logSecurityEvent(integration.id, phoneNumber, message, 'MESSAGE_SENT');
@@ -131,10 +140,11 @@ export class WhatsappService {
     try {
       const logEntry = {
         integrationId,
-        messageType: 'security_event',
-        messageContent: `[${event}] Destino: ${destination} | Mensagem: ${message.substring(0, 100)}`,
+        phoneNumber: destination,
+        eventType: 'security_event',
         command: event,
-        success: !event.includes('BLOCKED') && !event.includes('ERROR')
+        details: `[${event}] Destino: ${destination} | Mensagem: ${message.substring(0, 100)}`,
+        destination: destination
       };
       
       await storage.createWhatsappLog(logEntry);
@@ -196,11 +206,21 @@ export class WhatsappService {
     }
   }
 
-  // 🎯 SIMPLES: Sempre responder para quem enviou (número individual)
+  // 🔒 ULTRA SEGURO: Sempre responder para número individual, NUNCA para grupo
   private determineResponseTarget(integration: WhatsappIntegration, senderNumber: string, groupJid?: string): string {
-    // REGRA ÚNICA: Sempre responder para o número individual que enviou
-    // Não importa de onde veio (grupo ou privado), resposta sempre individual
-    console.log(`📱 RESPOSTA SERÁ ENVIADA PARA: ${senderNumber} (individual)`);
+    // 🚫 VALIDAÇÃO CRÍTICA: Se contém @g.us, É GRUPO - NUNCA RESPONDER
+    if (senderNumber.includes('@g.us')) {
+      console.error(`🚫 BLOQUEIO CRÍTICO: Tentativa de envio para GRUPO ${senderNumber} - NUNCA PERMITIDO`);
+      throw new Error(`SEGURANÇA: Bloqueado envio para grupo ${senderNumber}`);
+    }
+    
+    // ✅ ÚNICA REGRA SEGURA: Só números individuais (@c.us ou @s.whatsapp.net)
+    if (!senderNumber.includes('@c.us') && !senderNumber.includes('@s.whatsapp.net')) {
+      console.error(`🚫 BLOQUEIO CRÍTICO: Formato de número inválido ${senderNumber}`);
+      throw new Error(`SEGURANÇA: Formato de número inválido ${senderNumber}`);
+    }
+    
+    console.log(`✅ RESPOSTA SEGURA PARA NÚMERO INDIVIDUAL: ${senderNumber}`);
     return senderNumber;
   }
 
@@ -329,12 +349,12 @@ export class WhatsappService {
       // Log da interação
       await storage.createWhatsappLog({
         integrationId,
-        messageId,
-        messageType: 'text',
-        messageContent: message,
+        phoneNumber: responseTarget,
+        eventType: 'command_processed',
         command: command.action,
         response,
-        success: true,
+        details: `Mensagem: ${message}`,
+        destination: responseTarget,
       });
 
     } catch (error) {
@@ -343,13 +363,12 @@ export class WhatsappService {
 
       await storage.createWhatsappLog({
         integrationId,
-        messageId,
-        messageType: 'text',
-        messageContent: message,
+        phoneNumber: responseTarget,
+        eventType: 'command_error',
         command: command.action,
         response: errorMessage,
-        success: false,
-        errorMessage: error instanceof Error ? error.message : 'Erro desconhecido',
+        details: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        destination: responseTarget,
       });
     }
   }
