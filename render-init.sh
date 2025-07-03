@@ -19,4 +19,4 @@ echo "🐘 Conectando ao PostgreSQL..."
 echo "🚀 Iniciando servidor na porta ${PORT:-5000}..."
 
 # Iniciar aplicação
-node dist/server.js
+node dist/index.js

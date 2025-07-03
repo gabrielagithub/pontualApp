@@ -7,16 +7,16 @@ echo "🚀 Iniciando build para Render..."
 echo "📦 Instalando dependências..."
 npm install
 
-# Build do servidor
-echo "🔧 Compilando servidor..."
-npm run build:server
+# Build completo (frontend + backend)
+echo "🔧 Compilando aplicação..."
+npm run build
 
-# Build do cliente
-echo "🎨 Compilando frontend..."
-npm run build:client
-
-# Aplicar migrations
-echo "🐘 Aplicando migrations do banco..."
-npm run migrate
+# Aplicar migrations se DATABASE_URL existir
+if [ -n "$DATABASE_URL" ]; then
+  echo "🐘 Aplicando migrations do banco..."
+  npm run db:push
+else
+  echo "⚠️ DATABASE_URL não definida, pulando migrations"
+fi
 
 echo "✅ Build concluído com sucesso!"

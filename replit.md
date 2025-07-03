@@ -311,6 +311,13 @@ Changelog:
   * Validação de logs de segurança e destinos de mensagens implementada
   * Jest configurado mas com timeouts no ambiente atual (conflito servidor/testes)
   * Testes estruturados corretamente - prontos para execução em ambiente adequado
+- July 03, 2025 (12:30): Correções críticas para deploy no Render:
+  * Corrigido render-build.sh para usar comandos corretos do package.json
+  * Mudado de build:server/build:client para npm run build (comando unificado)
+  * Corrigido render-init.sh para executar dist/index.js em vez de dist/server.js
+  * Adicionada verificação condicional de DATABASE_URL para migrations
+  * Criado DEPLOY_FIXES.md com documentação completa das correções
+  * Scripts de deploy agora alinhados com estrutura real do projeto
 ```
 
 ## User Preferences
