@@ -13,9 +13,15 @@ import { neon, neonConfig } from '@neondatabase/serverless';
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
 
 // Detectar ambiente: Docker vs Render/Cloud
-const isDocker = process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('postgres:5432');
+const isDocker = process.env.DATABASE_URL?.includes('postgres:5432') || 
+                 process.env.DATABASE_URL?.includes('localhost:5432') ||
+                 process.env.DATABASE_URL?.includes('db:5432');
 
 let db: any;
+
+console.log('🔍 Detectando ambiente:');
+console.log('DATABASE_URL:', process.env.DATABASE_URL?.slice(0, 50) + '...');
+console.log('isDocker:', isDocker);
 
 if (isDocker) {
   // Configuração para Docker com PostgreSQL padrão
