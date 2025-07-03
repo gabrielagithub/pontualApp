@@ -1,16 +1,27 @@
 import { WhatsappService } from '../server/whatsapp-service';
-import { MemStorage } from '../server/storage';
+import { DatabaseStorage } from '../server/database-storage';
 
 // Mock fetch para testes
 global.fetch = jest.fn();
 
 describe('WhatsApp Service Tests', () => {
   let whatsappService: WhatsappService;
-  let storage: MemStorage;
+  let storage: DatabaseStorage;
 
-  beforeEach(() => {
-    storage = new MemStorage();
-    whatsappService = new WhatsappService(storage);
+  beforeEach(async () => {
+    storage = new DatabaseStorage();
+    whatsappService = new WhatsappService();
+    
+    // Criar integração de teste com números autorizados
+    await storage.createWhatsappIntegration({
+      userId: 1,
+      instanceName: 'test-instance',
+      apiKey: 'test-key',
+      apiUrl: 'https://test.com',
+      authorizedNumbers: '["5531999999999@c.us"]',
+      restrictToNumbers: true,
+      responseMode: 'private_only'
+    });
     
     // Reset mocks
     jest.clearAllMocks();
@@ -341,6 +352,100 @@ describe('WhatsApp Service Tests', () => {
       
       expect(response).toBeTruthy();
       expect(response).toContain('2h 11min'); // Should format time correctly
+    });
+  });
+
+  describe('Ultra Restrictive Security System', () => {
+    it('should block messages when no numbers are configured', async () => {
+      // Update integration to have empty authorized numbers
+      await storage.updateWhatsappIntegration(1, {
+        authorizedNumbers: ''
+      });
+
+      const result = await whatsappService.processIncomingMessage(
+        1, // integrationId
+        '5531999999999@c.us', // phoneNumber
+        'tarefas', // message
+        'test123', // messageId
+        '120363419788242278@g.us' // groupJid
+      );
+
+      // Should be blocked due to no configured numbers
+      expect(result).toBeUndefined(); // No response for blocked messages
+    });
+
+    it('should block messages when numbers list is empty', async () => {
+      // Update integration to have empty array
+      await storage.updateWhatsappIntegration(1, {
+        authorizedNumbers: '[]'
+      });
+
+      const result = await whatsappService.processIncomingMessage(
+        1,
+        '5531999999999@c.us',
+        'tarefas',
+        'test123',
+        '120363419788242278@g.us'
+      );
+
+      // Should be blocked due to empty numbers list
+      expect(result).toBeUndefined();
+    });
+
+    it('should allow messages from authorized numbers', async () => {
+      // Ensure authorized numbers are set
+      await storage.updateWhatsappIntegration(1, {
+        authorizedNumbers: '["5531999999999@c.us"]'
+      });
+
+      const result = await whatsappService.processIncomingMessage(
+        1,
+        '5531999999999@c.us',
+        'tarefas',
+        'test123',
+        '120363419788242278@g.us'
+      );
+
+      // Should process the message (not undefined)
+      expect(result).not.toBeUndefined();
+    });
+
+    it('should block messages from unauthorized numbers', async () => {
+      // Set specific authorized number
+      await storage.updateWhatsappIntegration(1, {
+        authorizedNumbers: '["5531999999999@c.us"]'
+      });
+
+      const result = await whatsappService.processIncomingMessage(
+        1,
+        '5531888888888@c.us', // Different unauthorized number
+        'tarefas',
+        'test123',
+        '120363419788242278@g.us'
+      );
+
+      // Should be blocked due to unauthorized number
+      expect(result).toBeUndefined();
+    });
+
+    it('should log security events for blocked messages', async () => {
+      // Set empty configuration
+      await storage.updateWhatsappIntegration(1, {
+        authorizedNumbers: ''
+      });
+
+      await whatsappService.processIncomingMessage(
+        1,
+        '5531999999999@c.us',
+        'tarefas',
+        'test123',
+        '120363419788242278@g.us'
+      );
+
+      // Verify security log was created
+      const logs = await storage.getWhatsappLogs(1, 10);
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs[0].eventType).toBe('BLOCKED_INCOMING');
     });
   });
 
