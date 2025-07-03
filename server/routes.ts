@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTaskSchema, insertTaskItemSchema, insertTimeEntrySchema, updateTimeEntrySchema, insertWhatsappIntegrationSchema, insertNotificationSettingsSchema } from "@shared/schema";
 import { z } from "zod";
-import { basicAuth } from "./auth";
+
 import { whatsappService } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -17,15 +17,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Middleware condicional: aplicar autenticação apenas para rotas que NÃO são o webhook
-  app.use('/api', (req, res, next) => {
-    // Pular autenticação para webhook do WhatsApp
-    if (req.path.includes('/whatsapp/webhook/')) {
-      return next();
-    }
-    // Aplicar autenticação para todas as outras rotas
-    return basicAuth(req, res, next);
-  });
+  // Sistema simplificado - sem autenticação para single-user
+  // Apenas webhook do WhatsApp precisa de tratamento especial (já sem auth)
 
   // Webhook para receber mensagens do WhatsApp (SEM autenticação)
   app.post("/api/whatsapp/webhook/:instanceName", async (req, res) => {
