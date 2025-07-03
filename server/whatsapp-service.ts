@@ -14,6 +14,11 @@ export class WhatsappService {
     timestamp: number;
   }> = new Map();
 
+  // Normalizar número de telefone para comparação (5531999999999)
+  private normalizePhoneNumber(phoneNumber: string): string {
+    return phoneNumber.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', '');
+  }
+
   private getContextKey(integrationId: number, phoneNumber: string): string {
     return `${integrationId}-${phoneNumber}`;
   }
@@ -184,7 +189,6 @@ export class WhatsappService {
         integrationId,
         phoneNumber: destination,
         eventType: 'security_event',
-        command: event,
         details: `[${event}] Destino: ${destination} | Mensagem: ${message.substring(0, 100)}`,
         destination: destination
       };
@@ -218,11 +222,14 @@ export class WhatsappService {
         };
       }
 
-      // Validar se número está autorizado
-      if (!authorizedNumbers.includes(senderNumber)) {
+      // Validar se número está autorizado (normalizar formatos @c.us e @s.whatsapp.net)
+      const normalizedSender = this.normalizePhoneNumber(senderNumber);
+      const normalizedAuthorized = authorizedNumbers.map((num: string) => this.normalizePhoneNumber(num));
+      
+      if (!normalizedAuthorized.includes(normalizedSender)) {
         return {
           isValid: false,
-          reason: `Número "${senderNumber}" não autorizado`
+          reason: `Número "${senderNumber}" (normalizado: ${normalizedSender}) não autorizado. Lista: ${JSON.stringify(normalizedAuthorized)}`
         };
       }
 
