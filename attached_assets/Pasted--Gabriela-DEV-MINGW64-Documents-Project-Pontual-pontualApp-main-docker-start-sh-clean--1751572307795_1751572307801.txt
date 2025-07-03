@@ -1,0 +1,57 @@
+
+Gabriela@DEV MINGW64 ~/Documents/Project/Pontual/pontualApp (main)
+$ ./docker-start.sh --clean
+🐳 Iniciando Pontual App com Docker...
+🛑 Parando containers existentes...
+time="2025-07-03T16:49:21-03:00" level=warning msg="C:\\Users\\Gabriela\\Documents\\Project\\Pontual\\pontualApp\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+🧹 Removendo volumes antigos...
+time="2025-07-03T16:49:22-03:00" level=warning msg="C:\\Users\\Gabriela\\Documents\\Project\\Pontual\\pontualApp\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+[+] Running 1/1
+ ✔ Volume pontualapp_postgres_data  R...                                   0.0s
+Total reclaimed space: 0B
+🔨 Construindo e iniciando serviços...
+time="2025-07-03T16:49:22-03:00" level=warning msg="C:\\Users\\Gabriela\\Documents\\Project\\Pontual\\pontualApp\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+[+] Building 69.2s (11/11) FINISHED                        docker:desktop-linux
+ => [app internal] load build definition from Dockerfile                   0.0s
+ => => transferring dockerfile: 485B                                       0.0s
+ => [app internal] load metadata for docker.io/library/node:20-alpine      0.7s
+ => [app internal] load .dockerignore                                      0.0s
+ => => transferring context: 349B                                          0.0s
+ => [app 1/7] FROM docker.io/library/node:20-alpine@sha256:674181320f4f94  2.9s
+ => => resolve docker.io/library/node:20-alpine@sha256:674181320f4f94582c  0.0s
+ => => sha256:5432aa916e0868c8c9385ef60226d5ef530f13fe7 42.99MB / 42.99MB  1.7s
+ => => extracting sha256:5432aa916e0868c8c9385ef60226d5ef530f13fe7c28fc13  1.1s
+ => => extracting sha256:2506673f55362e86b6c8a2ab9c01541ae636887386c92d06  0.1s
+ => => extracting sha256:98c4889b578e94078411d6c14fe8f5daa0303d43e82bbf84  0.0s
+ => [app internal] load build context                                      0.0s
+ => => transferring context: 8.14kB                                        0.0s
+ => [app 2/7] RUN apk add --no-cache python3 make g++                      7.3s
+ => [app 3/7] WORKDIR /app                                                 0.1s
+ => [app 4/7] COPY package*.json ./                                        0.1s
+ => [app 5/7] RUN npm ci --only=production                                57.0s
+ => [app 6/7] COPY . .                                                     0.5s
+ => ERROR [app 7/7] RUN npm run build                                      0.5s
+------
+ > [app 7/7] RUN npm run build:
+0.416
+0.416 > rest-express@1.0.0 build
+0.416 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+0.416
+0.421 sh: vite: not found
+------
+failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 127
+⏳ Aguardando inicialização dos serviços...
+🔍 Verificando status dos containers...
+time="2025-07-03T16:50:42-03:00" level=warning msg="C:\\Users\\Gabriela\\Documents\\Project\\Pontual\\pontualApp\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
+✅ Pontual App rodando em http://localhost:3000
+
+📝 Comandos úteis:
+  - Ver logs: docker-compose logs -f
+  - Parar: docker-compose down
+  - Reiniciar limpo: ./docker-start.sh --clean
+  - Entrar no container: docker exec -it pontual-app sh
+
+Gabriela@DEV MINGW64 ~/Documents/Project/Pontual/pontualApp (main)

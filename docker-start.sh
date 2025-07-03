@@ -28,21 +28,28 @@ fi
 
 # Construir e iniciar os serviços
 echo "🔨 Construindo e iniciando serviços..."
-docker-compose up --build -d
+if ! docker-compose up --build -d; then
+    echo "❌ Erro no build ou inicialização. Mostrando logs:"
+    docker-compose logs
+    exit 1
+fi
 
 # Aguardar inicialização
 echo "⏳ Aguardando inicialização dos serviços..."
-sleep 10
+sleep 15
 
-# Verificar status
+# Verificar se containers estão rodando
 echo "🔍 Verificando status dos containers..."
-docker-compose ps
-
-# Mostrar logs se houver problemas
-if [ $? -ne 0 ]; then
-    echo "❌ Erro na inicialização. Mostrando logs:"
+if ! docker-compose ps | grep -q "Up"; then
+    echo "❌ Containers não estão rodando. Mostrando logs:"
     docker-compose logs
-else
+    exit 1
+fi
+
+# Verificar se a aplicação responde
+echo "🌐 Testando conectividade da aplicação..."
+sleep 5
+if curl -f http://localhost:3000 > /dev/null 2>&1; then
     echo "✅ Pontual App rodando em http://localhost:3000"
     echo ""
     echo "📝 Comandos úteis:"
@@ -50,4 +57,8 @@ else
     echo "  - Parar: docker-compose down"
     echo "  - Reiniciar limpo: ./docker-start.sh --clean"
     echo "  - Entrar no container: docker exec -it pontual-app sh"
+else
+    echo "⚠️  Containers iniciados, mas aplicação pode ainda estar inicializando..."
+    echo "🔍 Verifique os logs: docker-compose logs -f"
+    echo "🌐 Tente acessar: http://localhost:3000"
 fi
