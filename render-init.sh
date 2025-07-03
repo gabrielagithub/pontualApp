@@ -1,16 +1,22 @@
 #!/bin/bash
 
-# Script de inicialização para o Render
-echo "🚀 Configurando ambiente para Render..."
+# Script de inicialização para Render
+echo "🌟 Iniciando aplicação Pontual..."
 
-# Criar diretório de dados persistente
-mkdir -p /opt/render/project/src/data
-echo "📁 Diretório de dados criado: /opt/render/project/src/data"
+# Verificar variáveis de ambiente essenciais
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ DATABASE_URL não configurada!"
+    exit 1
+fi
 
-# Verificar permissões
-chmod 755 /opt/render/project/src/data
-echo "🔒 Permissões configuradas"
+if [ -z "$SESSION_SECRET" ]; then
+    echo "❌ SESSION_SECRET não configurada!"
+    exit 1
+fi
+
+echo "✅ Variáveis de ambiente verificadas"
+echo "🐘 Conectando ao PostgreSQL..."
+echo "🚀 Iniciando servidor na porta ${PORT:-5000}..."
 
 # Iniciar aplicação
-echo "🏃‍♂️ Iniciando aplicação..."
-exec npm start
+node dist/server.js

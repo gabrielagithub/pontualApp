@@ -7,6 +7,16 @@ import { basicAuth } from "./auth";
 import { whatsappService } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint para Render (sem autenticação)
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+      version: '1.0.0'
+    });
+  });
+
   // Middleware condicional: aplicar autenticação apenas para rotas que NÃO são o webhook
   app.use('/api', (req, res, next) => {
     // Pular autenticação para webhook do WhatsApp
