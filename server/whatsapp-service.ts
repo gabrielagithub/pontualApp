@@ -185,18 +185,21 @@ export class WhatsappService {
   // ✅ NOVA FUNÇÃO: Log de eventos de segurança
   private async logSecurityEvent(integrationId: number, destination: string, message: string, event: string): Promise<void> {
     try {
+      // Usar schema atual da tabela whatsapp_logs
       const logEntry = {
         integrationId,
         phoneNumber: destination,
         eventType: 'security_event',
+        command: event,
         details: `[${event}] Destino: ${destination} | Mensagem: ${message.substring(0, 100)}`,
         destination: destination
       };
       
       await storage.createWhatsappLog(logEntry);
       console.log(`🔒 LOG SEGURANÇA: ${event} registrado`);
-    } catch (error) {
-      console.error('❌ Erro ao registrar log de segurança:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao registrar log de segurança (será ignorado):', error.message);
+      // Não interromper o fluxo por erro de log
     }
   }
 
@@ -225,6 +228,14 @@ export class WhatsappService {
       // Validar se número está autorizado (normalizar formatos @c.us e @s.whatsapp.net)
       const normalizedSender = this.normalizePhoneNumber(senderNumber);
       const normalizedAuthorized = authorizedNumbers.map((num: string) => this.normalizePhoneNumber(num));
+      
+      console.log(`🔍 VALIDAÇÃO NÚMEROS:`, {
+        senderOriginal: senderNumber,
+        senderNormalizado: normalizedSender,
+        listaAutorizada: authorizedNumbers,
+        listaNormalizada: normalizedAuthorized,
+        match: normalizedAuthorized.includes(normalizedSender)
+      });
       
       if (!normalizedAuthorized.includes(normalizedSender)) {
         return {
