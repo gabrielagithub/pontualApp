@@ -1,17 +1,12 @@
 import { 
-  users, tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings,
-  type User, type InsertUser, type Task, type InsertTask, type TaskItem, type InsertTaskItem, 
+  tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings,
+  type Task, type InsertTask, type TaskItem, type InsertTaskItem, 
   type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TimeEntryWithTask, type TaskWithStats,
   type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog,
   type NotificationSettings, type InsertNotificationSettings
 } from "@shared/schema";
 
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-
   // Task methods
   getAllTasks(): Promise<TaskWithStats[]>;
   getTask(id: number): Promise<Task | undefined>;
@@ -54,8 +49,8 @@ export interface IStorage {
   getTimeByTask(startDate?: Date, endDate?: Date): Promise<Array<{ task: Task; totalTime: number }>>;
   getDailyStats(startDate: Date, endDate: Date): Promise<Array<{ date: string; totalTime: number }>>;
 
-  // WhatsApp Integration methods
-  getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined>;
+  // WhatsApp Integration methods (single instance)
+  getWhatsappIntegration(): Promise<WhatsappIntegration | undefined>;
   createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration>;
   updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined>;
   deleteWhatsappIntegration(id: number): Promise<boolean>;
@@ -64,47 +59,27 @@ export interface IStorage {
   createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog>;
   getWhatsappLogs(integrationId: number, limit?: number): Promise<WhatsappLog[]>;
   
-  // Notification Settings methods
-  getNotificationSettings(userId: number): Promise<NotificationSettings | undefined>;
+  // Notification Settings methods (single instance)
+  getNotificationSettings(): Promise<NotificationSettings | undefined>;
   createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings>;
-  updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined>;
+  updateNotificationSettings(updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
   private tasks: Map<number, Task>;
   private taskItems: Map<number, TaskItem>;
   private timeEntries: Map<number, TimeEntry>;
-  private currentUserId: number;
   private currentTaskId: number;
   private currentTaskItemId: number;
   private currentTimeEntryId: number;
 
   constructor() {
-    this.users = new Map();
     this.tasks = new Map();
     this.taskItems = new Map();
     this.timeEntries = new Map();
-    this.currentUserId = 1;
     this.currentTaskId = 1;
     this.currentTaskItemId = 1;
     this.currentTimeEntryId = 1;
-  }
-
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
   }
 
   // Task methods
@@ -496,7 +471,7 @@ export class MemStorage implements IStorage {
   }
 
   // WhatsApp Integration methods - implementação básica para compatibilidade
-  async getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined> {
+  async getWhatsappIntegration(): Promise<WhatsappIntegration | undefined> {
     // Em memória, retorna undefined - não implementado
     return undefined;
   }
@@ -521,7 +496,7 @@ export class MemStorage implements IStorage {
     return [];
   }
 
-  async getNotificationSettings(userId: number): Promise<NotificationSettings | undefined> {
+  async getNotificationSettings(): Promise<NotificationSettings | undefined> {
     return undefined;
   }
 
@@ -529,7 +504,7 @@ export class MemStorage implements IStorage {
     throw new Error("Notification settings não disponível em modo de memória");
   }
 
-  async updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
+  async updateNotificationSettings(updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
     throw new Error("Notification settings não disponível em modo de memória");
   }
 }

@@ -306,10 +306,10 @@ export class WhatsappService {
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
-    // Para compatibilidade, ainda usando userId = 1 por enquanto
-    const integration = await storage.getWhatsappIntegration(1);
+    // Single instance approach
+    const integration = await storage.getWhatsappIntegration();
     if (!integration) {
-      console.log(`📱 INTEGRAÇÃO NÃO ENCONTRADA para userId: 1`);
+      console.log(`📱 INTEGRAÇÃO NÃO ENCONTRADA`);
       return;
     }
 

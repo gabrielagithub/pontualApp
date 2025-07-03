@@ -43,7 +43,6 @@ export const timeEntries = pgTable("time_entries", {
 // Configurações de integração WhatsApp por usuário
 export const whatsappIntegrations = pgTable("whatsapp_integrations", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
   instanceName: text("instance_name").notNull(), // nome da instância Evolution API
   apiUrl: text("api_url").notNull(), // URL da Evolution API
   apiKey: text("api_key").notNull(), // chave de acesso
@@ -78,7 +77,6 @@ export const whatsappLogs = pgTable("whatsapp_logs", {
 // Configurações de notificações automáticas
 export const notificationSettings = pgTable("notification_settings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
   enableDailyReport: boolean("enable_daily_report").notNull().default(false),
   dailyReportTime: text("daily_report_time").default("18:00"), // formato HH:MM
   enableWeeklyReport: boolean("enable_weekly_report").notNull().default(false),
@@ -89,11 +87,6 @@ export const notificationSettings = pgTable("notification_settings", {
   timerReminderInterval: integer("timer_reminder_interval").default(120), // minutos
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).omit({
@@ -132,8 +125,7 @@ export const updateTimeEntrySchema = createInsertSchema(timeEntries).omit({
   }),
 }).partial();
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// User types removidos - aplicação simplificada sem usuários
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;

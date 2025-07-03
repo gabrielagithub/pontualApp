@@ -121,8 +121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log('📱 DADOS FINAIS:', { phoneNumber, groupName, isGroupMessage });
         
-        // Buscar integração por instanceName
-        const integration = await storage.getWhatsappIntegration(1); // Por enquanto, usar userId 1
+        // Buscar integração (single instance)
+        const integration = await storage.getWhatsappIntegration();
         
         console.log('📱 INTEGRAÇÃO ENCONTRADA:', {
           found: !!integration,
@@ -1138,11 +1138,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // WhatsApp Integration routes
-  app.get("/api/whatsapp/integration/:userId", async (req, res) => {
+  // WhatsApp Integration routes (single instance)
+  app.get("/api/whatsapp/integration", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
-      const integration = await storage.getWhatsappIntegration(userId);
+      const integration = await storage.getWhatsappIntegration();
       
       if (!integration) {
         return res.status(404).json({ message: "Integração WhatsApp não encontrada" });
@@ -1163,24 +1162,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("🔄 Criando integração WhatsApp:", JSON.stringify(req.body, null, 2));
       
-      // Verificar se usuário existe antes da validação
-      const userId = req.body.userId;
-      console.log("🔍 Verificando se usuário existe - ID:", userId);
-      
-      if (userId) {
-        const user = await storage.getUser(userId);
-        console.log("👤 Usuário encontrado:", user ? "SIM" : "NÃO", user);
-      }
-      
       // Validação com logging detalhado
       const validatedData = insertWhatsappIntegrationSchema.parse(req.body);
       console.log("✅ Dados validados:", JSON.stringify(validatedData, null, 2));
       
-      // Verificar se já existe integração ativa para este usuário
-      const existing = await storage.getWhatsappIntegration(validatedData.userId);
+      // Verificar se já existe integração ativa (single instance)
+      const existing = await storage.getWhatsappIntegration();
       if (existing) {
-        console.log("❌ Usuário já possui integração:", existing.id);
-        return res.status(400).json({ message: "Usuário já possui integração WhatsApp ativa" });
+        console.log("❌ Já existe integração:", existing.id);
+        return res.status(400).json({ message: "Já existe integração WhatsApp ativa" });
       }
       
       console.log("🔄 Criando no banco de dados...");
@@ -1265,11 +1255,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Notification Settings routes
-  app.get("/api/notifications/settings/:userId", async (req, res) => {
+  // Notification Settings routes (single instance)
+  app.get("/api/notifications/settings", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
-      const settings = await storage.getNotificationSettings(userId);
+      const settings = await storage.getNotificationSettings();
       
       if (!settings) {
         return res.status(404).json({ message: "Configurações de notificação não encontradas" });
@@ -1294,12 +1283,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/notifications/settings/:userId", async (req, res) => {
+  app.put("/api/notifications/settings", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
       const updates = req.body;
       
-      const settings = await storage.updateNotificationSettings(userId, updates);
+      const settings = await storage.updateNotificationSettings(updates);
       
       if (!settings) {
         return res.status(404).json({ message: "Configurações não encontradas" });

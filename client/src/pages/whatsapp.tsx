@@ -17,19 +17,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Smartphone, MessageSquare, Settings, Activity, Clock, Calendar, Bell } from "lucide-react";
 
 const integrationSchema = z.object({
-  userId: z.number().default(1),
   instanceName: z.string().min(1, "Nome da instância é obrigatório"),
   apiUrl: z.string().url("URL deve ser válida"),
   apiKey: z.string().optional(), // Tornando opcional para permitir manter chave existente
   phoneNumber: z.string().min(10, "Número deve ter pelo menos 10 dígitos"),
   webhookUrl: z.string().url("URL do webhook deve ser válida").optional(),
-  responseMode: z.enum(["individual", "group"]).default("individual"),
   authorizedNumbers: z.string().optional(),
-  allowedGroupJid: z.string().optional(),
 });
 
 const notificationSchema = z.object({
-  userId: z.number().default(1),
   enableDailyReport: z.boolean(),
   dailyReportTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato deve ser HH:MM"),
   enableWeeklyReport: z.boolean(),
@@ -49,15 +45,12 @@ export default function WhatsAppPage() {
   const integrationForm = useForm({
     resolver: zodResolver(integrationSchema),
     defaultValues: {
-      userId: 1,
       instanceName: "",
       apiUrl: "",
       apiKey: "",
       phoneNumber: "",
       webhookUrl: `${window.location.origin}/api/whatsapp/webhook/`,
-      responseMode: "individual",
       authorizedNumbers: "",
-      allowedGroupJid: "",
     },
   });
 
@@ -65,7 +58,6 @@ export default function WhatsAppPage() {
   const notificationForm = useForm({
     resolver: zodResolver(notificationSchema),
     defaultValues: {
-      userId: 1,
       enableDailyReport: false,
       dailyReportTime: "18:00",
       enableWeeklyReport: false,
@@ -79,12 +71,12 @@ export default function WhatsAppPage() {
 
   // Queries
   const { data: integration, isLoading: integrationLoading } = useQuery<any>({
-    queryKey: ["/api/whatsapp/integration/1"],
+    queryKey: ["/api/whatsapp/integration"],
     retry: false,
   });
 
   const { data: notificationSettings, isLoading: notificationLoading } = useQuery<any>({
-    queryKey: ["/api/notifications/settings/1"],
+    queryKey: ["/api/notifications/settings"],
     retry: false,
   });
 
@@ -98,7 +90,7 @@ export default function WhatsAppPage() {
     mutationFn: (data: any) => apiRequest("POST", "/api/whatsapp/integration", data),
     onSuccess: () => {
       toast({ title: "Integração WhatsApp criada com sucesso!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/integration/1"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/integration"] });
     },
     onError: (error: any) => {
       console.error("❌ Erro detalhado na criação:", error);
@@ -125,11 +117,11 @@ export default function WhatsAppPage() {
       toast({ title: "Integração WhatsApp atualizada!" });
       console.log("🔄 Invalidando cache após atualização...");
       // Invalidar todas as queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/integration/1"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/integration"] });
       queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/logs"] });
       // Também forçar refetch
       setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ["/api/whatsapp/integration/1"] });
+        queryClient.refetchQueries({ queryKey: ["/api/whatsapp/integration"] });
       }, 100);
     },
     onError: (error: any) => {
@@ -145,7 +137,7 @@ export default function WhatsAppPage() {
     mutationFn: (data: any) => apiRequest("POST", "/api/notifications/settings", data),
     onSuccess: () => {
       toast({ title: "Configurações de notificação criadas!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications/settings/1"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/settings"] });
     },
     onError: (error: any) => {
       toast({
@@ -158,10 +150,10 @@ export default function WhatsAppPage() {
 
   const updateNotificationMutation = useMutation({
     mutationFn: (data: any) => 
-      apiRequest("PUT", `/api/notifications/settings/1`, data),
+      apiRequest("PUT", `/api/notifications/settings`, data),
     onSuccess: () => {
       toast({ title: "Configurações de notificação atualizadas!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications/settings/1"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/settings"] });
     },
     onError: (error: any) => {
       toast({
@@ -177,14 +169,12 @@ export default function WhatsAppPage() {
     if (integration) {
       console.log("🔄 Carregando dados no formulário:", integration);
       integrationForm.reset({
-        userId: integration.userId || 1,
         instanceName: integration.instanceName || "",
         apiUrl: integration.apiUrl || "",
         apiKey: integration.hasApiKey ? "••••••••••••••••" : "", // Mostrar placeholder se já tem chave salva
         phoneNumber: integration.phoneNumber || "",
         webhookUrl: `${window.location.origin}/api/whatsapp/webhook/${integration.instanceName}`,
         authorizedNumbers: integration.authorizedNumbers || "",
-        responseMode: integration.responseMode || "individual",
       });
     }
   }, [integration, integrationForm]);
@@ -413,55 +403,7 @@ export default function WhatsAppPage() {
                     <div className="space-y-4 border-t pt-4">
                       <h4 className="font-medium text-gray-900">Controle de Acesso</h4>
                       
-                      <FormField
-                        control={integrationForm.control}
-                        name="responseMode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Modo de Resposta</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o modo de resposta" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="individual">Individual - Resposta privada para cada usuário</SelectItem>
-                                <SelectItem value="group">Grupo - Resposta no grupo configurado</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              <strong>Individual:</strong> Respostas sempre enviadas no privado, mesmo se comando veio de grupo<br/>
-                              <strong>Grupo:</strong> Respostas enviadas para o grupo configurado quando comando vem de membro autorizado
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      {integrationForm.watch("responseMode") === "group" && (
-                        <FormField
-                          control={integrationForm.control}
-                          name="allowedGroupJid"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>JID do Grupo Autorizado</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="120363419788242278@g.us" 
-                                  {...field} 
-                                  className="font-mono text-sm"
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                <strong>Formato:</strong> números@g.us (ex: 120363419788242278@g.us)<br/>
-                                <strong>Obtenção:</strong> Use webhook/logs para capturar o JID real do grupo
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
                       
                       <FormField
                         control={integrationForm.control}

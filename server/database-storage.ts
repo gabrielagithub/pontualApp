@@ -1,27 +1,9 @@
-import { users, tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings, type User, type InsertUser, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TaskWithStats, type TimeEntryWithTask, type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog, type NotificationSettings, type InsertNotificationSettings } from "@shared/schema";
+import { tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TaskWithStats, type TimeEntryWithTask, type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog, type NotificationSettings, type InsertNotificationSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, isNull, desc, asc } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
-  }
-
   async getAllTasks(): Promise<TaskWithStats[]> {
     const allTasks = await db.select().from(tasks).orderBy(desc(tasks.createdAt));
     
@@ -30,7 +12,7 @@ export class DatabaseStorage implements IStorage {
     for (const task of allTasks) {
       // Calcular tempo total da tarefa
       const entries = await db.select().from(timeEntries).where(eq(timeEntries.taskId, task.id));
-      const totalTime = entries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+      const totalTime = entries.reduce((sum: number, entry: TimeEntry) => sum + (entry.duration || 0), 0);
       
       // Contar entradas ativas
       const activeEntries = await db.select().from(timeEntries)
@@ -157,7 +139,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(tasks, eq(timeEntries.taskId, tasks.id))
       .orderBy(desc(timeEntries.startTime));
 
-    return entries.map(entry => ({
+    return entries.map((entry: any) => ({
       id: entry.id,
       taskId: entry.taskId,
       startTime: entry.startTime,
@@ -196,7 +178,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(tasks, eq(timeEntries.taskId, tasks.id))
       .where(eq(timeEntries.isRunning, true));
 
-    return entries.map(entry => ({
+    return entries.map((entry: any) => ({
       id: entry.id,
       taskId: entry.taskId,
       startTime: entry.startTime,
@@ -269,17 +251,17 @@ export class DatabaseStorage implements IStorage {
     // Tempo de hoje
     const todayEntries = await db.select().from(timeEntries)
       .where(gte(timeEntries.startTime, startOfDay));
-    const todayTime = todayEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+    const todayTime = todayEntries.reduce((sum: number, entry: TimeEntry) => sum + (entry.duration || 0), 0);
 
     // Tempo da semana
     const weekEntries = await db.select().from(timeEntries)
       .where(gte(timeEntries.startTime, startOfWeek));
-    const weekTime = weekEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+    const weekTime = weekEntries.reduce((sum: number, entry: TimeEntry) => sum + (entry.duration || 0), 0);
 
     // Tempo do mês
     const monthEntries = await db.select().from(timeEntries)
       .where(gte(timeEntries.startTime, startOfMonth));
-    const monthTime = monthEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+    const monthTime = monthEntries.reduce((sum: number, entry: TimeEntry) => sum + (entry.duration || 0), 0);
 
     // Tarefas ativas
     const activeTasks = await db.select().from(tasks).where(eq(tasks.isActive, true));
@@ -371,19 +353,14 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  // WhatsApp Integration methods
-  async getWhatsappIntegration(userId: number): Promise<WhatsappIntegration | undefined> {
-    const [integration] = await db.select().from(whatsappIntegrations).where(eq(whatsappIntegrations.userId, userId));
+  // WhatsApp Integration methods (single instance)
+  async getWhatsappIntegration(): Promise<WhatsappIntegration | undefined> {
+    const [integration] = await db.select().from(whatsappIntegrations).limit(1);
     return integration || undefined;
   }
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
     console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", JSON.stringify(integration, null, 2));
-    console.log("🔍 Verificando userId:", integration.userId, "tipo:", typeof integration.userId);
-    
-    // Verificar se usuário existe antes de tentar inserir
-    const user = await this.getUser(integration.userId);
-    console.log("👤 Usuário encontrado no banco:", user ? "SIM" : "NÃO", user);
     
     try {
       const [created] = await db
@@ -465,9 +442,9 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  // Notification Settings methods
-  async getNotificationSettings(userId: number): Promise<NotificationSettings | undefined> {
-    const [settings] = await db.select().from(notificationSettings).where(eq(notificationSettings.userId, userId));
+  // Notification Settings methods (single instance)
+  async getNotificationSettings(): Promise<NotificationSettings | undefined> {
+    const [settings] = await db.select().from(notificationSettings).limit(1);
     return settings || undefined;
   }
 
@@ -479,11 +456,17 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateNotificationSettings(userId: number, updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
+  async updateNotificationSettings(updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
+    // Para single instance, atualiza a primeira configuração existente
+    const existing = await this.getNotificationSettings();
+    if (!existing) {
+      return undefined;
+    }
+    
     const [updated] = await db
       .update(notificationSettings)
       .set(updates)
-      .where(eq(notificationSettings.userId, userId))
+      .where(eq(notificationSettings.id, existing.id))
       .returning();
     return updated || undefined;
   }
