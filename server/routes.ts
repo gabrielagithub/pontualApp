@@ -169,6 +169,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (integration && integration.instanceName === instanceName) {
           // 🔒 SISTEMA ULTRA RESTRITIVO: Validação agora é por número individual
           console.log('📱 PROCESSANDO MENSAGEM para:', phoneNumber);
+          console.log('🔧 DEBUG GROUPJID:', {
+            isGroupMessage,
+            remoteJid,
+            groupJidToPass: isGroupMessage ? remoteJid : undefined
+          });
           await whatsappService.processIncomingMessage(
             integration.id,
             phoneNumber,
