@@ -138,8 +138,13 @@ export class WhatsappService {
 
         const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
         
-        if (!authorizedNumbers.includes(phoneNumber)) {
-          console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
+        // Normalizar números para comparação
+        const normalizedSender = this.normalizePhoneNumber(phoneNumber);
+        const normalizedAuthorized = authorizedNumbers.map(n => this.normalizePhoneNumber(n));
+        
+        if (!normalizedAuthorized.includes(normalizedSender)) {
+          console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" (normalizado: ${normalizedSender}) não está na lista autorizada`);
+          console.error(`Lista autorizada normalizada:`, normalizedAuthorized);
           return false;
         }
 
@@ -167,8 +172,13 @@ export class WhatsappService {
           return false;
         }
 
-        if (!authorizedNumbers.includes(phoneNumber)) {
-          console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" não está na lista autorizada`);
+        // Normalizar números para comparação
+        const normalizedSender = this.normalizePhoneNumber(phoneNumber);
+        const normalizedAuthorized = authorizedNumbers.map(n => this.normalizePhoneNumber(n));
+        
+        if (!normalizedAuthorized.includes(normalizedSender)) {
+          console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" (normalizado: ${normalizedSender}) não está na lista autorizada`);
+          console.error(`Lista autorizada normalizada:`, normalizedAuthorized);
           return false;
         }
 
@@ -356,12 +366,12 @@ export class WhatsappService {
     });
 
     // ✅ VALIDAÇÃO DE SEGURANÇA AVANÇADA (agora por número individual)
-    console.log(`🔧 TESTE NORMALIZAÇÃO DIRETO:`, {
+    console.log(`🔧 TESTE NORMALIZAÇÃO CORRIGIDO:`, {
       phoneNumber,
       authorizedNumbers: integration.authorizedNumbers,
-      normalized: phoneNumber.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', ''),
+      normalizedSender: this.normalizePhoneNumber(phoneNumber),
       authorizedParsed: JSON.parse(integration.authorizedNumbers || '[]'),
-      match: JSON.parse(integration.authorizedNumbers || '[]').map((n: string) => n.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', '')).includes(phoneNumber.replace('@c.us', '').replace('@s.whatsapp.net', '').replace('@g.us', ''))
+      normalizedAuthorized: JSON.parse(integration.authorizedNumbers || '[]').map(n => this.normalizePhoneNumber(n))
     });
     
     const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);
