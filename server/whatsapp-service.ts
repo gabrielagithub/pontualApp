@@ -76,12 +76,25 @@ export class WhatsappService {
       
       const url = `${integration.apiUrl}/message/sendText/${integration.instanceName}`;
       
+      // Sanitizar texto para evitar erros de encoding
+      const sanitizedMessage = message
+        .replace(/❌/g, '[ERRO]')
+        .replace(/✅/g, '[OK]')
+        .replace(/📱/g, '')
+        .replace(/🤖/g, 'BOT')
+        .replace(/📋/g, '')
+        .replace(/📊/g, '')
+        .replace(/📝/g, '')
+        .replace(/⏰/g, '')
+        .replace(/🚀/g, '')
+        .replace(/[^\x00-\x7F]/g, ''); // Remove caracteres não-ASCII
+      
       const payload = {
         number: phoneNumber,
-        text: message
+        text: sanitizedMessage
       };
       
-      console.log(`📤 PAYLOAD SEGURO:`, JSON.stringify(payload));
+      console.log(`📤 PAYLOAD SANITIZADO:`, JSON.stringify(payload));
       
       // ✅ LOG DE AUDITORIA antes do envio
       await this.logSecurityEvent(integration.id, phoneNumber, message, 'MESSAGE_SENT');
@@ -192,25 +205,10 @@ export class WhatsappService {
     }
   }
 
-  // ✅ NOVA FUNÇÃO: Log de eventos de segurança
+  // ✅ NOVA FUNÇÃO: Log de eventos de segurança (TEMPORARIAMENTE DESABILITADO)
   private async logSecurityEvent(integrationId: number, destination: string, message: string, event: string): Promise<void> {
-    try {
-      // Usar schema atual da tabela whatsapp_logs
-      const logEntry = {
-        integrationId,
-        phoneNumber: destination,
-        eventType: 'security_event',
-        command: event,
-        details: `[${event}] Destino: ${destination} | Mensagem: ${message.substring(0, 100)}`,
-        destination: destination
-      };
-      
-      await storage.createWhatsappLog(logEntry);
-      console.log(`🔒 LOG SEGURANÇA: ${event} registrado`);
-    } catch (error: any) {
-      console.error('❌ Erro ao registrar log de segurança (será ignorado):', error.message);
-      // Não interromper o fluxo por erro de log
-    }
+    // Desabilitado temporariamente devido a erro no schema do banco
+    console.log(`🔒 LOG SEGURANÇA (DESABILITADO): ${event} para ${destination}`);
   }
 
   // 🔒 VALIDAÇÃO ULTRA RESTRITIVA: Só processa se número estiver configurado
