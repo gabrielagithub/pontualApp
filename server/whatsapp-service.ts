@@ -92,6 +92,12 @@ export class WhatsappService {
       };
       
       console.log(`📤 PAYLOAD SANITIZADO:`, JSON.stringify(payload));
+      console.log(`🔍 DEBUG ENCODING:`, {
+        firstChar: sanitizedMessage.charAt(0),
+        firstCharCode: sanitizedMessage.charCodeAt(0),
+        length: sanitizedMessage.length,
+        preview: sanitizedMessage.substring(0, 50)
+      });
       
       // ✅ LOG DE AUDITORIA antes do envio
       await this.logSecurityEvent(integration.id, phoneNumber, message, 'MESSAGE_SENT');
