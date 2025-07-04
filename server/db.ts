@@ -6,6 +6,10 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Detectar se está usando Neon e se ele está hibernando
+const isNeonDatabase = process.env.DATABASE_URL.includes('neon.tech');
+const isProductionReady = !isNeonDatabase || process.env.NODE_ENV === 'production';
+
 // Imports para PostgreSQL padrão
 import { Pool } from 'pg';
 import { drizzle as drizzleNodePg } from 'drizzle-orm/node-postgres';

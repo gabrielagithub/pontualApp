@@ -576,12 +576,40 @@ export class MemStorage implements IStorage {
 
 import { DatabaseStorage } from "./database-storage.js";
 
-// Usar apenas PostgreSQL
-if (!process.env.DATABASE_URL) {
+// Detectar ambiente
+const hasDatabaseUrl = !!process.env.DATABASE_URL;
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
+const isNeonDatabase = process.env.DATABASE_URL?.includes('neon.tech');
+
+console.log("🔍 Detectando ambiente:");
+console.log("- Produção:", isProduction ? "✅ Sim" : "❌ Não (desenvolvimento)");
+console.log("- DATABASE_URL:", hasDatabaseUrl ? "✅ Configurado" : "❌ Não configurado");
+console.log("- Tipo de banco:", isNeonDatabase ? "Neon" : "PostgreSQL padrão");
+
+// Verificar se o banco Neon está hibernando
+const isNeonHibernating = isNeonDatabase && !isProduction;
+
+if (!hasDatabaseUrl) {
+  console.log("❌ DATABASE_URL não configurado. Configure PostgreSQL.");
   throw new Error("DATABASE_URL é obrigatória. Configure uma conexão PostgreSQL.");
 }
 
-console.log("🐘 Usando PostgreSQL");
+let storage: IStorage;
 
-// PostgreSQL não está funcionando (banco Neon hibernando), usando MemStorage temporariamente
-export const storage = new MemStorage();
+if (isProduction) {
+  // Produção sempre usa PostgreSQL
+  console.log("🐘 Produção: Usando PostgreSQL obrigatoriamente");
+  storage = new DatabaseStorage();
+} else if (isNeonHibernating) {
+  // Neon hibernando em desenvolvimento - usar MemStorage
+  console.log("⚠️  Banco Neon detectado hibernando em desenvolvimento");
+  console.log("💾 Usando MemStorage temporariamente");
+  console.log("💡 Para produção: configure PostgreSQL dedicado no Render");
+  storage = new MemStorage();
+} else {
+  // PostgreSQL padrão em desenvolvimento
+  console.log("🐘 Desenvolvimento: Usando PostgreSQL");
+  storage = new DatabaseStorage();
+}
+
+export { storage };
