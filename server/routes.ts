@@ -1215,6 +1215,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pause timer endpoint
+  app.post("/api/pause-timer", async (req, res) => {
+    try {
+      const { taskName, taskId } = req.body;
+      
+      let task;
+      if (taskId) {
+        task = await storage.getTask(taskId);
+      } else if (taskName) {
+        const allTasks = await storage.getAllTasks();
+        task = allTasks.find(t => t.name.toLowerCase() === taskName.toLowerCase());
+      }
+      
+      if (!task) {
+        return res.status(400).json({ message: "Tarefa não encontrada. Forneça taskId ou taskName." });
+      }
+      
+      // Find running timer for this task
+      const runningEntries = await storage.getRunningTimeEntries();
+      const runningTimer = runningEntries.find(entry => entry.taskId === task.id);
+      
+      if (!runningTimer) {
+        return res.status(400).json({ message: "Nenhum timer ativo encontrado para esta tarefa" });
+      }
+      
+      // Pause timer by setting isRunning to false but keeping endTime null for resume
+      const updates = {
+        isRunning: false,
+        notes: runningTimer.notes ? `${runningTimer.notes} (pausado)` : "Pausado via WhatsApp"
+      };
+      
+      const pausedEntry = await storage.updateTimeEntry(runningTimer.id, updates);
+      
+      res.json({
+        message: "Timer pausado com sucesso",
+        entry: pausedEntry,
+        task
+      });
+    } catch (error) {
+      console.error("Erro ao pausar timer:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // Resume timer endpoint
+  app.post("/api/resume-timer", async (req, res) => {
+    try {
+      const { taskName, taskId } = req.body;
+      
+      let task;
+      if (taskId) {
+        task = await storage.getTask(taskId);
+      } else if (taskName) {
+        const allTasks = await storage.getAllTasks();
+        task = allTasks.find(t => t.name.toLowerCase() === taskName.toLowerCase());
+      }
+      
+      if (!task) {
+        return res.status(400).json({ message: "Tarefa não encontrada. Forneça taskId ou taskName." });
+      }
+      
+      // Find paused timer for this task (isRunning = false and endTime = null)
+      const allEntries = await storage.getTimeEntriesByTask(task.id);
+      const pausedTimer = allEntries.find(entry => 
+        !entry.isRunning && 
+        entry.endTime === null &&
+        entry.notes && entry.notes.includes("pausado")
+      );
+      
+      if (!pausedTimer) {
+        return res.status(400).json({ message: "Nenhum timer pausado encontrado para esta tarefa" });
+      }
+      
+      // Resume timer by setting isRunning back to true
+      const updates = {
+        isRunning: true,
+        notes: pausedTimer.notes?.replace(" (pausado)", "") || "Retomado via WhatsApp"
+      };
+      
+      const resumedEntry = await storage.updateTimeEntry(pausedTimer.id, updates);
+      
+      res.json({
+        message: "Timer retomado com sucesso",
+        entry: resumedEntry,
+        task
+      });
+    } catch (error) {
+      console.error("Erro ao retomar timer:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // WhatsApp Integration routes (single instance)
   app.get("/api/whatsapp/integration", async (req, res) => {
     try {

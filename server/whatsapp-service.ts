@@ -654,6 +654,8 @@ export class WhatsappService {
 
 ⏱️ *TIMER:*
 • *iniciar T5* - Liga timer da tarefa
+• *pausar T5* - Pausa timer (mantém tempo)
+• *retomar T5* - Continua timer pausado
 • *parar T5* - Para timer da tarefa
 
 📝 *APONTAR TEMPO:*
@@ -922,13 +924,77 @@ export class WhatsappService {
   }
 
   private async pauseTimer(params: string[]): Promise<string> {
-    // Similar ao stopTimer mas mantém isRunning = false temporariamente
-    return "🚧 Funcionalidade de pausar em desenvolvimento.";
+    if (params.length === 0) {
+      return "❌ Especifique a tarefa: *pausar T5* ou *pausar 1*";
+    }
+
+    const taskIdentifier = params[0];
+    const task = await this.findTask(taskIdentifier);
+    if (!task) {
+      return `❌ Tarefa não encontrada: "${taskIdentifier}"`;
+    }
+
+    try {
+      // Find running timer for this task
+      const runningEntries = await storage.getRunningTimeEntries();
+      const runningTimer = runningEntries.find(entry => entry.taskId === task.id);
+      
+      if (!runningTimer) {
+        return `❌ Nenhum timer ativo encontrado para "${task.name}"`;
+      }
+
+      // Pause timer by setting isRunning to false but keeping endTime null for resume
+      const updates = {
+        isRunning: false,
+        notes: runningTimer.notes ? `${runningTimer.notes} (pausado)` : "Pausado via WhatsApp"
+      };
+      
+      await storage.updateTimeEntry(runningTimer.id, updates);
+
+      return `⏸️ Timer pausado para "${task.name}"!\n\nUse *retomar T${task.id}* para continuar.`;
+    } catch (error) {
+      console.error("Erro ao pausar timer:", error);
+      return "❌ Erro interno ao pausar timer.";
+    }
   }
 
   private async resumeTimer(params: string[]): Promise<string> {
-    // Reativar timer pausado
-    return "🚧 Funcionalidade de retomar em desenvolvimento.";
+    if (params.length === 0) {
+      return "❌ Especifique a tarefa: *retomar T5* ou *retomar 1*";
+    }
+
+    const taskIdentifier = params[0];
+    const task = await this.findTask(taskIdentifier);
+    if (!task) {
+      return `❌ Tarefa não encontrada: "${taskIdentifier}"`;
+    }
+
+    try {
+      // Find paused timer for this task (isRunning = false and endTime = null)
+      const allEntries = await storage.getTimeEntriesByTask(task.id);
+      const pausedTimer = allEntries.find(entry => 
+        !entry.isRunning && 
+        entry.endTime === null &&
+        entry.notes && entry.notes.includes("pausado")
+      );
+      
+      if (!pausedTimer) {
+        return `❌ Nenhum timer pausado encontrado para "${task.name}"`;
+      }
+
+      // Resume timer by setting isRunning back to true
+      const updates = {
+        isRunning: true,
+        notes: pausedTimer.notes?.replace(" (pausado)", "") || "Retomado via WhatsApp"
+      };
+      
+      await storage.updateTimeEntry(pausedTimer.id, updates);
+
+      return `▶️ Timer retomado para "${task.name}"!\n\n⏱️ Cronômetro rodando novamente.`;
+    } catch (error) {
+      console.error("Erro ao retomar timer:", error);
+      return "❌ Erro interno ao retomar timer.";
+    }
   }
 
   private async logTime(params: string[]): Promise<string> {
