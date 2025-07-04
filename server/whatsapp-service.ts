@@ -87,7 +87,11 @@ export class WhatsappService {
         .replace(/📝/g, '')
         .replace(/⏰/g, '')
         .replace(/🚀/g, '')
-        .replace(/[^\x00-\x7F]/g, ''); // Remove caracteres não-ASCII
+        .replace(/•/g, '-') // Substituir bullet points
+        .replace(/→/g, '->') // Substituir setas
+        .replace(/💡/g, '')
+        .replace(/🔧/g, '')
+        .replace(/[^\x00-\x7F]/g, ''); // Remove caracteres não-ASCII restantes
       
       const payload = {
         number: phoneNumber,
