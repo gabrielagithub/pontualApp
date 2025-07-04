@@ -69,17 +69,25 @@ export class MemStorage implements IStorage {
   private tasks: Map<number, Task>;
   private taskItems: Map<number, TaskItem>;
   private timeEntries: Map<number, TimeEntry>;
+  private whatsappIntegration: WhatsappIntegration | undefined;
+  private whatsappLogs: Map<number, WhatsappLog>;
+  private notificationSettings: NotificationSettings | undefined;
   private currentTaskId: number;
   private currentTaskItemId: number;
   private currentTimeEntryId: number;
+  private currentWhatsappLogId: number;
 
   constructor() {
     this.tasks = new Map();
     this.taskItems = new Map();
     this.timeEntries = new Map();
+    this.whatsappIntegration = undefined;
+    this.whatsappLogs = new Map();
+    this.notificationSettings = undefined;
     this.currentTaskId = 1;
     this.currentTaskItemId = 1;
     this.currentTimeEntryId = 1;
+    this.currentWhatsappLogId = 1;
   }
 
   // Task methods
@@ -470,42 +478,99 @@ export class MemStorage implements IStorage {
     return result.sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  // WhatsApp Integration methods - implementação básica para compatibilidade
+  // WhatsApp Integration methods - implementação completa em memória
   async getWhatsappIntegration(): Promise<WhatsappIntegration | undefined> {
-    // Em memória, retorna undefined - não implementado
-    return undefined;
+    return this.whatsappIntegration;
   }
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
-    throw new Error("WhatsApp integration não disponível em modo de memória");
+    const whatsappIntegration: WhatsappIntegration = {
+      id: 1,
+      instanceName: integration.instanceName || '',
+      apiKey: integration.apiKey || '',
+      baseUrl: integration.baseUrl || '',
+      authorizedNumbers: integration.authorizedNumbers || [],
+      restrictToNumbers: integration.restrictToNumbers ?? true,
+      isActive: integration.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.whatsappIntegration = whatsappIntegration;
+    return whatsappIntegration;
   }
 
   async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {
-    throw new Error("WhatsApp integration não disponível em modo de memória");
-  }
-
-  async deleteWhatsappIntegration(id: number): Promise<boolean> {
-    throw new Error("WhatsApp integration não disponível em modo de memória");
-  }
-
-  async createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog> {
-    throw new Error("WhatsApp logs não disponível em modo de memória");
-  }
-
-  async getWhatsappLogs(integrationId: number, limit?: number): Promise<WhatsappLog[]> {
-    return [];
-  }
-
-  async getNotificationSettings(): Promise<NotificationSettings | undefined> {
+    if (this.whatsappIntegration && this.whatsappIntegration.id === id) {
+      this.whatsappIntegration = {
+        ...this.whatsappIntegration,
+        ...updates,
+        updatedAt: new Date()
+      };
+      return this.whatsappIntegration;
+    }
     return undefined;
   }
 
+  async deleteWhatsappIntegration(id: number): Promise<boolean> {
+    if (this.whatsappIntegration && this.whatsappIntegration.id === id) {
+      this.whatsappIntegration = undefined;
+      return true;
+    }
+    return false;
+  }
+
+  async createWhatsappLog(log: InsertWhatsappLog): Promise<WhatsappLog> {
+    const whatsappLog: WhatsappLog = {
+      id: this.currentWhatsappLogId++,
+      integrationId: log.integrationId,
+      eventType: log.eventType,
+      phoneNumber: log.phoneNumber || '',
+      messageText: log.messageText || '',
+      responseText: log.responseText || '',
+      success: log.success ?? true,
+      errorMessage: log.errorMessage || '',
+      timestamp: new Date()
+    };
+    this.whatsappLogs.set(whatsappLog.id, whatsappLog);
+    return whatsappLog;
+  }
+
+  async getWhatsappLogs(integrationId: number, limit?: number): Promise<WhatsappLog[]> {
+    const logs = Array.from(this.whatsappLogs.values())
+      .filter(log => log.integrationId === integrationId)
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
+    return limit ? logs.slice(0, limit) : logs;
+  }
+
+  async getNotificationSettings(): Promise<NotificationSettings | undefined> {
+    return this.notificationSettings;
+  }
+
   async createNotificationSettings(settings: InsertNotificationSettings): Promise<NotificationSettings> {
-    throw new Error("Notification settings não disponível em modo de memória");
+    const notificationSettings: NotificationSettings = {
+      id: 1,
+      notificationsEnabled: settings.notificationsEnabled ?? true,
+      dailyReminderTime: settings.dailyReminderTime || '09:00:00',
+      weeklyReportEnabled: settings.weeklyReportEnabled ?? true,
+      deadlineNotifications: settings.deadlineNotifications ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.notificationSettings = notificationSettings;
+    return notificationSettings;
   }
 
   async updateNotificationSettings(updates: Partial<NotificationSettings>): Promise<NotificationSettings | undefined> {
-    throw new Error("Notification settings não disponível em modo de memória");
+    if (this.notificationSettings) {
+      this.notificationSettings = {
+        ...this.notificationSettings,
+        ...updates,
+        updatedAt: new Date()
+      };
+      return this.notificationSettings;
+    }
+    return undefined;
   }
 }
 
@@ -518,5 +583,5 @@ if (!process.env.DATABASE_URL) {
 
 console.log("🐘 Usando PostgreSQL");
 
-// Temporariamente usando MemStorage até resolver DATABASE_URL
+// PostgreSQL não está funcionando (banco Neon hibernando), usando MemStorage temporariamente
 export const storage = new MemStorage();
