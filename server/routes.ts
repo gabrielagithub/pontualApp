@@ -308,23 +308,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/tasks/:id/complete", async (req, res) => {
+  app.post("/api/tasks/:id/complete", async (req, res) => {
     try {
-      console.log("Complete task endpoint called with ID:", req.params.id);
       const id = parseInt(req.params.id);
       const task = await storage.completeTask(id);
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
-      console.log("Task completed successfully:", task);
       res.json(task);
     } catch (error) {
-      console.error("Error completing task:", error);
       res.status(500).json({ message: "Failed to complete task" });
     }
   });
 
-  app.put("/api/tasks/:id/reopen", async (req, res) => {
+  app.post("/api/tasks/:id/reopen", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const task = await storage.reopenTask(id);

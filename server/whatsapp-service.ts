@@ -393,7 +393,7 @@ export class WhatsappService {
       authorizedNumbers: integration.authorizedNumbers,
       normalizedSender: this.normalizePhoneNumber(phoneNumber),
       authorizedParsed: JSON.parse(integration.authorizedNumbers || '[]'),
-      normalizedAuthorized: JSON.parse(integration.authorizedNumbers || '[]').map(n => this.normalizePhoneNumber(n))
+      normalizedAuthorized: JSON.parse(integration.authorizedNumbers || '[]').map((n: string) => this.normalizePhoneNumber(n))
     });
     
     const securityValidation = this.validateIncomingMessage(integration, phoneNumber, groupJid, message);

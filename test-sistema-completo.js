@@ -228,7 +228,7 @@ async function testGetTimeEntries() {
 
 async function testStartTimer(taskId) {
   logTest("Iniciar Timer");
-  const result = await makeRequest('POST', `/api/time-entries/start`, { taskId });
+  const result = await makeRequest('POST', `/api/start-timer`, { taskId });
   
   if (result.success) {
     logSuccess(`Timer iniciado para tarefa ${taskId}`);
@@ -239,15 +239,15 @@ async function testStartTimer(taskId) {
   }
 }
 
-async function testStopTimer(entryId) {
+async function testStopTimer(taskId) {
   logTest("Parar Timer");
-  const result = await makeRequest('POST', `/api/time-entries/${entryId}/stop`);
+  const result = await makeRequest('POST', `/api/stop-timer`, { taskId });
   
   if (result.success) {
-    logSuccess(`Timer ${entryId} parado`);
+    logSuccess(`Timer parado para tarefa ${taskId}`);
     return true;
   } else {
-    logError(`Erro ao parar timer: ${result.status}`);
+    logError(`Erro ao parar timer: ${result.status} - ${JSON.stringify(result.data)}`);
     return false;
   }
 }
@@ -287,7 +287,25 @@ async function testDashboardStats() {
 
 async function testWhatsAppIntegration() {
   logTest("WhatsApp Integration");
-  const result = await makeRequest('GET', '/api/whatsapp/integrations');
+  
+  // Testar primeiro endpoint (single integration)
+  let result = await makeRequest('GET', '/api/whatsapp/integration');
+  
+  if (result.success && result.data) {
+    logSuccess("Integração WhatsApp encontrada");
+    
+    const integration = result.data;
+    if (integration.hasApiKey) {
+      logSuccess("API Key configurada");
+    } else {
+      logWarning("API Key não configurada");
+    }
+    
+    return { success: true, integration };
+  }
+  
+  // Testar endpoint alternativo (multiple integrations)
+  result = await makeRequest('GET', '/api/whatsapp/integrations');
   
   if (result.success && Array.isArray(result.data) && result.data.length > 0) {
     logSuccess(`${result.data.length} integrações WhatsApp encontradas`);
@@ -301,7 +319,7 @@ async function testWhatsAppIntegration() {
     
     return { success: true, integration };
   } else {
-    logError(`Erro ao obter integrações WhatsApp: ${result.status}`);
+    logError(`Erro ao obter integrações WhatsApp: ${result.status} - ${JSON.stringify(result.data)}`);
     return { success: false, integration: null };
   }
 }
@@ -446,10 +464,10 @@ async function runCompleteTest() {
       results.startTimer = timerResult.success;
       timerEntryId = timerResult.entryId;
       
-      if (timerEntryId) {
+      if (timerResult.success) {
         // Aguardar um pouco antes de parar o timer
         await new Promise(resolve => setTimeout(resolve, 2000));
-        results.stopTimer = await testStopTimer(timerEntryId);
+        results.stopTimer = await testStopTimer(createdTaskId);
       }
     }
     
@@ -530,9 +548,14 @@ async function runCompleteTest() {
 // Executar o teste
 if (typeof window === 'undefined') {
   // Node.js environment
-  const fetch = require('node-fetch');
-  runCompleteTest().then(result => {
+  import('node-fetch').then(fetchModule => {
+    global.fetch = fetchModule.default;
+    return runCompleteTest();
+  }).then(result => {
     process.exit(result.percentage >= 70 ? 0 : 1);
+  }).catch(error => {
+    console.error('Erro durante o teste:', error);
+    process.exit(1);
   });
 } else {
   // Browser environment
