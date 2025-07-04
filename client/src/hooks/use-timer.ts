@@ -253,6 +253,12 @@ export function useTimer() {
       
       // Verificar se é erro de tempo mínimo
       if (error.message && error.message.includes("pelo menos 1 minuto")) {
+        // Invalidar queries para remover da lista de sessões ativas
+        queryClient.invalidateQueries({ queryKey: ["/api/time-entries"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/time-entries/running"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+        
         toast({
           title: "Sessão removida",
           description: "Tempo inferior a 1 minuto. A sessão foi removida automaticamente.",

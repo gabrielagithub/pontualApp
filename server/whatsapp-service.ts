@@ -175,7 +175,7 @@ export class WhatsappService {
         
         // Normalizar números para comparação
         const normalizedSender = this.normalizePhoneNumber(phoneNumber);
-        const normalizedAuthorized = authorizedNumbers.map(n => this.normalizePhoneNumber(n));
+        const normalizedAuthorized = authorizedNumbers.map((n: string) => this.normalizePhoneNumber(n));
         
         if (!normalizedAuthorized.includes(normalizedSender)) {
           console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" (normalizado: ${normalizedSender}) não está na lista autorizada`);
@@ -209,7 +209,7 @@ export class WhatsappService {
 
         // Normalizar números para comparação
         const normalizedSender = this.normalizePhoneNumber(phoneNumber);
-        const normalizedAuthorized = authorizedNumbers.map(n => this.normalizePhoneNumber(n));
+        const normalizedAuthorized = authorizedNumbers.map((n: string) => this.normalizePhoneNumber(n));
         
         if (!normalizedAuthorized.includes(normalizedSender)) {
           console.error(`🚫 ENVIO BLOQUEADO: "${phoneNumber}" (normalizado: ${normalizedSender}) não está na lista autorizada`);
@@ -369,7 +369,15 @@ export class WhatsappService {
   }
 
   async processIncomingMessage(integrationId: number, phoneNumber: string, message: string, messageId?: string, groupJid?: string): Promise<void> {
-    console.log(`🔥 INICIANDO PROCESSAMENTO:`, { integrationId, phoneNumber, message, groupJid, isGroupMessage: !!groupJid });
+    console.log(`🔥 INICIANDO PROCESSAMENTO:`, { 
+      integrationId, 
+      phoneNumber, 
+      message, 
+      messageId,
+      groupJid, 
+      groupJidType: typeof groupJid,
+      isGroupMessage: !!groupJid 
+    });
     
     // Single instance approach
     const integration = await storage.getWhatsappIntegration();
@@ -444,6 +452,13 @@ export class WhatsappService {
         case 'criar':
         case 'nova':
           response = await this.createTask(command.params);
+          break;
+
+        case 'multiplas':
+        case 'batch':
+        case 'varias':
+        case 'lote':
+          response = await this.createMultipleTasks(command.params);
           break;
 
         case 'iniciar':
@@ -667,6 +682,7 @@ export class WhatsappService {
 
 ✅ *GERENCIAR:*
 • *nova Reunião* - Cria tarefa
+• *multiplas Reunião | Desenvolvimento | Testes* - Várias de uma vez
 • *concluir T5* - Finaliza tarefa
 • *status* - Timers rodando
 • *resumo* - Relatório hoje
@@ -1358,6 +1374,66 @@ export class WhatsappService {
     // Buscar por nome (case insensitive, parcial)
     const searchTerm = identifier.toLowerCase();
     return tasks.find(t => t.name.toLowerCase().includes(searchTerm));
+  }
+
+  private async createMultipleTasks(params: string[]): Promise<string> {
+    if (params.length === 0) {
+      return `📝 *Criar Múltiplas Atividades*\n\n*Formato:* multiplas [atividade1] | [atividade2] | [atividade3]\n\n*Exemplo:*\nmultiplas Reunião matinal | Desenvolvimento frontend | Documentação API\n\n*Com detalhes:*\nmultiplas Projeto A --tempo 2h | Projeto B --cor verde | Reunião --prazo 2025-07-10`;
+    }
+
+    const tasksText = params.join(' ');
+    const taskDefinitions = tasksText.split('|').map(task => task.trim()).filter(task => task.length > 0);
+
+    if (taskDefinitions.length < 2) {
+      return `❌ Para criar múltiplas atividades, separe com "|" (pipe).\n\n*Exemplo:*\nmultiplas Reunião | Desenvolvimento | Testes`;
+    }
+
+    if (taskDefinitions.length > 10) {
+      return `❌ Máximo de 10 atividades por comando.\n\nVocê tentou criar ${taskDefinitions.length} atividades.`;
+    }
+
+    const results: string[] = [];
+    let sucessCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < taskDefinitions.length; i++) {
+      const taskDef = taskDefinitions[i];
+      
+      try {
+        // Reutilizar lógica de parseTaskCreationInput para processar parâmetros
+        const taskData = this.parseTaskCreationInput(taskDef);
+        
+        const task = await storage.createTask({
+          name: taskData.name,
+          description: taskData.description || null,
+          color: taskData.color || 'blue',
+          estimatedHours: taskData.estimatedHours || null,
+          deadline: taskData.deadline || null,
+          isActive: true,
+          isCompleted: false,
+        });
+
+        results.push(`✅ ${i + 1}. ${task.name} (T${task.id})`);
+        sucessCount++;
+        
+      } catch (error) {
+        results.push(`❌ ${i + 1}. ${taskDef} - Erro: ${error instanceof Error ? error.message : 'Falha'}`);
+        errorCount++;
+      }
+    }
+
+    let summary = `📝 *Criação em Lote Concluída*\n\n`;
+    summary += `✅ Criadas: ${sucessCount}\n`;
+    if (errorCount > 0) {
+      summary += `❌ Falhas: ${errorCount}\n`;
+    }
+    summary += `\n*Resultado:*\n${results.join('\n')}`;
+
+    if (sucessCount > 0) {
+      summary += `\n\n💡 Use *tarefas* para ver todas as atividades.`;
+    }
+
+    return summary;
   }
 
   private parseTimeString(timeStr: string): number {

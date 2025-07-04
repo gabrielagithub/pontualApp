@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phoneNumber,
         message,
         'test-id',
-        phoneNumber // remoteJid igual ao phoneNumber para teste individual
+        undefined // groupJid undefined para simular mensagem individual
       );
       
       res.json({ success: true, message: 'Teste executado' });
