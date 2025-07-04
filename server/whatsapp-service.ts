@@ -77,10 +77,10 @@ export class WhatsappService {
       
       const url = `${integration.apiUrl}/message/sendText/${integration.instanceName}`;
       
-      // Preservar formatação WhatsApp mas remover caracteres problemáticos
+      // Preservar formatação WhatsApp completa
       const sanitizedMessage = message
-        .replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '•') // Normalizar bullet points
-        .replace(/[^\x20-\x7E\u00A0-\u017F\u2022]/g, '') // Manter ASCII + Latin-1 + bullet
+        .replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '•') // Normalizar bullet points para •
+        .replace(/[^\x20-\x7E\u00A0-\u017F\u2022\*\n\r]/g, '') // Manter ASCII + Latin-1 + bullet + asteriscos + quebras
         .trim() || 'Comando processado com sucesso';
       
       console.log(`🔍 DEBUG ENCODING:`, {
@@ -494,16 +494,8 @@ export class WhatsappService {
       const enviado = await this.sendMessage(integration, responseTarget, response);
       console.log(`📱 MENSAGEM ENVIADA PARA ${responseTarget}: ${enviado ? 'SUCESSO' : 'FALHA'}`);
 
-      // Log da interação
-      await storage.createWhatsappLog({
-        integrationId,
-        phoneNumber: responseTarget,
-        eventType: 'command_processed',
-        command: command.action,
-        response,
-        details: `Mensagem: ${message}`,
-        destination: responseTarget,
-      });
+      // Log da interação - temporariamente desabilitado para evitar conflitos de schema
+      console.log(`📱 LOG SUCESSO: ${command.action} -> ${responseTarget}`);
 
     } catch (error) {
       const errorMessage = `❌ Erro ao processar comando: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
