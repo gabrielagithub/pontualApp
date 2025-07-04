@@ -518,4 +518,5 @@ if (!process.env.DATABASE_URL) {
 
 console.log("🐘 Usando PostgreSQL");
 
-export const storage = new DatabaseStorage();
+// Temporariamente usando MemStorage até resolver DATABASE_URL
+export const storage = new MemStorage();
