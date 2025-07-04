@@ -69,6 +69,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedTask] = await db
       .update(tasks)
       .set({ 
+        isActive: false,
         isCompleted: true, 
         completedAt: new Date() 
       })
@@ -81,6 +82,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedTask] = await db
       .update(tasks)
       .set({ 
+        isActive: true,
         isCompleted: false, 
         completedAt: null 
       })

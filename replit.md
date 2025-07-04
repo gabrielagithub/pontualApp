@@ -455,6 +455,12 @@ Changelog:
   * Banco de dados contém todas as entradas criadas via WhatsApp com dados corretos
   * Problema identificado: possível cache ou filtro no frontend impedindo exibição
   * Sistema de apontamento via WhatsApp funciona perfeitamente - dados persistem no banco
+- July 04, 2025 (02:05): Correção crítica do comando "concluir" via WhatsApp:
+  * Identificado problema na função completeTask() - atualizava apenas isCompleted mas não isActive
+  * Corrigido completeTask() para definir isActive: false quando tarefa é concluída
+  * Corrigido reopenTask() para definir isActive: true quando tarefa é reaberta
+  * Comando "concluir T5" agora remove tarefa da lista ativa corretamente
+  * Sistema de conclusão de tarefas via WhatsApp totalmente funcional
 ```
 
 ## User Preferences
