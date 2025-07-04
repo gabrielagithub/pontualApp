@@ -48,11 +48,16 @@ export class WhatsappService {
 
   private async sendMessage(integration: WhatsappIntegration, phoneNumber: string, message: string): Promise<boolean> {
     try {
-      // 🔒 PRIMEIRA CAMADA: Bloqueio absoluto de grupos
+      // 🔒 PRIMEIRA CAMADA: Validar se é envio para grupo
       if (phoneNumber.includes('@g.us')) {
-        console.error(`🚫 BLOQUEIO ABSOLUTO: Tentativa de envio para GRUPO ${phoneNumber} - REJEITADO`);
-        await this.logSecurityEvent(integration.id, phoneNumber, message, 'BLOCKED_GROUP_SEND_ATTEMPT');
-        throw new Error(`SEGURANÇA CRÍTICA: Bloqueado envio para grupo ${phoneNumber}`);
+        // Se for modo grupo e o JID for o autorizado, permite
+        if (integration.responseMode === 'group' && phoneNumber === integration.allowedGroupJid) {
+          console.log(`✅ GRUPO AUTORIZADO: Enviando para grupo configurado ${phoneNumber}`);
+        } else {
+          console.error(`🚫 BLOQUEIO GRUPO: Tentativa de envio para grupo não autorizado ${phoneNumber}`);
+          await this.logSecurityEvent(integration.id, phoneNumber, message, 'BLOCKED_GROUP_SEND_ATTEMPT');
+          throw new Error(`SEGURANÇA: Bloqueado envio para grupo não autorizado ${phoneNumber}`);
+        }
       }
       
       // 🔒 SEGUNDA CAMADA: Validar formato de número individual
