@@ -443,6 +443,12 @@ Changelog:
   * Validado funcionamento completo: comando "ajuda" processado com sucesso
   * Evolution API respondeu 201 (sucesso) enviando mensagem para grupo configurado
   * WhatsApp modo grupo 100% funcional - bot processa próprias mensagens quando autorizado
+- July 04, 2025 (01:36): Aprimoramento do sistema de apontamento de tempo com suporte expandido a minutos:
+  * Função parseTimeString melhorada para aceitar formatos: 30m, 1h30m, 90min, 2h, 1.5h
+  * Mensagens de ajuda atualizadas com exemplos de entrada de tempo em minutos
+  * Interface de comandos simplificada para mostrar "30m" em vez de "2h" nos exemplos
+  * Sistema agora aceita entrada flexível de tempo tanto em horas quanto em minutos
+  * Compatibilidade mantida com todos os formatos anteriores de entrada de tempo
 ```
 
 ## User Preferences

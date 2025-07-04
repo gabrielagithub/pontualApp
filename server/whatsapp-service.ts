@@ -621,7 +621,7 @@ export class WhatsappService {
     }
     
     menu += `• *concluir* - Finaliza\n`;
-    menu += `• *apontar ${taskCode} 2h* - Adiciona tempo`;
+    menu += `• *apontar ${taskCode} 30m* - Adiciona tempo`;
     
     return menu;
   }
@@ -658,6 +658,8 @@ export class WhatsappService {
 
 📝 *APONTAR TEMPO:*
 • *apontar T5 2h* - Registra 2 horas
+• *apontar T5 30m* - Registra 30 minutos
+• *apontar T5 1h30m* - Uma hora e meia
 • *apontar T5 14:00 16:30* - Das 14:00 às 16:30
 • *apontar T5 ontem 9:00 12:00* - Ontem das 9h às 12h
 
@@ -955,7 +957,7 @@ export class WhatsappService {
   private async logTimeDuration(task: TaskWithStats, timeStr: string): Promise<string> {
     const duration = this.parseTimeString(timeStr);
     if (duration === 0) {
-      return "❌ Formato de tempo inválido.\n\n*Exemplos:* 2h, 1.5h, 90min, 1h30min";
+      return "❌ Formato de tempo inválido.\n\n*Exemplos:* 2h, 30m, 1h30m, 90min, 1.5h";
     }
 
     try {
@@ -1195,7 +1197,7 @@ export class WhatsappService {
 
     const duration = this.parseTimeString(timeStr);
     if (duration === 0) {
-      return "❌ Formato de tempo inválido.\n\n*Exemplos:* 2h, 1.5h, 90min, 1h30min";
+      return "❌ Formato de tempo inválido.\n\n*Exemplos:* 2h, 30m, 1h30m, 90min, 1.5h";
     }
 
     try {
@@ -1272,9 +1274,9 @@ export class WhatsappService {
   }
 
   private parseTimeString(timeStr: string): number {
-    // Converter strings como "2h", "1.5h", "90min", "1h30min" para segundos
+    // Converter strings como "2h", "1.5h", "90min", "30m", "1h30min" para segundos
     const hoursMatch = timeStr.match(/(\d+(?:\.\d+)?)h/);
-    const minutesMatch = timeStr.match(/(\d+)min/);
+    const minutesMatch = timeStr.match(/(\d+)(?:min|m)(?!in)/); // "min" ou "m" (mas não parte de "min")
     
     let totalSeconds = 0;
     
@@ -1284,6 +1286,14 @@ export class WhatsappService {
     
     if (minutesMatch) {
       totalSeconds += parseInt(minutesMatch[1]) * 60;
+    }
+    
+    // Se não encontrou horas nem minutos, tentar apenas número seguido de "m"
+    if (totalSeconds === 0) {
+      const simpleMinutesMatch = timeStr.match(/^(\d+)m$/);
+      if (simpleMinutesMatch) {
+        totalSeconds = parseInt(simpleMinutesMatch[1]) * 60;
+      }
     }
     
     return Math.floor(totalSeconds);
