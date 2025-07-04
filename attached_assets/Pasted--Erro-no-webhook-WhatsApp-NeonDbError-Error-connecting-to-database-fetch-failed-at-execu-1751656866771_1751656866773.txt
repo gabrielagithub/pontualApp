@@ -1,0 +1,71 @@
+}
+❌ Erro no webhook WhatsApp: NeonDbError: Error connecting to database: fetch failed
+    at execute (file:///opt/render/project/src/node_modules/@neondatabase/serverless/index.mjs:1549:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (file:///opt/render/project/src/node_modules/drizzle-orm/neon-http/session.js:40:20)
+    at async DatabaseStorage.getWhatsappIntegration (file:///opt/render/project/src/dist/index.js:454:27)
+    at async file:///opt/render/project/src/dist/index.js:1786:29 {
+  severity: undefined,
+  code: undefined,
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: undefined,
+  line: undefined,
+  routine: undefined,
+  sourceError: TypeError: fetch failed
+      at node:internal/deps/undici/undici:13502:13
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async execute (file:///opt/render/project/src/node_modules/@neondatabase/serverless/index.mjs:1548:15)
+      at async NeonHttpPreparedQuery.execute (file:///opt/render/project/src/node_modules/drizzle-orm/neon-http/session.js:40:20)
+      at async DatabaseStorage.getWhatsappIntegration (file:///opt/render/project/src/dist/index.js:454:27)
+      at async file:///opt/render/project/src/dist/index.js:1786:29 {
+    [cause]: Error: connect ECONNREFUSED 10.215.120.144:443
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16) {
+      errno: -111,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '10.215.120.144',
+      port: 443
+    }
+  }
+}
+7:04:05 PM [express] POST /api/whatsapp/webhook/pontulApp 500 in 6ms :: {"message":"Erro no webhook"}
+🔄 Criando integração WhatsApp: {
+  "instanceName": "pontulApp",
+  "apiUrl": "https://evolution.corvusmanager.com.br",
+  "apiKey": "A2B8C9EFB054-4BBC-8187-E8C577CC3622",
+  "phoneNumber": "5531992126113",
+  "webhookUrl": "https://pontualapp.onrender.com/api/whatsapp/webhook/pontulApp",
+  "authorizedNumbers": "[\"553195343133@c.us\"]",
+  "responseMode": "individual",
+  "allowedGroupJid": ""
+}
+✅ Dados validados: {
+  "instanceName": "pontulApp",
+  "apiUrl": "https://evolution.corvusmanager.com.br",
+  "apiKey": "A2B8C9EFB054-4BBC-8187-E8C577CC3622",
+  "phoneNumber": "5531992126113",
+  "webhookUrl": "https://pontualapp.onrender.com/api/whatsapp/webhook/pontulApp",
+  "authorizedNumbers": "[\"553195343133@c.us\"]",
+  "allowedGroupJid": "",
+  "responseMode": "individual"
+}
+❌ ERRO DETALHADO ao criar integração:
+Tipo do erro: NeonDbError
+Mensagem: Error connecting to database: fetch failed
+Stack: NeonDbError: Error connecting to database: fetch failed
+    at execute (file:///opt/render/project/src/node_modules/@neondatabase/serverless/index.mjs:1549:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async NeonHttpPreparedQuery.execute (file:///opt/render/project/src/node_modules/drizzle-orm/neon-http/session.js:40:20)
+    at async DatabaseStorage.getWhatsappIntegration (file:///opt/render/project/src/dist/index.js:454:27)
+    at async file:///opt/render/project/src/dist/index.js:2742:24
+7:04:10 PM [express] POST /api/whatsapp/integration 500 in 6ms :: {"message":"Falha ao criar integração WhatsApp","error":"Error connecting to database: fetch failed","type":"NeonDbError"}

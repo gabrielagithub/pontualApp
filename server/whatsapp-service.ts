@@ -908,6 +908,13 @@ export class WhatsappService {
       const endTime = new Date();
       const duration = Math.floor((endTime.getTime() - new Date(taskEntry.startTime).getTime()) / 1000);
 
+      // Validar tempo mínimo de 1 minuto (60 segundos)
+      if (duration < 60) {
+        // Se o tempo for menor que 1 minuto, deletar a entrada em vez de salvar
+        await storage.deleteTimeEntry(taskEntry.id);
+        return `⚠️ Timer removido para "${task.name}"!\n\n❌ Tempo inferior a 1 minuto não é registrado no histórico.\n\nInicie novamente se necessário.`;
+      }
+
       await storage.updateTimeEntry(taskEntry.id, {
         endTime,
         duration,
@@ -943,6 +950,10 @@ export class WhatsappService {
         return `❌ Nenhum timer ativo encontrado para "${task.name}"`;
       }
 
+      // Calcular duração atual para mostrar na mensagem
+      const currentTime = new Date();
+      const currentDuration = Math.floor((currentTime.getTime() - new Date(runningTimer.startTime).getTime()) / 1000);
+
       // Pause timer by setting isRunning to false but keeping endTime null for resume
       const updates = {
         isRunning: false,
@@ -951,7 +962,15 @@ export class WhatsappService {
       
       await storage.updateTimeEntry(runningTimer.id, updates);
 
-      return `⏸️ Timer pausado para "${task.name}"!\n\nUse *retomar T${task.id}* para continuar.`;
+      const minutes = Math.floor(currentDuration / 60);
+      const seconds = currentDuration % 60;
+      
+      let warningMessage = "";
+      if (currentDuration < 60) {
+        warningMessage = "\n\n⚠️ Tempo atual inferior a 1 minuto. Se parar agora, não será salvo no histórico.";
+      }
+
+      return `⏸️ Timer pausado para "${task.name}"!\n\n⏱️ Tempo atual: ${minutes}min ${seconds}s\n\nUse *retomar T${task.id}* para continuar.${warningMessage}`;
     } catch (error) {
       console.error("Erro ao pausar timer:", error);
       return "❌ Erro interno ao pausar timer.";
