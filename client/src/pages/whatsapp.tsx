@@ -232,8 +232,8 @@ export default function WhatsAppPage() {
       }
     }
 
-    // Se estamos atualizando e a API key está vazia, não enviar ela
-    if (integration && (!data.apiKey || data.apiKey.trim() === '')) {
+    // Se estamos atualizando e a API key está vazia ou mascarada, não enviar ela
+    if (integration && (!data.apiKey || data.apiKey.trim() === '' || data.apiKey.includes('••••'))) {
       const { apiKey, ...dataWithoutApiKey } = data;
       console.log("📤 Dados finais (update sem API key):", dataWithoutApiKey);
       updateIntegrationMutation.mutate(dataWithoutApiKey);

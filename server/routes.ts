@@ -1237,7 +1237,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/whatsapp/integration/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const updates = req.body;
+      let updates = req.body;
+      
+      // Se a API key está mascarada ou vazia, não incluir na atualização
+      if (!updates.apiKey || updates.apiKey.trim() === '' || updates.apiKey.includes('••••')) {
+        const { apiKey, ...updatesWithoutApiKey } = updates;
+        updates = updatesWithoutApiKey;
+        console.log("🔐 API key preservada (não incluída na atualização)");
+      }
       
       console.log("Atualizando integração:", id, updates);
       

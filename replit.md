@@ -425,6 +425,12 @@ Changelog:
   * Sistema inteligente de parsing de tempo com validação robusta
   * Interface de ajuda completamente redesenhada com exemplos práticos
   * Eliminação de comandos confusos, foco em simplicidade e intuitividade
+- July 04, 2025 (00:45): Correção crítica do bug de API key na interface de configuração:
+  * Identificado problema onde atualizações de configuração apagavam a API key salva
+  * Implementada proteção dupla: frontend e backend ignoram campos mascarados (••••••••••••••••)
+  * Sistema agora preserva API key existente quando campo está vazio ou mascarado
+  * Correção garante que configurações podem ser alteradas sem perder autenticação
+  * WhatsApp bot mantém funcionamento contínuo mesmo após mudanças de configuração
 ```
 
 ## User Preferences
