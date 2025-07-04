@@ -448,6 +448,21 @@ export default function WhatsAppPage() {
                                   {...field} 
                                   className="font-mono text-sm"
                                 />
+                                <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                                  <p className="text-sm text-blue-800 font-medium">JID detectado nos logs:</p>
+                                  <code className="text-xs text-blue-700">120363419788242278@g.us</code>
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="ml-2 h-6 text-xs"
+                                    onClick={() => {
+                                      integrationForm.setValue("allowedGroupJid", "120363419788242278@g.us");
+                                    }}
+                                  >
+                                    Usar este JID
+                                  </Button>
+                                </div>
                               </FormControl>
                               <FormDescription>
                                 <strong>Formato:</strong> números@g.us (ex: 120363419788242278@g.us)<br/>
