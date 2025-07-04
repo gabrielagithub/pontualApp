@@ -133,14 +133,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     normalizedBot = normalizedBot.slice(0, 4) + normalizedBot.slice(5); // Remove o 5º dígito (9)
                   }
                   
-                  console.log(`🔍 COMPARANDO: Bot="${normalizedBot}" vs Auth="${normalizedAuth}"`);
-                  
                   if (normalizedBot === normalizedAuth) {
-                    console.log('✅ MATCH EXATO após correção do dígito 9');
                     return true;
                   }
-                  
-                  console.log('❌ SEM MATCH');
                   return false;
                 });
                 
