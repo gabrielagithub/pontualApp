@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Play, Pause, Square, Clock, Plus } from "lucide-react";
+import { Play, Pause, Square, Clock, Plus, AlertTriangle } from "lucide-react";
 import TimerDisplay from "@/components/timer-display";
 import QuickTaskForm from "@/components/quick-task-form";
 import { useTimer } from "@/hooks/use-timer";
@@ -31,9 +31,10 @@ export default function Timer() {
     queryKey: ["/api/tasks"],
   });
 
-  const { data: runningEntries, isLoading: runningLoading } = useQuery<TimeEntryWithTask[]>({
+  const { data: runningEntries, isLoading: runningLoading, error: runningError } = useQuery<TimeEntryWithTask[]>({
     queryKey: ["/api/time-entries/running"],
-    refetchInterval: 5000, // Reduce from 1s to 5s
+    refetchInterval: 5000, // 5 segundos
+    retryDelay: 10000, // 10 segundos entre tentativas
   });
 
   const { startTimer, pauseTimer, resumeTimer, stopTimer, finishTimer, finishAndCompleteTimer, isLoading: timerLoading } = useTimer();
@@ -139,6 +140,18 @@ export default function Timer() {
   return (
     <div className="p-6">
       <h3 className="text-xl font-semibold text-gray-900 mb-6">Controle de Tempo</h3>
+      
+      {/* Status de conectividade */}
+      {runningError && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-2 text-yellow-800">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm">
+              Conectividade temporariamente indisponível. O sistema tentará reconectar automaticamente.
+            </span>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Timer Controls */}

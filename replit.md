@@ -478,6 +478,15 @@ Changelog:
   * Implementado sistema de retry inteligente para operações de banco com problemas de conectividade
   * Corrigidos problemas temporários de endpoint Neon "dormindo" (behavior normal em contas gratuitas)
   * Sistema mantém consistência total entre interface web e comandos WhatsApp para validação de tempo
+- July 04, 2025 (19:30): Migração completa do Neon para PostgreSQL padrão:
+  * Removido completamente o Neon devido a problemas de hibernação constante
+  * Migrado para PostgreSQL padrão usando node-postgres (drizzle-orm/node-postgres)
+  * Configuração otimizada para Docker (localhost/db:5432) e Cloud/Render (SSL habilitado)
+  * Sistema de detecção automática de ambiente: Docker vs Cloud
+  * Pool de conexões configurado com timeouts apropriados para cada ambiente
+  * Eliminados todos os problemas de "endpoint is disabled" do Neon
+  * Sistema agora funciona de forma estável no Render e Docker sem interrupções
+  * Compatibilidade total mantida com ambos os ambientes de deployment
 ```
 
 ## User Preferences

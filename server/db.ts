@@ -6,11 +6,9 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Imports estáticos para evitar problemas com ESM bundles
+// Imports para PostgreSQL padrão
 import { Pool } from 'pg';
 import { drizzle as drizzleNodePg } from 'drizzle-orm/node-postgres';
-import { neon, neonConfig } from '@neondatabase/serverless';
-import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
 
 // Detectar ambiente: Docker vs Render/Cloud
 const isDocker = process.env.DATABASE_URL?.includes('postgres:5432') || 
@@ -36,31 +34,17 @@ if (isDocker) {
   console.log('✅ PostgreSQL configurado para Docker (node-postgres)');
   
 } else {
-  // Configuração para Render/Cloud
-  try {
-    // Primeiro tentar Neon HTTP (para Neon databases)
-    if (process.env.DATABASE_URL.includes('neon.tech')) {
-      neonConfig.fetchConnectionCache = true;
-      const sql = neon(process.env.DATABASE_URL);
-      db = drizzleNeon(sql, { schema });
-      console.log('✅ PostgreSQL configurado via Neon HTTP');
-    } else {
-      // Fallback para PostgreSQL padrão (Render PostgreSQL)
-      const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        max: 20,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-      });
-      
-      db = drizzleNodePg(pool, { schema });
-      console.log('✅ PostgreSQL configurado via node-postgres para cloud');
-    }
-  } catch (error) {
-    console.error('❌ Erro na configuração do banco:', error);
-    throw error;
-  }
+  // Configuração para Cloud/Render com PostgreSQL padrão
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  });
+  
+  db = drizzleNodePg(pool, { schema });
+  console.log('✅ PostgreSQL configurado via node-postgres para Render/Cloud');
 }
 
 export { db };

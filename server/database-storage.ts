@@ -366,14 +366,19 @@ export class DatabaseStorage implements IStorage {
         lastError = error;
         console.error(`❌ Tentativa ${attempt}/${maxRetries} falhou para ${operationName}:`, error.message);
         
-        // Se for erro de conectividade, tentar novamente após delay
+        // Se for erro de conectividade ou hibernação do Neon, tentar novamente após delay
         if (error.message?.includes('fetch failed') || 
             error.message?.includes('ECONNREFUSED') ||
             error.message?.includes('network') ||
-            error.message?.includes('timeout')) {
+            error.message?.includes('timeout') ||
+            error.message?.includes('endpoint is disabled') ||
+            error.message?.includes('Control plane request failed')) {
           
           if (attempt < maxRetries) {
-            const delay = attempt * 1000; // 1s, 2s, 3s
+            // Para hibernação do Neon, usar delays maiores
+            const isNeonHibernation = error.message?.includes('endpoint is disabled') || 
+                                      error.message?.includes('Control plane request failed');
+            const delay = isNeonHibernation ? (attempt * 3000) : (attempt * 1000); // 3s, 6s, 9s para Neon / 1s, 2s, 3s para outros
             console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
