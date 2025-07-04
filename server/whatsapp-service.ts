@@ -77,14 +77,10 @@ export class WhatsappService {
       
       const url = `${integration.apiUrl}/message/sendText/${integration.instanceName}`;
       
-      // Sanitização simples e efetiva
+      // Preservar formatação WhatsApp mas remover caracteres problemáticos
       const sanitizedMessage = message
-        .split('')
-        .filter(char => {
-          const code = char.charCodeAt(0);
-          return code >= 32 && code <= 126; // Apenas caracteres ASCII imprimíveis
-        })
-        .join('')
+        .replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '•') // Normalizar bullet points
+        .replace(/[^\x20-\x7E\u00A0-\u017F\u2022]/g, '') // Manter ASCII + Latin-1 + bullet
         .trim() || 'Comando processado com sucesso';
       
       console.log(`🔍 DEBUG ENCODING:`, {
@@ -221,8 +217,8 @@ export class WhatsappService {
 
   // ✅ NOVA FUNÇÃO: Log de eventos de segurança (TEMPORARIAMENTE DESABILITADO)
   private async logSecurityEvent(integrationId: number, destination: string, message: string, event: string): Promise<void> {
-    // Desabilitado temporariamente devido a erro no schema do banco
-    console.log(`🔒 LOG SEGURANÇA (DESABILITADO): ${event} para ${destination}`);
+    // Logs temporariamente desabilitados para evitar loop
+    console.log(`🔒 LOG SEGURANÇA: ${event} para ${destination}`);
   }
 
   // 🔒 VALIDAÇÃO ULTRA RESTRITIVA: Só processa se número estiver configurado
@@ -513,15 +509,8 @@ export class WhatsappService {
       const errorMessage = `❌ Erro ao processar comando: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
       await this.sendMessage(integration, responseTarget, errorMessage);
 
-      await storage.createWhatsappLog({
-        integrationId,
-        phoneNumber: responseTarget,
-        eventType: 'command_error',
-        command: command.action,
-        response: errorMessage,
-        details: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-        destination: responseTarget,
-      });
+      // Log temporariamente desabilitado para evitar loop
+      console.log(`❌ LOG ERROR: ${command.action} - ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   }
 

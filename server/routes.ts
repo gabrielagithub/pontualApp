@@ -109,22 +109,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(200).json({ status: 'ignored - no text' });
         }
 
-        // AJUSTE CRÍTICO: Em grupos, só ignorar fromMe se não há participant diferente
-        const isActuallyFromBot = message.key?.fromMe && (!message.key?.participant || message.key.participant === message.key.remoteJid);
-        
-        if (isActuallyFromBot) {
-          console.log('📱 IGNORANDO - mensagem realmente do bot (sem participant válido)');
-          return res.status(200).json({ status: 'ignored - own message' });
+        // FILTRO SIMPLES: Ignorar todas as mensagens enviadas pelo próprio bot
+        if (message.key?.fromMe) {
+          console.log('🤖 IGNORANDO - mensagem do próprio bot (fromMe: true)');
+          return res.status(200).json({ status: 'ignored - bot message' });
         }
-        
-        // Log para debug de fromMe mas com participant
-        if (message.key?.fromMe && message.key?.participant) {
-          console.log('⚠️ ATENÇÃO: fromMe=true mas participant presente:', {
-            fromMe: message.key.fromMe,
-            participant: message.key.participant,
-            remoteJid: message.key.remoteJid
-          });
-        }
+
         
         // Extrair informações da mensagem
         let phoneNumber = '';

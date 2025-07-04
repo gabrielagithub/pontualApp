@@ -60,12 +60,9 @@ export const whatsappIntegrations = pgTable("whatsapp_integrations", {
 export const whatsappLogs = pgTable("whatsapp_logs", {
   id: serial("id").primaryKey(),
   integrationId: integer("integration_id").notNull().references(() => whatsappIntegrations.id),
-  command: text("command"),
-  response: text("response"),
-  phoneNumber: text("phone_number").notNull(),
-  eventType: text("event_type").notNull(),
-  details: text("details"),
-  destination: text("destination"),
+  logType: text("log_type").notNull(),
+  message: text("message").notNull(),
+  metadata: text("metadata"),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
