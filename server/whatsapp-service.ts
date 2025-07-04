@@ -76,28 +76,15 @@ export class WhatsappService {
       
       const url = `${integration.apiUrl}/message/sendText/${integration.instanceName}`;
       
-      // Sanitização agressiva para evitar erros de encoding
-      let sanitizedMessage = message;
-      
-      // Primeiro, converter para buffer e depois para string ASCII limpa
-      try {
-        sanitizedMessage = Buffer.from(message, 'utf8').toString('ascii', { ignoreBOM: true });
-      } catch (e) {
-        // Fallback: sanitização manual completa
-        sanitizedMessage = message
-          .split('')
-          .map(char => {
-            const code = char.charCodeAt(0);
-            if (code > 127) return ''; // Remove todos os caracteres não-ASCII
-            return char;
-          })
-          .join('');
-      }
-      
-      // Garantir que não está vazio após sanitização
-      if (!sanitizedMessage || sanitizedMessage.trim() === '') {
-        sanitizedMessage = 'Comando processado com sucesso';
-      }
+      // Sanitização simples e efetiva
+      const sanitizedMessage = message
+        .split('')
+        .filter(char => {
+          const code = char.charCodeAt(0);
+          return code >= 32 && code <= 126; // Apenas caracteres ASCII imprimíveis
+        })
+        .join('')
+        .trim() || 'Comando processado com sucesso';
       
       const payload = {
         number: phoneNumber,
