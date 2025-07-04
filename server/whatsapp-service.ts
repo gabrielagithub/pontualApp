@@ -104,18 +104,21 @@ export class WhatsappService {
       };
       
       console.log(`🔍 PAYLOAD AXIOS:`, JSON.stringify(axiosPayload).substring(0, 100));
+      // Sanitizar API key para remover caracteres inválidos
+      const cleanApiKey = integration.apiKey?.trim().replace(/[^\x20-\x7E]/g, '') || '';
+      
       console.log(`🔍 AXIOS CONFIG:`, {
         url,
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'apikey': integration.apiKey
+          'apikey': cleanApiKey ? '••••••••••••••••' : 'EMPTY'
         }
       });
       
       const response = await axios.post(url, axiosPayload, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'apikey': integration.apiKey,
+          'apikey': cleanApiKey,
         },
         timeout: 10000
       });
