@@ -122,22 +122,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
                 const botNumber = integration.phoneNumber;
                 
-                // Simplificar - o bot número 5531992126113 deve bater com 553192126113@c.us
-                // Comparar apenas os últimos 11 dígitos para número brasileiro
+                // Corrigir número do bot removendo o dígito 9 após DDD se necessário
+                // Bot: 5531992126113 → 553192126113 para comparar com autorizado
                 botAuthorized = authorizedNumbers.some((num: string) => {
-                  const normalizedBot = botNumber.replace(/[^\d]/g, '');
+                  let normalizedBot = botNumber.replace(/[^\d]/g, '');
                   const normalizedAuth = num.replace(/[^\d]/g, '');
+                  
+                  // Se o bot tem 13 dígitos e começa com 5531, remover o 9
+                  if (normalizedBot.length === 13 && normalizedBot.startsWith('5531')) {
+                    normalizedBot = normalizedBot.slice(0, 4) + normalizedBot.slice(5); // Remove o 5º dígito (9)
+                  }
                   
                   console.log(`🔍 COMPARANDO: Bot="${normalizedBot}" vs Auth="${normalizedAuth}"`);
                   
-                  // Verificar apenas os últimos 11 dígitos (número brasileiro)
-                  const botLast11 = normalizedBot.slice(-11);
-                  const authLast11 = normalizedAuth.slice(-11);
-                  
-                  console.log(`🔍 ÚLTIMOS 11: Bot="${botLast11}" vs Auth="${authLast11}"`);
-                  
-                  if (botLast11 === authLast11) {
-                    console.log('✅ MATCH pelos últimos 11 dígitos');
+                  if (normalizedBot === normalizedAuth) {
+                    console.log('✅ MATCH EXATO após correção do dígito 9');
                     return true;
                   }
                   
