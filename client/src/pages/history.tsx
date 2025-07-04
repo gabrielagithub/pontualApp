@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,11 @@ export default function History() {
   const { data: timeEntries, isLoading: entriesLoading } = useQuery<TimeEntryWithTask[]>({
     queryKey: ["/api/time-entries"],
   });
+
+  // Log quando os dados mudarem
+  useEffect(() => {
+    console.log("🔄 FRONTEND: Time entries recebidas:", timeEntries?.length || 0, timeEntries);
+  }, [timeEntries]);
 
   const { data: tasks, isLoading: tasksLoading } = useQuery<TaskWithStats[]>({
     queryKey: ["/api/tasks"],

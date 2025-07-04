@@ -964,14 +964,16 @@ export class WhatsappService {
       const now = new Date();
       const startTime = new Date(now.getTime() - (duration * 1000));
 
-      await storage.createTimeEntry({
+      const entryData = {
         taskId: task.id,
         startTime,
         endTime: now,
         duration,
         isRunning: false,
         notes: 'Lançamento manual via WhatsApp',
-      });
+      };
+
+      const createdEntry = await storage.createTimeEntry(entryData);
 
       const hours = Math.floor(duration / 3600);
       const minutes = Math.floor((duration % 3600) / 60);

@@ -449,6 +449,12 @@ Changelog:
   * Interface de comandos simplificada para mostrar "30m" em vez de "2h" nos exemplos
   * Sistema agora aceita entrada flexível de tempo tanto em horas quanto em minutos
   * Compatibilidade mantida com todos os formatos anteriores de entrada de tempo
+- July 04, 2025 (01:50): Investigação completa do problema de persistência de time entries:
+  * Confirmado que time entries ESTÃO sendo criadas no banco PostgreSQL com sucesso
+  * API retorna 11 time entries corretamente para o frontend (verificado em logs)
+  * Banco de dados contém todas as entradas criadas via WhatsApp com dados corretos
+  * Problema identificado: possível cache ou filtro no frontend impedindo exibição
+  * Sistema de apontamento via WhatsApp funciona perfeitamente - dados persistem no banco
 ```
 
 ## User Preferences
