@@ -633,41 +633,30 @@ export class WhatsappService {
   }
 
   private getHelpMessage(): string {
-    return `🤖 *PONTUAL - Todos os Comandos*
+    return `🤖 *PONTUAL - Comandos Simplificados*
 
-📋 *BÁSICOS:*
-• *tarefas* - Ver lista (depois digite 1, 2, 3...)
-• *nova [nome]* - Criar tarefa simples
-• *status* - Ver timers ativos
-• *ajuda* - Esta lista
+📋 *VER TAREFAS:*
+• *tarefas* - Lista com códigos (T5, T6...)
 
 ⏱️ *TIMER:*
-• *iniciar [nome]* - Iniciar timer
-• *parar [nome]* - Parar timer
-• *pausar [nome]* - Pausar timer
-• *retomar [nome]* - Retomar timer pausado
+• *iniciar T5* - Liga timer da tarefa
+• *parar T5* - Para timer da tarefa
 
-📝 *APONTAMENTO:*
-• *apontar [nome] [tempo]* - Adicionar tempo manual
-• *apontar T5 2h* - Usar código da tarefa
-• *apontar-concluir [nome] [tempo]* - Adicionar tempo e finalizar
+📝 *APONTAR TEMPO:*
+• *apontar T5 2h* - Registra 2 horas
+• *apontar T5 14:00 16:30* - Das 14:00 às 16:30
+• *apontar T5 ontem 9:00 12:00* - Ontem das 9h às 12h
 
-✅ *TAREFAS:*
-• *concluir [nome]* - Marcar como concluída
-• *reabrir [nome]* - Reativar tarefa concluída
+✅ *GERENCIAR:*
+• *nova Reunião* - Cria tarefa
+• *concluir T5* - Finaliza tarefa
+• *status* - Timers rodando
+• *resumo* - Relatório hoje
 
-📊 *RESUMOS:*
-• *resumo* - Resumo de hoje
-• *resumo semanal* - Resumo semanal
-• *resumo mensal* - Resumo mensal
-
-🔧 *AVANÇADO:*
-• *nova --desc "descrição" --tempo 2h --prazo 2025-01-15 --cor azul Nome da Tarefa*
-
-💡 *SELEÇÃO RÁPIDA:*
-1. *tarefas* → vê lista numerada
-2. *1* → vê menu da tarefa 1
-3. *1 iniciar* → inicia timer da tarefa 1`;
+💡 *EXEMPLOS PRÁTICOS:*
+• *apontar T6 1.5h* - Uma hora e meia
+• *apontar T6 08:30 12:00* - Manhã toda
+• *apontar T6 segunda 14:00 17:00* - Segunda à tarde`;
   }
 
   private async getTasksList(): Promise<{ response: string; tasks: TaskWithStats[] }> {
@@ -928,17 +917,28 @@ export class WhatsappService {
 
   private async logTime(params: string[]): Promise<string> {
     if (params.length < 2) {
-      return "❌ Por favor, informe a tarefa e o tempo.\n\n*Exemplo:* lancamento 1 2.5h\n*Ou:* lancar Reunião 1h30min";
+      return "❌ Formato: *apontar T5 2h* ou *apontar T5 14:00 16:30*";
     }
 
-    const timeStr = params[params.length - 1];
-    const taskIdentifier = params.slice(0, -1).join(' ');
-
+    const taskIdentifier = params[0];
     const task = await this.findTask(taskIdentifier);
     if (!task) {
       return `❌ Tarefa não encontrada: "${taskIdentifier}"`;
     }
 
+    // Detectar formato: duração ou horário específico
+    if (params.length === 2) {
+      // Formato: apontar T5 2h
+      return await this.logTimeDuration(task, params[1]);
+    } else if (params.length >= 3) {
+      // Formato: apontar T5 14:00 16:30 ou apontar T5 ontem 14:00 16:30
+      return await this.logTimeRange(task, params.slice(1));
+    }
+
+    return "❌ Formato inválido. Use: *apontar T5 2h* ou *apontar T5 14:00 16:30*";
+  }
+
+  private async logTimeDuration(task: TaskWithStats, timeStr: string): Promise<string> {
     const duration = this.parseTimeString(timeStr);
     if (duration === 0) {
       return "❌ Formato de tempo inválido.\n\n*Exemplos:* 2h, 1.5h, 90min, 1h30min";
@@ -960,10 +960,112 @@ export class WhatsappService {
       const hours = Math.floor(duration / 3600);
       const minutes = Math.floor((duration % 3600) / 60);
 
-      return `✅ Tempo lançado para "${task.name}"!\n\n⏱️ ${hours}h ${minutes}min registrados.`;
+      return `✅ Tempo registrado: "${task.name}"\n⏱️ ${hours}h ${minutes}min`;
     } catch (error) {
-      return `❌ Erro ao lançar tempo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+      return `❌ Erro ao registrar tempo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
     }
+  }
+
+  private async logTimeRange(task: TaskWithStats, timeParams: string[]): Promise<string> {
+    let dateModifier = "";
+    let startTimeStr = "";
+    let endTimeStr = "";
+
+    if (timeParams.length === 2) {
+      // Formato: 14:00 16:30 (hoje)
+      [startTimeStr, endTimeStr] = timeParams;
+    } else if (timeParams.length === 3) {
+      // Formato: ontem 14:00 16:30
+      [dateModifier, startTimeStr, endTimeStr] = timeParams;
+    } else {
+      return "❌ Formato: *apontar T5 14:00 16:30* ou *apontar T5 ontem 14:00 16:30*";
+    }
+
+    const { startTime, endTime, error } = this.parseTimeRange(dateModifier, startTimeStr, endTimeStr);
+    if (error) {
+      return `❌ ${error}`;
+    }
+
+    const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+
+    try {
+      await storage.createTimeEntry({
+        taskId: task.id,
+        startTime,
+        endTime,
+        duration,
+        isRunning: false,
+        notes: 'Lançamento com horário específico via WhatsApp',
+      });
+
+      const hours = Math.floor(duration / 3600);
+      const minutes = Math.floor((duration % 3600) / 60);
+      const dateStr = startTime.toLocaleDateString('pt-BR');
+      const startStr = startTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const endStr = endTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      return `✅ Tempo registrado: "${task.name}"\n📅 ${dateStr} de ${startStr} às ${endStr}\n⏱️ Total: ${hours}h ${minutes}min`;
+    } catch (error) {
+      return `❌ Erro ao registrar tempo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  }
+
+  private parseTimeRange(dateModifier: string, startTimeStr: string, endTimeStr: string): { startTime: Date; endTime: Date; error?: string } {
+    const now = new Date();
+    let baseDate = new Date(now);
+
+    // Processar modificador de data
+    if (dateModifier) {
+      const lowerModifier = dateModifier.toLowerCase();
+      if (lowerModifier === 'ontem' || lowerModifier === 'yesterday') {
+        baseDate.setDate(baseDate.getDate() - 1);
+      } else if (lowerModifier === 'segunda' || lowerModifier === 'monday') {
+        const daysToMonday = (baseDate.getDay() + 6) % 7;
+        baseDate.setDate(baseDate.getDate() - daysToMonday);
+      } else if (lowerModifier === 'terça' || lowerModifier === 'tuesday') {
+        const daysToTuesday = (baseDate.getDay() + 5) % 7;
+        baseDate.setDate(baseDate.getDate() - daysToTuesday);
+      } else if (['quarta', 'wednesday'].includes(lowerModifier)) {
+        const daysToWednesday = (baseDate.getDay() + 4) % 7;
+        baseDate.setDate(baseDate.getDate() - daysToWednesday);
+      } else if (['quinta', 'thursday'].includes(lowerModifier)) {
+        const daysToThursday = (baseDate.getDay() + 3) % 7;
+        baseDate.setDate(baseDate.getDate() - daysToThursday);
+      } else if (['sexta', 'friday'].includes(lowerModifier)) {
+        const daysToFriday = (baseDate.getDay() + 2) % 7;
+        baseDate.setDate(baseDate.getDate() - daysToFriday);
+      }
+    }
+
+    // Parseaar horários
+    const startTime = this.parseTimeToDate(baseDate, startTimeStr);
+    const endTime = this.parseTimeToDate(baseDate, endTimeStr);
+
+    if (!startTime || !endTime) {
+      return { startTime: new Date(), endTime: new Date(), error: "Formato de horário inválido. Use HH:MM (ex: 14:30)" };
+    }
+
+    if (endTime <= startTime) {
+      return { startTime: new Date(), endTime: new Date(), error: "Horário de fim deve ser depois do início" };
+    }
+
+    return { startTime, endTime };
+  }
+
+  private parseTimeToDate(baseDate: Date, timeStr: string): Date | null {
+    const timeRegex = /^(\d{1,2}):(\d{2})$/;
+    const match = timeStr.match(timeRegex);
+    
+    if (!match) return null;
+    
+    const hours = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+    
+    const date = new Date(baseDate);
+    date.setHours(hours, minutes, 0, 0);
+    return date;
   }
 
   private async generateReport(params: string[]): Promise<string> {

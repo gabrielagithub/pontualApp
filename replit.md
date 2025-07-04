@@ -396,6 +396,12 @@ Changelog:
   * Script apply-migration-local.js criado para aplicação em ambiente local
   * Sistema agora funciona sem conceito de usuários, completamente simplificado
   * Timers funcionam sem solicitar login, conforme esperado para single-user
+- July 04, 2025 (00:30): Simplificação completa dos comandos WhatsApp:
+  * Adicionados códigos de tarefa (T5, T6, etc.) para identificação rápida
+  * Comando apontar agora aceita códigos: "apontar T6 1h"
+  * Implementado lançamento com hora específica: "apontar T6 14:00 16:00"
+  * Comandos simplificados e mais intuitivos para o usuário final
+  * Sistema suporta múltiplos formatos de entrada de tempo flexíveis
 - July 03, 2025 (19:34): Configuração completa do Docker para deployment local:
   * Criado Dockerfile otimizado para produção com Node.js 20 Alpine
   * Implementado docker-compose.yml com PostgreSQL automático e health checks
@@ -412,6 +418,13 @@ Changelog:
   * Criado migrate-docker.js específico para PostgreSQL padrão
   * Build separado: Vite para frontend, ESBuild customizado para servidor Docker
   * Configuração robusta para ambientes containerizados e serverless
+- July 04, 2025 (00:35): Revolução na UX dos comandos WhatsApp com horários específicos:
+  * Implementada funcionalidade completa de apontamento com horários específicos
+  * Novos formatos: "apontar T5 14:00 16:30", "apontar T5 ontem 9:00 12:00"
+  * Suporte a modificadores de data: ontem, segunda, terça, quarta, quinta, sexta
+  * Sistema inteligente de parsing de tempo com validação robusta
+  * Interface de ajuda completamente redesenhada com exemplos práticos
+  * Eliminação de comandos confusos, foco em simplicidade e intuitividade
 ```
 
 ## User Preferences
