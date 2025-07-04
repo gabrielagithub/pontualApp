@@ -126,13 +126,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 botAuthorized = authorizedNumbers.some((num: string) => {
                   const normalizedBot = botNumber.replace(/[^\d]/g, '');
                   const normalizedAuth = num.replace(/[^\d]/g, '');
-                  return normalizedBot === normalizedAuth;
+                  
+                  // Tentar match com os últimos 11 dígitos (padrão brasileiro)
+                  const botLast11 = normalizedBot.slice(-11);
+                  const authLast11 = normalizedAuth.slice(-11);
+                  
+                  return normalizedBot === normalizedAuth || botLast11 === authLast11;
                 });
                 
                 console.log('🔍 VERIFICAÇÃO BOT AUTORIZADO:', {
                   botNumber,
                   authorizedNumbers,
-                  botAuthorized
+                  botAuthorized,
+                  normalizedBot: botNumber.replace(/[^\d]/g, ''),
+                  normalizedAuth: authorizedNumbers.map((n: string) => n.replace(/[^\d]/g, '')),
+                  botLast11: botNumber.replace(/[^\d]/g, '').slice(-11),
+                  authLast11: authorizedNumbers.map((n: string) => n.replace(/[^\d]/g, '').slice(-11))
                 });
               } catch (error) {
                 console.error('Erro ao verificar números autorizados:', error);
