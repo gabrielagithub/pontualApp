@@ -377,7 +377,9 @@ export class WhatsappService {
       id: integration.id,
       responseMode: integration.responseMode,
       authorizedNumbers: integration.authorizedNumbers,
-      allowedGroupJid: integration.allowedGroupJid
+      allowedGroupJid: integration.allowedGroupJid,
+      hasApiKey: !!integration.apiKey,
+      apiKeyLength: integration.apiKey?.length || 0
     });
 
     // ✅ VALIDAÇÃO DE SEGURANÇA AVANÇADA (agora por número individual)
