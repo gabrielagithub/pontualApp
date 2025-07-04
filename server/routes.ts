@@ -127,20 +127,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const normalizedBot = botNumber.replace(/[^\d]/g, '');
                   const normalizedAuth = num.replace(/[^\d]/g, '');
                   
+                  console.log(`🔍 COMPARANDO: Bot="${normalizedBot}" vs Auth="${normalizedAuth}"`);
+                  
                   // Tentar match exato
-                  if (normalizedBot === normalizedAuth) return true;
-                  
-                  // Tentar match com os últimos 11 dígitos (padrão brasileiro)
-                  const botLast11 = normalizedBot.slice(-11);
-                  const authLast11 = normalizedAuth.slice(-11);
-                  if (botLast11 === authLast11) return true;
-                  
-                  // Remover o dígito 9 após código do país (55) do bot e comparar
-                  if (normalizedBot.startsWith('5599') && normalizedAuth.startsWith('55')) {
-                    const botWithout9 = '55' + normalizedBot.slice(4); // Remove o 9 após 55
-                    return botWithout9 === normalizedAuth;
+                  if (normalizedBot === normalizedAuth) {
+                    console.log('✅ MATCH EXATO');
+                    return true;
                   }
                   
+                  // Para o caso específico: 5531992126113 vs 553192126113
+                  // Remover o dígito 9 após o código do país
+                  if (normalizedBot.length === 13 && normalizedAuth.length === 12) {
+                    if (normalizedBot.startsWith('5531') && normalizedAuth.startsWith('5531')) {
+                      const botWithoutMiddle9 = normalizedBot.slice(0,4) + normalizedBot.slice(5); // Remove o 5º dígito
+                      if (botWithoutMiddle9 === normalizedAuth) {
+                        console.log('✅ MATCH REMOVENDO 9 DO MEIO');
+                        return true;
+                      }
+                    }
+                  }
+                  
+                  // Match com últimos 11 dígitos
+                  const botLast11 = normalizedBot.slice(-11);
+                  const authLast11 = normalizedAuth.slice(-11);
+                  if (botLast11 === authLast11) {
+                    console.log('✅ MATCH ÚLTIMOS 11 DÍGITOS');
+                    return true;
+                  }
+                  
+                  console.log('❌ SEM MATCH');
                   return false;
                 });
                 
