@@ -1,4 +1,5 @@
 import { storage } from "./storage";
+import axios from 'axios';
 import type { 
   WhatsappIntegration, 
   Task, 
@@ -86,12 +87,6 @@ export class WhatsappService {
         .join('')
         .trim() || 'Comando processado com sucesso';
       
-      const payload = {
-        number: phoneNumber,
-        text: sanitizedMessage
-      };
-      
-      console.log(`📤 PAYLOAD SANITIZADO:`, JSON.stringify(payload));
       console.log(`🔍 DEBUG ENCODING:`, {
         firstChar: sanitizedMessage.charAt(0),
         firstCharCode: sanitizedMessage.charCodeAt(0),
@@ -102,30 +97,32 @@ export class WhatsappService {
       // ✅ LOG DE AUDITORIA antes do envio
       await this.logSecurityEvent(integration.id, phoneNumber, message, 'MESSAGE_SENT');
       
-      // Usar Buffer para garantir encoding UTF-8 correto
-      const jsonPayload = `{"number":"${phoneNumber}","text":"${sanitizedMessage.replace(/"/g, '\\"')}"}`;
-      const bodyBuffer = Buffer.from(jsonPayload, 'utf8');
+      // Usar axios para melhor controle de encoding
+      const axiosPayload = {
+        number: phoneNumber,
+        text: sanitizedMessage
+      };
       
-      console.log(`🔍 JSON MANUAL:`, jsonPayload.substring(0, 100));
-      console.log(`🔍 BUFFER INFO:`, {
-        length: bodyBuffer.length,
-        firstByte: bodyBuffer[0],
-        preview: bodyBuffer.toString('utf8', 0, 50)
+      console.log(`🔍 PAYLOAD AXIOS:`, JSON.stringify(axiosPayload).substring(0, 100));
+      console.log(`🔍 AXIOS CONFIG:`, {
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'apikey': integration.apiKey
+        }
       });
       
-      const response = await fetch(url, {
-        method: 'POST',
+      const response = await axios.post(url, axiosPayload, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'apikey': integration.apiKey,
         },
-        body: bodyBuffer
+        timeout: 10000
       });
 
-      const responseText = await response.text();
-      console.log(`📤 RESPOSTA EVOLUTION API: ${response.status} - ${responseText}`);
+      console.log(`📤 RESPOSTA EVOLUTION API: ${response.status} - ${JSON.stringify(response.data)}`);
 
-      return response.ok;
+      return response.status >= 200 && response.status < 300;
     } catch (error) {
       console.error('❌ Erro ao enviar mensagem WhatsApp:', error);
       await this.logSecurityEvent(integration.id, phoneNumber, message, 'SEND_ERROR');
