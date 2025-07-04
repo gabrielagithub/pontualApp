@@ -593,8 +593,9 @@ export class WhatsappService {
     const hours = Math.floor(task.totalTime / 3600);
     const minutes = Math.floor((task.totalTime % 3600) / 60);
     const isRunning = task.activeEntries > 0;
+    const taskCode = `T${task.id}`;
     
-    let menu = `📋 *${task.name}*\n`;
+    let menu = `📋 *${task.name}* (${taskCode})\n`;
     menu += `⏱️ ${hours}h ${minutes}min\n`;
     
     if (isRunning) {
@@ -606,7 +607,7 @@ export class WhatsappService {
     }
     
     menu += `• *concluir* - Finaliza\n`;
-    menu += `• *apontar 2h* - Adiciona tempo`;
+    menu += `• *apontar ${taskCode} 2h* - Adiciona tempo`;
     
     return menu;
   }
@@ -648,6 +649,7 @@ export class WhatsappService {
 
 📝 *APONTAMENTO:*
 • *apontar [nome] [tempo]* - Adicionar tempo manual
+• *apontar T5 2h* - Usar código da tarefa
 • *apontar-concluir [nome] [tempo]* - Adicionar tempo e finalizar
 
 ✅ *TAREFAS:*
@@ -689,7 +691,8 @@ export class WhatsappService {
       const isRunning = task.activeEntries > 0 ? "⏱️" : "";
       
       const taskNumber = index + 1;
-      message += `${taskNumber}. ${task.name} ${isRunning}\n`;
+      const taskCode = `T${task.id}`;
+      message += `${taskNumber}. ${task.name} (${taskCode}) ${isRunning}\n`;
       if (totalTime > 0 || minutes > 0) {
         message += `   └ ${totalTime}h ${minutes}min trabalhadas\n`;
       }
@@ -706,7 +709,8 @@ export class WhatsappService {
     message += "\n⚡ *COMO USAR:*\n";
     message += "• *1 iniciar* - Liga timer\n";
     message += "• *2 parar* - Para timer\n";
-    message += "• *3 concluir* - Finaliza tarefa";
+    message += "• *3 concluir* - Finaliza tarefa\n";
+    message += "• *apontar T5 2h* - Registra tempo por código";
     
     return {
       response: message,
@@ -1132,7 +1136,15 @@ export class WhatsappService {
   private async findTask(identifier: string): Promise<TaskWithStats | undefined> {
     const tasks = await storage.getAllTasks();
     
-    // Tentar por ID primeiro
+    // Tentar por código da tarefa (T{id})
+    if (identifier.toUpperCase().startsWith('T')) {
+      const taskId = parseInt(identifier.substring(1));
+      if (!isNaN(taskId)) {
+        return tasks.find(t => t.id === taskId);
+      }
+    }
+    
+    // Tentar por ID numérico direto
     const taskId = parseInt(identifier);
     if (!isNaN(taskId)) {
       return tasks.find(t => t.id === taskId);
