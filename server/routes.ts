@@ -127,11 +127,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const normalizedBot = botNumber.replace(/[^\d]/g, '');
                   const normalizedAuth = num.replace(/[^\d]/g, '');
                   
+                  // Tentar match exato
+                  if (normalizedBot === normalizedAuth) return true;
+                  
                   // Tentar match com os últimos 11 dígitos (padrão brasileiro)
                   const botLast11 = normalizedBot.slice(-11);
                   const authLast11 = normalizedAuth.slice(-11);
+                  if (botLast11 === authLast11) return true;
                   
-                  return normalizedBot === normalizedAuth || botLast11 === authLast11;
+                  // Remover o dígito 9 após código do país (55) do bot e comparar
+                  if (normalizedBot.startsWith('5599') && normalizedAuth.startsWith('55')) {
+                    const botWithout9 = '55' + normalizedBot.slice(4); // Remove o 9 após 55
+                    return botWithout9 === normalizedAuth;
+                  }
+                  
+                  return false;
                 });
                 
                 console.log('🔍 VERIFICAÇÃO BOT AUTORIZADO:', {

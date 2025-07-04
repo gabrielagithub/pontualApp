@@ -431,6 +431,12 @@ Changelog:
   * Sistema agora preserva API key existente quando campo está vazio ou mascarado
   * Correção garante que configurações podem ser alteradas sem perder autenticação
   * WhatsApp bot mantém funcionamento contínuo mesmo após mudanças de configuração
+- July 04, 2025 (01:04): Correção do sistema de grupo WhatsApp e autorização do bot:
+  * Resolvido bloqueio de envio para grupos autorizados no modo grupo
+  * Implementada autorização inteligente para mensagens do próprio bot quando configurado como autorizado
+  * Corrigida normalização de números brasileiros com dígito 9 após código do país (5599 vs 55)
+  * Sistema agora permite que instância do bot responda comandos em grupos quando autorizada
+  * WhatsApp modo grupo totalmente funcional com segurança mantida
 ```
 
 ## User Preferences
