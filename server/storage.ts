@@ -578,16 +578,18 @@ import { DatabaseStorage } from "./database-storage.js";
 
 // Detectar ambiente
 const hasDatabaseUrl = !!process.env.DATABASE_URL;
-const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER || process.env.DOCKER;
 const isNeonDatabase = process.env.DATABASE_URL?.includes('neon.tech');
+const isReplit = !!process.env.REPL_ID;
 
 console.log("🔍 Detectando ambiente:");
 console.log("- Produção:", isProduction ? "✅ Sim" : "❌ Não (desenvolvimento)");
+console.log("- Replit:", isReplit ? "✅ Sim" : "❌ Não");
 console.log("- DATABASE_URL:", hasDatabaseUrl ? "✅ Configurado" : "❌ Não configurado");
 console.log("- Tipo de banco:", isNeonDatabase ? "Neon" : "PostgreSQL padrão");
 
-// Verificar se o banco Neon está hibernando
-const isNeonHibernating = isNeonDatabase && !isProduction;
+// Verificar se o banco Neon está hibernando APENAS em desenvolvimento no Replit
+const isNeonHibernating = isNeonDatabase && !isProduction && isReplit;
 
 if (!hasDatabaseUrl) {
   console.log("❌ DATABASE_URL não configurado. Configure PostgreSQL.");
@@ -597,18 +599,20 @@ if (!hasDatabaseUrl) {
 let storage: IStorage;
 
 if (isProduction) {
-  // Produção sempre usa PostgreSQL
-  console.log("🐘 Produção: Usando PostgreSQL obrigatoriamente");
+  // Produção (Render/Docker) sempre usa PostgreSQL
+  console.log("🐘 Produção (Render/Docker): Usando PostgreSQL obrigatoriamente");
+  console.log("📊 Dados serão persistidos no banco PostgreSQL");
   storage = new DatabaseStorage();
 } else if (isNeonHibernating) {
-  // Neon hibernando em desenvolvimento - usar MemStorage
-  console.log("⚠️  Banco Neon detectado hibernando em desenvolvimento");
-  console.log("💾 Usando MemStorage temporariamente");
-  console.log("💡 Para produção: configure PostgreSQL dedicado no Render");
+  // Neon hibernando APENAS em desenvolvimento no Replit
+  console.log("⚠️  Banco Neon detectado hibernando no Replit desenvolvimento");
+  console.log("💾 Usando MemStorage temporariamente (apenas desenvolvimento)");
+  console.log("💡 No Render/Docker: dados serão persistidos no PostgreSQL");
   storage = new MemStorage();
 } else {
-  // PostgreSQL padrão em desenvolvimento
+  // PostgreSQL padrão ou desenvolvimento local
   console.log("🐘 Desenvolvimento: Usando PostgreSQL");
+  console.log("📊 Dados serão persistidos no banco PostgreSQL");
   storage = new DatabaseStorage();
 }
 

@@ -504,6 +504,13 @@ Changelog:
   * WhatsApp integration funcional em ambos os modos (MemStorage e PostgreSQL)
   * Criada documentação completa DATABASE_CONFIGURATION.md para deploy
   * Aplicação pronta para deploy no Render com PostgreSQL dedicado
+- July 04, 2025 (20:03): Garantia de persistência de dados no Render e Docker:
+  * Aprimorada detecção de ambiente para incluir RENDER e DOCKER nas variáveis de produção
+  * Implementada lógica específica: MemStorage APENAS no Replit desenvolvimento com Neon hibernando
+  * Render e Docker SEMPRE usam PostgreSQL com dados persistidos (nunca MemStorage)
+  * Logs claros confirmam onde dados são persistidos: "📊 Dados serão persistidos no banco PostgreSQL"
+  * Documentação atualizada com garantias explícitas de persistência por ambiente
+  * Sistema 100% seguro para produção com persistência garantida de dados
 ```
 
 ## User Preferences

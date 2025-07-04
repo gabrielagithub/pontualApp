@@ -14,23 +14,45 @@ O sistema detecta automaticamente:
 - **Desenvolvimento**: Quando não está em produção
 - **Tipo de Banco**: Neon vs PostgreSQL padrão
 
-### Estratégia de Fallback
+### Estratégia de Persistência Garantida
+
+### Detecção de Ambiente
 
 ```javascript
-// Produção: SEMPRE PostgreSQL
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER || process.env.DOCKER;
+const isReplit = !!process.env.REPL_ID;
+const isNeonHibernating = isNeonDatabase && !isProduction && isReplit;
+
+// RENDER/DOCKER: SEMPRE PostgreSQL (dados persistidos)
 if (isProduction) {
-  storage = new DatabaseStorage(); // PostgreSQL obrigatório
+  storage = new DatabaseStorage(); // ✅ DADOS PERSISTIDOS
 }
 
-// Desenvolvimento: Detecta Neon hibernando
+// REPLIT DESENVOLVIMENTO: Fallback apenas se Neon hibernando
 else if (isNeonHibernating) {
-  storage = new MemStorage(); // Fallback temporário
+  storage = new MemStorage(); // ⚠️ Temporário APENAS no Replit dev
 }
 
-// Desenvolvimento: PostgreSQL padrão
+// DESENVOLVIMENTO LOCAL: PostgreSQL
 else {
-  storage = new DatabaseStorage(); // PostgreSQL normal
+  storage = new DatabaseStorage(); // ✅ DADOS PERSISTIDOS
 }
+```
+
+### Garantias de Persistência
+
+✅ **Render**: SEMPRE PostgreSQL - dados persistidos
+✅ **Docker**: SEMPRE PostgreSQL - dados persistidos  
+✅ **Desenvolvimento Local**: PostgreSQL - dados persistidos
+⚠️ **Replit Dev**: MemStorage se Neon hibernando (temporário)
+
+### Logs de Confirmação
+
+O sistema mostra claramente onde os dados são persistidos:
+
+```
+🐘 Produção (Render/Docker): Usando PostgreSQL obrigatoriamente
+📊 Dados serão persistidos no banco PostgreSQL
 ```
 
 ## Configuração para Render (Produção)
