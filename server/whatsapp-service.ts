@@ -76,22 +76,28 @@ export class WhatsappService {
       
       const url = `${integration.apiUrl}/message/sendText/${integration.instanceName}`;
       
-      // Sanitizar texto para evitar erros de encoding
-      const sanitizedMessage = message
-        .replace(/❌/g, '[ERRO]')
-        .replace(/✅/g, '[OK]')
-        .replace(/📱/g, '')
-        .replace(/🤖/g, 'BOT')
-        .replace(/📋/g, '')
-        .replace(/📊/g, '')
-        .replace(/📝/g, '')
-        .replace(/⏰/g, '')
-        .replace(/🚀/g, '')
-        .replace(/•/g, '-') // Substituir bullet points
-        .replace(/→/g, '->') // Substituir setas
-        .replace(/💡/g, '')
-        .replace(/🔧/g, '')
-        .replace(/[^\x00-\x7F]/g, ''); // Remove caracteres não-ASCII restantes
+      // Sanitização agressiva para evitar erros de encoding
+      let sanitizedMessage = message;
+      
+      // Primeiro, converter para buffer e depois para string ASCII limpa
+      try {
+        sanitizedMessage = Buffer.from(message, 'utf8').toString('ascii', { ignoreBOM: true });
+      } catch (e) {
+        // Fallback: sanitização manual completa
+        sanitizedMessage = message
+          .split('')
+          .map(char => {
+            const code = char.charCodeAt(0);
+            if (code > 127) return ''; // Remove todos os caracteres não-ASCII
+            return char;
+          })
+          .join('');
+      }
+      
+      // Garantir que não está vazio após sanitização
+      if (!sanitizedMessage || sanitizedMessage.trim() === '') {
+        sanitizedMessage = 'Comando processado com sucesso';
+      }
       
       const payload = {
         number: phoneNumber,
