@@ -1157,6 +1157,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startTime = new Date(runningTimer.startTime);
       const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
       
+      // Validar tempo mínimo de 1 minuto (60 segundos)
+      if (duration < 60) {
+        // Se o tempo for menor que 1 minuto, deletar a entrada em vez de salvar
+        await storage.deleteTimeEntry(runningTimer.id);
+        return res.json({
+          message: "Timer removido - tempo inferior a 1 minuto não é registrado",
+          entry: null,
+          task,
+          duration: {
+            seconds: duration,
+            formatted: `${Math.floor(duration / 3600).toString().padStart(2, '0')}:${Math.floor((duration % 3600) / 60).toString().padStart(2, '0')}:${(duration % 60).toString().padStart(2, '0')}`
+          },
+          deleted: true
+        });
+      }
+      
       const updates: any = {
         endTime: endTime.toISOString(),
         duration,

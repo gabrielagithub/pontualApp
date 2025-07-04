@@ -470,6 +470,14 @@ Changelog:
   * Todas as funcionalidades principais validadas: healthCheck, getTasks, createTask, completeTask, reopenTask
   * Funcionalidades de tempo validadas: createTimeEntry, getTimeEntries, startTimer, stopTimer, dashboardStats
   * WhatsApp completamente operacional: integration, webhook, commands (ajuda, tarefas, status)
+- July 04, 2025 (19:25): Implementação da validação de tempo mínimo de 1 minuto e correção de conectividade:
+  * Implementada validação de 1 minuto no WhatsApp service (stopTimer e pauseTimer functions)
+  * Adicionada validação consistente no endpoint backend /api/stop-timer
+  * Timers com duração inferior a 60 segundos são automaticamente removidos do histórico
+  * Melhorada configuração de banco para detectar e usar PostgreSQL padrão vs Neon HTTP
+  * Implementado sistema de retry inteligente para operações de banco com problemas de conectividade
+  * Corrigidos problemas temporários de endpoint Neon "dormindo" (behavior normal em contas gratuitas)
+  * Sistema mantém consistência total entre interface web e comandos WhatsApp para validação de tempo
 ```
 
 ## User Preferences

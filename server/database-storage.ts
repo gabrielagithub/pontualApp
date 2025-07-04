@@ -355,9 +355,43 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  // Método de retry para operações de banco de dados
+  private async retryDatabaseOperation<T>(operation: () => Promise<T>, operationName: string, maxRetries = 3): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        console.error(`❌ Tentativa ${attempt}/${maxRetries} falhou para ${operationName}:`, error.message);
+        
+        // Se for erro de conectividade, tentar novamente após delay
+        if (error.message?.includes('fetch failed') || 
+            error.message?.includes('ECONNREFUSED') ||
+            error.message?.includes('network') ||
+            error.message?.includes('timeout')) {
+          
+          if (attempt < maxRetries) {
+            const delay = attempt * 1000; // 1s, 2s, 3s
+            console.log(`⏳ Aguardando ${delay}ms antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+        
+        // Para outros tipos de erro, falhar imediatamente
+        break;
+      }
+    }
+    
+    throw lastError;
+  }
+
   // WhatsApp Integration methods (single instance)
   async getWhatsappIntegration(): Promise<WhatsappIntegration | undefined> {
-    const [integration] = await db.select({
+    return this.retryDatabaseOperation(async () => {
+      const [integration] = await db.select({
       id: whatsappIntegrations.id,
       instanceName: whatsappIntegrations.instanceName,
       apiUrl: whatsappIntegrations.apiUrl,
@@ -372,15 +406,16 @@ export class DatabaseStorage implements IStorage {
       lastConnection: whatsappIntegrations.lastConnection,
       createdAt: whatsappIntegrations.createdAt,
       updatedAt: whatsappIntegrations.updatedAt,
-    }).from(whatsappIntegrations).limit(1);
-    
-    return integration || undefined;
+      }).from(whatsappIntegrations).limit(1);
+      
+      return integration || undefined;
+    }, 'getWhatsappIntegration');
   }
 
   async createWhatsappIntegration(integration: InsertWhatsappIntegration): Promise<WhatsappIntegration> {
-    console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", JSON.stringify(integration, null, 2));
-    
-    try {
+    return this.retryDatabaseOperation(async () => {
+      console.log("🔄 DatabaseStorage.createWhatsappIntegration - Input:", JSON.stringify(integration, null, 2));
+      
       const [created] = await db
         .insert(whatsappIntegrations)
         .values(integration)
@@ -388,47 +423,7 @@ export class DatabaseStorage implements IStorage {
       
       console.log("✅ DatabaseStorage.createWhatsappIntegration - Created:", created);
       return created;
-    } catch (error: any) {
-      console.error("❌ ERRO DETALHADO no createWhatsappIntegration:");
-      console.error("Tipo:", error?.constructor?.name);
-      console.error("Mensagem:", error?.message);
-      console.error("Código:", error?.code);
-      console.error("Stack:", error?.stack);
-      throw error;
-    }
-  }
-
-  // Método para retry em operações críticas
-  private async retryOperation<T>(operation: () => Promise<T>, operationName: string, maxRetries = 2): Promise<T> {
-    let lastError: any;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const result = await operation();
-        if (attempt > 1) {
-          console.log(`✅ ${operationName} - Sucesso na tentativa ${attempt}`);
-        }
-        return result;
-      } catch (error: any) {
-        lastError = error;
-        console.error(`❌ ${operationName} - Erro na tentativa ${attempt}:`, error.message);
-        
-        // Se for erro de conexão e não for a última tentativa, aguardar
-        if (error.message?.includes('fetch failed') || error.message?.includes('connect') || error.constructor.name === 'NeonDbError') {
-          if (attempt < maxRetries) {
-            const delayMs = 1500; // 1.5s fixo
-            console.log(`⏳ Aguardando ${delayMs}ms antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-          }
-        } else {
-          // Se não for erro de conexão, não retry
-          throw error;
-        }
-      }
-    }
-    
-    console.error(`❌ ${operationName} - Todas as tentativas falharam`);
-    throw lastError;
+    }, 'createWhatsappIntegration');
   }
 
   async updateWhatsappIntegration(id: number, updates: Partial<WhatsappIntegration>): Promise<WhatsappIntegration | undefined> {

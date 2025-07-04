@@ -36,11 +36,31 @@ if (isDocker) {
   console.log('✅ PostgreSQL configurado para Docker (node-postgres)');
   
 } else {
-  // Configuração para Render/Cloud com Neon
-  neonConfig.fetchConnectionCache = true;
-  const sql = neon(process.env.DATABASE_URL);
-  db = drizzleNeon(sql, { schema });
-  console.log('✅ PostgreSQL configurado via Neon HTTP para cloud');
+  // Configuração para Render/Cloud
+  try {
+    // Primeiro tentar Neon HTTP (para Neon databases)
+    if (process.env.DATABASE_URL.includes('neon.tech')) {
+      neonConfig.fetchConnectionCache = true;
+      const sql = neon(process.env.DATABASE_URL);
+      db = drizzleNeon(sql, { schema });
+      console.log('✅ PostgreSQL configurado via Neon HTTP');
+    } else {
+      // Fallback para PostgreSQL padrão (Render PostgreSQL)
+      const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      });
+      
+      db = drizzleNodePg(pool, { schema });
+      console.log('✅ PostgreSQL configurado via node-postgres para cloud');
+    }
+  } catch (error) {
+    console.error('❌ Erro na configuração do banco:', error);
+    throw error;
+  }
 }
 
 export { db };
