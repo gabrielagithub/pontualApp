@@ -102,13 +102,22 @@ export class WhatsappService {
       // ✅ LOG DE AUDITORIA antes do envio
       await this.logSecurityEvent(integration.id, phoneNumber, message, 'MESSAGE_SENT');
       
+      // Construir payload manualmente para evitar problemas de encoding
+      const jsonPayload = `{"number":"${phoneNumber}","text":"${sanitizedMessage.replace(/"/g, '\\"')}"}`;
+      
+      console.log(`🔍 JSON MANUAL:`, jsonPayload.substring(0, 100));
+      console.log(`🔍 PRIMEIRO CHAR DO JSON:`, {
+        char: jsonPayload.charAt(0),
+        code: jsonPayload.charCodeAt(0)
+      });
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': integration.apiKey,
         },
-        body: JSON.stringify(payload)
+        body: jsonPayload
       });
 
       const responseText = await response.text();
