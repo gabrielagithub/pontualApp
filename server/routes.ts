@@ -109,10 +109,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(200).json({ status: 'ignored - no text' });
         }
 
-        // FILTRO SIMPLES: Ignorar todas as mensagens enviadas pelo próprio bot
+        // FILTRO INTELIGENTE: Permitir mensagens do bot se ele estiver autorizado
         if (message.key?.fromMe) {
-          console.log('🤖 IGNORANDO - mensagem do próprio bot (fromMe: true)');
-          return res.status(200).json({ status: 'ignored - bot message' });
+          // Buscar integração para verificar se o bot está autorizado
+          const integration = await storage.getWhatsappIntegration();
+          
+          if (integration && integration.instanceName === instanceName) {
+            // Verificar se o número do bot está na lista de autorizados
+            let botAuthorized = false;
+            if (integration.authorizedNumbers) {
+              try {
+                const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
+                const botNumber = integration.phoneNumber;
+                
+                // Verificar se o número do bot está na lista (com diferentes formatos)
+                botAuthorized = authorizedNumbers.some((num: string) => {
+                  const normalizedBot = botNumber.replace(/[^\d]/g, '');
+                  const normalizedAuth = num.replace(/[^\d]/g, '');
+                  return normalizedBot === normalizedAuth;
+                });
+                
+                console.log('🔍 VERIFICAÇÃO BOT AUTORIZADO:', {
+                  botNumber,
+                  authorizedNumbers,
+                  botAuthorized
+                });
+              } catch (error) {
+                console.error('Erro ao verificar números autorizados:', error);
+              }
+            }
+            
+            if (!botAuthorized) {
+              console.log('🤖 IGNORANDO - bot não autorizado na lista de números permitidos');
+              return res.status(200).json({ status: 'ignored - bot not authorized' });
+            } else {
+              console.log('✅ PROCESSANDO - bot está na lista de números autorizados');
+            }
+          } else {
+            console.log('🤖 IGNORANDO - mensagem do próprio bot (fromMe: true)');
+            return res.status(200).json({ status: 'ignored - bot message' });
+          }
         }
 
         
