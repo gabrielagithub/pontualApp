@@ -39,7 +39,7 @@ export default function LoginPage() {
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
           <h1 className="text-2xl font-bold text-center mt-2 text-blue-700">
-            PontualApp
+            Pontual
           </h1>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
