@@ -122,36 +122,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const authorizedNumbers = JSON.parse(integration.authorizedNumbers);
                 const botNumber = integration.phoneNumber;
                 
-                // Verificar se o número do bot está na lista (com diferentes formatos)
+                // Simplificar - o bot número 5531992126113 deve bater com 553192126113@c.us
+                // Comparar apenas os últimos 11 dígitos para número brasileiro
                 botAuthorized = authorizedNumbers.some((num: string) => {
                   const normalizedBot = botNumber.replace(/[^\d]/g, '');
                   const normalizedAuth = num.replace(/[^\d]/g, '');
                   
                   console.log(`🔍 COMPARANDO: Bot="${normalizedBot}" vs Auth="${normalizedAuth}"`);
                   
-                  // Tentar match exato
-                  if (normalizedBot === normalizedAuth) {
-                    console.log('✅ MATCH EXATO');
-                    return true;
-                  }
-                  
-                  // Para o caso específico: 5531992126113 vs 553192126113
-                  // Remover o dígito 9 após o código do país
-                  if (normalizedBot.length === 13 && normalizedAuth.length === 12) {
-                    if (normalizedBot.startsWith('5531') && normalizedAuth.startsWith('5531')) {
-                      const botWithoutMiddle9 = normalizedBot.slice(0,4) + normalizedBot.slice(5); // Remove o 5º dígito
-                      if (botWithoutMiddle9 === normalizedAuth) {
-                        console.log('✅ MATCH REMOVENDO 9 DO MEIO');
-                        return true;
-                      }
-                    }
-                  }
-                  
-                  // Match com últimos 11 dígitos
+                  // Verificar apenas os últimos 11 dígitos (número brasileiro)
                   const botLast11 = normalizedBot.slice(-11);
                   const authLast11 = normalizedAuth.slice(-11);
+                  
+                  console.log(`🔍 ÚLTIMOS 11: Bot="${botLast11}" vs Auth="${authLast11}"`);
+                  
                   if (botLast11 === authLast11) {
-                    console.log('✅ MATCH ÚLTIMOS 11 DÍGITOS');
+                    console.log('✅ MATCH pelos últimos 11 dígitos');
                     return true;
                   }
                   
