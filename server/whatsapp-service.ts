@@ -60,9 +60,9 @@ export class WhatsappService {
         }
       }
       
-      // 🔒 SEGUNDA CAMADA: Validar formato de número individual
-      if (!phoneNumber.includes('@c.us') && !phoneNumber.includes('@s.whatsapp.net')) {
-        console.error(`🚫 BLOQUEIO FORMATO: Número "${phoneNumber}" não é individual válido`);
+      // 🔒 SEGUNDA CAMADA: Validar formato de número (individual ou grupo autorizado)
+      if (!phoneNumber.includes('@c.us') && !phoneNumber.includes('@s.whatsapp.net') && !phoneNumber.includes('@g.us')) {
+        console.error(`🚫 BLOQUEIO FORMATO: Número "${phoneNumber}" não é formato válido`);
         await this.logSecurityEvent(integration.id, phoneNumber, message, 'BLOCKED_INVALID_NUMBER_FORMAT');
         return false;
       }
