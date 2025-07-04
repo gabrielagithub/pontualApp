@@ -355,7 +355,23 @@ export class DatabaseStorage implements IStorage {
 
   // WhatsApp Integration methods (single instance)
   async getWhatsappIntegration(): Promise<WhatsappIntegration | undefined> {
-    const [integration] = await db.select().from(whatsappIntegrations).limit(1);
+    const [integration] = await db.select({
+      id: whatsappIntegrations.id,
+      instanceName: whatsappIntegrations.instanceName,
+      apiUrl: whatsappIntegrations.apiUrl,
+      apiKey: whatsappIntegrations.apiKey,
+      phoneNumber: whatsappIntegrations.phoneNumber,
+      isActive: whatsappIntegrations.isActive,
+      webhookUrl: whatsappIntegrations.webhookUrl,
+      authorizedNumbers: whatsappIntegrations.authorizedNumbers,
+      restrictToNumbers: whatsappIntegrations.restrictToNumbers,
+      allowedGroupJid: whatsappIntegrations.allowedGroupJid,
+      responseMode: whatsappIntegrations.responseMode,
+      lastConnection: whatsappIntegrations.lastConnection,
+      createdAt: whatsappIntegrations.createdAt,
+      updatedAt: whatsappIntegrations.updatedAt,
+    }).from(whatsappIntegrations).limit(1);
+    
     return integration || undefined;
   }
 

@@ -103,6 +103,13 @@ export class WhatsappService {
       // Sanitizar API key para remover caracteres inválidos
       const cleanApiKey = integration.apiKey?.trim().replace(/[^\x20-\x7E]/g, '') || '';
       
+      console.log(`🔍 DEBUG API KEY:`, {
+        hasApiKey: !!integration.apiKey,
+        apiKeyLength: integration.apiKey?.length || 0,
+        cleanApiKeyLength: cleanApiKey.length,
+        isEmpty: !cleanApiKey
+      });
+      
       console.log(`🔍 AXIOS CONFIG:`, {
         url,
         headers: {
