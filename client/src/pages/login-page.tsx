@@ -6,7 +6,7 @@ import { login } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Clock, LogIn } from "lucide-react";
 
@@ -65,9 +65,7 @@ export default function LoginPage() {
               <LogIn className="h-5 w-5" />
               Fazer Login
             </CardTitle>
-            <CardDescription>
-              Digite suas credenciais para acessar o sistema
-            </CardDescription>
+            
           </CardHeader>
           <CardContent>
             {error && (
