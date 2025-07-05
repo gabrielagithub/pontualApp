@@ -1,9 +1,17 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertTaskSchema, insertTaskItemSchema, insertTimeEntrySchema, updateTimeEntrySchema, insertWhatsappIntegrationSchema, insertNotificationSettingsSchema } from "@shared/schema";
+import { insertTaskSchema, insertTaskItemSchema, insertTimeEntrySchema, updateTimeEntrySchema, insertWhatsappIntegrationSchema, insertNotificationSettingsSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
-
+import { 
+  authenticateAny, 
+  authenticateApiKey, 
+  authenticateToken,
+  verifyPassword, 
+  generateJwtToken, 
+  createUserWithDefaults,
+  AuthenticatedRequest 
+} from "./auth-middleware";
 import { whatsappService } from "./whatsapp-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -15,6 +23,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
       database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
       version: '1.0.0'
     });
+  });
+
+
+
+  // ===== ENDPOINTS DE AUTENTICAÇÃO =====
+  
+  // Login para interface web
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: 'Username e password são obrigatórios' });
+      }
+
+      const user = await storage.getUserByUsername(username);
+      if (!user || !user.isActive) {
+        return res.status(401).json({ message: 'Usuário não encontrado ou inativo' });
+      }
+
+      const isValidPassword = await verifyPassword(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      const token = generateJwtToken(user.id, user.username);
+      
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName
+        }
+      });
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Obter informações do usuário autenticado
+  app.get('/api/auth/me', authenticateAny, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        apiKey: user.apiKey,
+        createdAt: user.createdAt
+      });
+    } catch (error: any) {
+      console.error('Erro ao buscar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar novo usuário (apenas para admin via API Key)
+  app.post('/api/auth/users', authenticateApiKey, async (req: AuthenticatedRequest, res) => {
+    try {
+      const validated = insertUserSchema.parse(req.body);
+      
+      // Verificar se usuário já existe
+      const existingUser = await storage.getUserByUsername(validated.username);
+      if (existingUser) {
+        return res.status(409).json({ message: 'Username já existe' });
+      }
+
+      const user = await createUserWithDefaults(
+        validated.username,
+        validated.password,
+        validated.email,
+        validated.fullName
+      );
+
+      res.status(201).json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        apiKey: user.apiKey,
+        createdAt: user.createdAt
+      });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Dados inválidos', errors: error.errors });
+      }
+      console.error('Erro ao criar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Gerar nova API Key
+  app.post('/api/auth/generate-api-key', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const apiKey = await storage.generateApiKey(req.user!.id);
+      res.json({ apiKey });
+    } catch (error: any) {
+      console.error('Erro ao gerar API Key:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
   });
 
   // Endpoint para testar WhatsApp manualmente
@@ -233,21 +349,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   // Task routes
-  app.get("/api/tasks", async (req, res) => {
+  // ===== ENDPOINTS DE TAREFAS (COM AUTENTICAÇÃO) =====
+
+  app.get("/api/tasks", authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {
       const tasks = await storage.getAllTasks();
-      res.json(tasks);
+      // Filtrar tarefas do usuário logado
+      const userTasks = tasks.filter(task => task.userId === req.user!.id);
+      res.json(userTasks);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tasks" });
     }
   });
 
-  app.get("/api/tasks/:id", async (req, res) => {
+  app.get("/api/tasks/:id", authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const task = await storage.getTask(id);
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
+      }
+      // Verificar se a tarefa pertence ao usuário
+      if (task.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Acesso negado à tarefa" });
       }
       res.json(task);
     } catch (error) {
@@ -255,9 +379,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tasks", async (req, res) => {
+  app.post("/api/tasks", authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {
-      const validatedData = insertTaskSchema.parse(req.body);
+      // Adicionar userId e source automaticamente
+      const taskData = {
+        ...req.body,
+        userId: req.user!.id,
+        source: req.headers['x-api-key'] ? 'api-externa' : 'sistema'
+      };
+      
+      const validatedData = insertTaskSchema.parse(taskData);
       const task = await storage.createTask(validatedData);
       res.status(201).json(task);
     } catch (error) {
@@ -434,10 +565,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/time-entries", async (req, res) => {
+  app.post("/api/time-entries", authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {
       console.log("Received time entry data:", req.body);
-      const validatedData = insertTimeEntrySchema.parse(req.body);
+      
+      // Adicionar userId do usuário autenticado
+      const timeEntryData = {
+        ...req.body,
+        userId: req.user!.id
+      };
+      
+      const validatedData = insertTimeEntrySchema.parse(timeEntryData);
       console.log("Validated time entry data:", validatedData);
       const entry = await storage.createTimeEntry(validatedData);
       res.status(201).json(entry);
@@ -1064,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Start timer for a task (by name or ID)
-  app.post("/api/start-timer", async (req, res) => {
+  app.post("/api/start-timer", authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {
       const { taskName, taskId, description } = req.body;
       
@@ -1082,7 +1220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             description: "",
             color: "#3B82F6",
             isActive: true,
-            deadline: null
+            deadline: null,
+            source: "sistema",
+            userId: req.user!.id
           });
         }
       }
@@ -1107,7 +1247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         taskId: task.id,
         startTime: new Date().toISOString(),
         isRunning: true,
-        notes: description || ""
+        notes: description || "",
+        userId: req.user!.id
       };
       
       const validatedData = insertTimeEntrySchema.parse(timeEntryData);
@@ -1128,7 +1269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Stop timer for a task (by name or ID)
-  app.post("/api/stop-timer", async (req, res) => {
+  app.post("/api/stop-timer", authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {
       const { taskName, taskId, description } = req.body;
       

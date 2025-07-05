@@ -1,12 +1,21 @@
 import { 
-  tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings,
+  tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings, users,
   type Task, type InsertTask, type TaskItem, type InsertTaskItem, 
   type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TimeEntryWithTask, type TaskWithStats,
   type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog,
-  type NotificationSettings, type InsertNotificationSettings
+  type NotificationSettings, type InsertNotificationSettings,
+  type User, type InsertUser
 } from "@shared/schema";
 
 export interface IStorage {
+  // User authentication methods
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByApiKey(apiKey: string): Promise<User | undefined>;
+  getUser(id: number): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
+  generateApiKey(userId: number): Promise<string>;
+  validateUserAccess(userId: number): Promise<boolean>;
   // Task methods
   getAllTasks(): Promise<TaskWithStats[]>;
   getTask(id: number): Promise<Task | undefined>;
@@ -66,28 +75,100 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<number, User>;
   private tasks: Map<number, Task>;
   private taskItems: Map<number, TaskItem>;
   private timeEntries: Map<number, TimeEntry>;
   private whatsappIntegration: WhatsappIntegration | undefined;
   private whatsappLogs: Map<number, WhatsappLog>;
   private notificationSettings: NotificationSettings | undefined;
+  private currentUserId: number;
   private currentTaskId: number;
   private currentTaskItemId: number;
   private currentTimeEntryId: number;
   private currentWhatsappLogId: number;
 
   constructor() {
+    this.users = new Map();
     this.tasks = new Map();
     this.taskItems = new Map();
     this.timeEntries = new Map();
     this.whatsappIntegration = undefined;
     this.whatsappLogs = new Map();
     this.notificationSettings = undefined;
+    this.currentUserId = 1;
     this.currentTaskId = 1;
     this.currentTaskItemId = 1;
     this.currentTimeEntryId = 1;
     this.currentWhatsappLogId = 1;
+    
+    // Criar usuário padrão do sistema
+    this.createDefaultUser();
+  }
+
+  private createDefaultUser() {
+    const defaultUser: User = {
+      id: 1,
+      username: 'admin',
+      password: '$2b$10$o94EUqCxV0Ih4BQ5ar.H2u08kL/.1Cy4kPzR5QH8ALzM9k9qU0R2G', // admin123
+      email: 'admin@pontual.local',
+      fullName: 'Administrador do Sistema',
+      isActive: true,
+      apiKey: 'pont_' + Math.random().toString(36).substring(2) + Date.now().toString(36),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.set(1, defaultUser);
+    this.currentUserId = 2;
+  }
+
+  // User authentication methods
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
+  }
+
+  async getUserByApiKey(apiKey: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.apiKey === apiKey && user.isActive);
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const user: User = {
+      id: this.currentUserId++,
+      username: userData.username,
+      password: userData.password,
+      email: userData.email || null,
+      fullName: userData.fullName || null,
+      isActive: userData.isActive ?? true,
+      apiKey: userData.apiKey || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.set(user.id, user);
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...updates, updatedAt: new Date() };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async generateApiKey(userId: number): Promise<string> {
+    const apiKey = 'pont_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    await this.updateUser(userId, { apiKey });
+    return apiKey;
+  }
+
+  async validateUserAccess(userId: number): Promise<boolean> {
+    const user = this.users.get(userId);
+    return !!user && user.isActive;
   }
 
   // Task methods

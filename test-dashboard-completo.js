@@ -35,11 +35,44 @@ function logWarning(message) {
   log(`⚠️  ${message}`, 'yellow');
 }
 
+// Variável global para armazenar o token de autenticação
+let authToken = null;
+
+async function authenticate() {
+  try {
+    const response = await fetch('http://localhost:5000/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'admin123' })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Falha na autenticação: ${response.status}`);
+    }
+
+    const data = await response.json();
+    authToken = data.token;
+    return true;
+  } catch (error) {
+    logError(`Erro na autenticação: ${error.message}`);
+    return false;
+  }
+}
+
 async function makeRequest(method, endpoint, data = null, headers = {}) {
+  // Garantir que estamos autenticados
+  if (!authToken) {
+    const authenticated = await authenticate();
+    if (!authenticated) {
+      throw new Error('Falha na autenticação');
+    }
+  }
+
   const config = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
       ...headers
     }
   };

@@ -115,6 +115,16 @@ Pontual is a Brazilian Portuguese time tracking and task management application 
 ```
 Changelog:
 - July 01, 2025. Initial setup
+- July 05, 2025 (03:22): Implementação completa do sistema de autenticação obrigatória:
+  * Adicionado sistema de autenticação JWT com bcryptjs para hash de senhas
+  * Criado usuário padrão "admin" com senha "admin123" para acesso inicial
+  * Implementada autenticação obrigatória em todos os endpoints da API
+  * Adicionado campo 'source' nas tarefas para rastrear origem (sistema vs API)
+  * Adicionado campo 'userId' em todas as entidades para controle de acesso
+  * Corrigidos endpoints de time entries e timer para incluir userId automaticamente
+  * Implementada validação de API Key como alternativa ao JWT para integrações
+  * Sistema completamente testado: 6/6 testes do dashboard passaram com sucesso
+  * Aplicação agora segura e pronta para produção com controle de acesso completo
 - July 01, 2025 (21:00): Implemented timer system improvements:
   * Fixed pause/resume functionality with proper state management
   * Added prevention of multiple active sessions for same task

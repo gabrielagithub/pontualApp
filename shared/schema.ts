@@ -4,6 +4,19 @@ import { z } from "zod";
 
 
 
+// Tabela de usuários para autenticação
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(), // hash da senha
+  email: text("email").unique(),
+  fullName: text("full_name"),
+  isActive: boolean("is_active").notNull().default(true),
+  apiKey: text("api_key").unique(), // chave para acesso via API
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -15,6 +28,9 @@ export const tasks = pgTable("tasks", {
   isCompleted: boolean("is_completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  // Campo obrigatório para identificar origem da tarefa
+  source: text("source").notNull(), // "sistema" ou nome do sistema externo
+  userId: integer("user_id").notNull().references(() => users.id), // usuário que criou
 });
 
 export const taskItems = pgTable("task_items", {
@@ -23,6 +39,7 @@ export const taskItems = pgTable("task_items", {
   title: text("title").notNull(),
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  userId: integer("user_id").notNull().references(() => users.id),
 });
 
 export const timeEntries = pgTable("time_entries", {
@@ -34,6 +51,7 @@ export const timeEntries = pgTable("time_entries", {
   isRunning: boolean("is_running").notNull().default(false),
   notes: text("notes"), // observações
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  userId: integer("user_id").notNull().references(() => users.id),
 });
 
 // Configurações de integração WhatsApp (sistema single-user)
@@ -81,6 +99,17 @@ export const notificationSettings = pgTable("notification_settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Schema para criação de usuário
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  email: z.string().email("Email deve ser válido").optional(),
+});
+
 export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   createdAt: true,
@@ -88,11 +117,15 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
   estimatedHours: z.number().nullable().optional(),
   deadline: z.string().nullable().optional().transform((val) => val ? new Date(val) : null),
   isActive: z.boolean().optional().default(true),
+  source: z.string().min(1, "Origem da tarefa é obrigatória"), // obrigatório
+  userId: z.number().min(1, "ID do usuário é obrigatório"),
 });
 
 export const insertTaskItemSchema = createInsertSchema(taskItems).omit({
   id: true,
   createdAt: true,
+}).extend({
+  userId: z.number().min(1, "ID do usuário é obrigatório"),
 });
 
 export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
@@ -104,6 +137,7 @@ export const insertTimeEntrySchema = createInsertSchema(timeEntries).omit({
     if (!val) return null;
     return typeof val === 'string' ? new Date(val) : val;
   }),
+  userId: z.number().min(1, "ID do usuário é obrigatório"),
 });
 
 export const updateTimeEntrySchema = createInsertSchema(timeEntries).omit({
@@ -117,7 +151,9 @@ export const updateTimeEntrySchema = createInsertSchema(timeEntries).omit({
   }),
 }).partial();
 
-// User types removidos - aplicação simplificada sem usuários
+// User types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
