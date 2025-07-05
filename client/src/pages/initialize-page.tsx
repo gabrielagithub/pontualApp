@@ -3,17 +3,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Clock } from "lucide-react";
 
 const initializeSchema = z.object({
-  username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  fullName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
-  fullName: z.string().min(2, "Nome completo deve ter pelo menos 2 caracteres"),
+  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 type InitializeFormData = z.infer<typeof initializeSchema>;
@@ -29,24 +34,31 @@ export default function InitializePage({ onInitialized }: InitializePageProps) {
   const form = useForm<InitializeFormData>({
     resolver: zodResolver(initializeSchema),
     defaultValues: {
+      fullName: "",
+      email: "",
       username: "",
       password: "",
-      email: "",
-      fullName: "",
+      confirmPassword: "",
     },
   });
 
   const onSubmit = async (data: InitializeFormData) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/initialize", data);
+      const response = await apiRequest("POST", "/api/auth/initialize", {
+        fullName: data.fullName,
+        email: data.email,
+        username: data.username,
+        password: data.password,
+      });
+      
       const result = await response.json();
       
       if (response.ok) {
         localStorage.setItem('authToken', result.token);
         toast({
           title: "Sistema inicializado com sucesso!",
-          description: "Seu usuário administrador foi criado.",
+          description: "Administrador criado. Bem-vindo ao Pontual.",
         });
         onInitialized(result.token);
       } else {
@@ -54,8 +66,8 @@ export default function InitializePage({ onInitialized }: InitializePageProps) {
       }
     } catch (error: any) {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao inicializar sistema",
+        title: "Erro ao inicializar sistema",
+        description: error.message || "Erro interno do servidor",
         variant: "destructive",
       });
     } finally {
@@ -65,17 +77,19 @@ export default function InitializePage({ onInitialized }: InitializePageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Inicializar Sistema
-            </CardTitle>
-            <p className="text-gray-600 mt-2">
-              Este é o primeiro acesso ao sistema. Crie seu usuário administrador.
-            </p>
-          </CardHeader>
-          <CardContent>
+      <div className="w-full max-w-sm">
+        <Card className="shadow-lg">
+          <CardContent className="p-8">
+            <div className="text-center mb-8">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-blue-600">Pontual</h1>
+              <p className="text-gray-600 text-sm mt-2">
+                Primeiro acesso - Criar administrador
+              </p>
+            </div>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -95,7 +109,7 @@ export default function InitializePage({ onInitialized }: InitializePageProps) {
                     </FormItem>
                   )}
                 />
-
+                
                 <FormField
                   control={form.control}
                   name="email"
@@ -120,7 +134,7 @@ export default function InitializePage({ onInitialized }: InitializePageProps) {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome de Usuário</FormLabel>
+                      <FormLabel>Nome de usuário</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="Digite seu nome de usuário" 
@@ -152,12 +166,31 @@ export default function InitializePage({ onInitialized }: InitializePageProps) {
                   )}
                 />
                 
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirmar Senha</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="Confirme sua senha" 
+                          {...field} 
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <Button 
                   type="submit" 
-                  className="w-full" 
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white" 
                   disabled={isLoading}
                 >
-                  {isLoading ? "Inicializando..." : "Criar Administrador"}
+                  {isLoading ? "Criando administrador..." : "Inicializar Sistema"}
                 </Button>
               </form>
             </Form>
