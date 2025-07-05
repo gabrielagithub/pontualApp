@@ -125,7 +125,7 @@ export default function LoginPage() {
             
             <div className="mt-4 text-center">
               <div className="text-sm text-gray-600">
-                <p className="font-semibold">Credenciais padrão:</p>
+                
                 <p>Usuário: <code className="bg-gray-100 px-1 rounded">admin</code></p>
                 <p>Senha: <code className="bg-gray-100 px-1 rounded">admin123</code></p>
               </div>
