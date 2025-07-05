@@ -12,10 +12,10 @@ import History from "@/pages/history";
 import WhatsAppPage from "@/pages/whatsapp";
 import ManagerPage from "@/pages/manager-page";
 import NotFound from "@/pages/not-found";
-import LoginPage from "@/pages/login";         // <= importe
-import { useAuth } from "@/hooks/useAuth";     // <= importe
+import LoginPage from "@/pages/login-page";
+import { useAuth } from "@/hooks/useAuth";
 
-function Router() {
+function AuthenticatedRoutes() {
   return (
     <Layout>
       <Switch>
@@ -33,21 +33,41 @@ function Router() {
   );
 }
 
+function UnauthenticatedRoutes() {
+  return (
+    <Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route component={LoginPage} />
+    </Switch>
+  );
+}
+
 function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div>Carregando...</div>;
-
-  if (!user) return <LoginPage />;
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );
+}
+
+function AppContent() {
+  const { user, loading, isAuthenticated } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <AuthenticatedRoutes /> : <UnauthenticatedRoutes />;
 }
 
 export default App;

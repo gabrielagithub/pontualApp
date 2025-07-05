@@ -85,8 +85,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: user.username,
         email: user.email,
         fullName: user.fullName,
+        role: user.role,
+        isActive: user.isActive,
+        mustResetPassword: user.mustResetPassword,
+        lastLogin: user.lastLogin,
         apiKey: user.apiKey,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       });
     } catch (error: any) {
       console.error('Erro ao buscar usuário:', error);

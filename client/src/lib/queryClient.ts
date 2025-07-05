@@ -7,34 +7,23 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Função para obter credenciais Basic Auth do usuário
-function getBasicAuthCredentials(): string | null {
-  // Tentar obter credenciais armazenadas
-  const storedCredentials = localStorage.getItem('pontual_auth_credentials');
-  if (storedCredentials) {
-    return storedCredentials;
-  }
-
-  // Usar credenciais padrão do usuário cadastrado
-  const defaultCredentials = btoa('usuario:senha123');
-  localStorage.setItem('pontual_auth_credentials', defaultCredentials);
-  return defaultCredentials;
+// Função para obter token JWT
+function getAuthToken(): string | null {
+  return localStorage.getItem('authToken');
 }
 
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-): Promise<any> {
-  const authCredentials = getBasicAuthCredentials();
+): Promise<Response> {
+  const headers: Record<string, string> = {};
   
-  if (!authCredentials) {
-    throw new Error('Credenciais necessárias para acessar a API');
+  // Adicionar token JWT se disponível (exceto para login)
+  const token = getAuthToken();
+  if (token && !url.includes('/api/auth/login')) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
-
-  const headers: Record<string, string> = {
-    'Authorization': `Basic ${authCredentials}`,
-  };
   
   if (data) {
     headers['Content-Type'] = 'application/json';
@@ -47,14 +36,14 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Se retornar 401, limpar credenciais e tentar novamente
-  if (res.status === 401) {
-    localStorage.removeItem('pontual_auth_credentials');
-    throw new Error('401: Credenciais inválidas. Recarregue a página para tentar novamente.');
+  // Se retornar 401, limpar token e redirecionar para login
+  if (res.status === 401 && !url.includes('/api/auth/login')) {
+    localStorage.removeItem('authToken');
+    window.location.href = '/login';
+    throw new Error('401: Token inválido');
   }
 
-  await throwIfResNotOk(res);
-  return await res.json();
+  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -63,25 +52,27 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const authCredentials = getBasicAuthCredentials();
+    const headers: Record<string, string> = {};
     
-    if (!authCredentials) {
-      throw new Error('Credenciais necessárias para acessar a API');
+    // Adicionar token JWT se disponível
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const res = await fetch(queryKey[0] as string, {
-      headers: {
-        'Authorization': `Basic ${authCredentials}`,
-      },
+      headers,
       credentials: "include",
     });
 
     if (res.status === 401) {
-      localStorage.removeItem('pontual_auth_credentials');
+      localStorage.removeItem('authToken');
       if (unauthorizedBehavior === "returnNull") {
         return null;
       }
-      throw new Error('401: Credenciais inválidas. Recarregue a página para tentar novamente.');
+      // Redirecionar para login
+      window.location.href = '/login';
+      throw new Error('401: Token inválido');
     }
 
     await throwIfResNotOk(res);

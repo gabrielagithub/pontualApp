@@ -1,14 +1,18 @@
 import { Link, useLocation } from "wouter";
 import { Clock, BarChart3, Timer, ListTodo, History, Smartphone, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
-const navigation = [
+const baseNavigation = [
   { name: "Dashboard", href: "/", icon: BarChart3 },
   { name: "Atividades", href: "/tasks", icon: ListTodo },
   { name: "Controle de Tempo", href: "/timer", icon: Timer },
   { name: "Relatórios", href: "/reports", icon: BarChart3 },
   { name: "Histórico", href: "/history", icon: History },
   { name: "WhatsApp", href: "/whatsapp", icon: Smartphone },
+];
+
+const adminNavigation = [
   { name: "Gerenciar Usuários", href: "/manager", icon: Users },
 ];
 
@@ -19,6 +23,10 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
+  const { isAdmin } = useAuth();
+  
+  // Criar navegação baseada no papel do usuário
+  const navigation = isAdmin ? [...baseNavigation, ...adminNavigation] : baseNavigation;
 
   return (
     <>
