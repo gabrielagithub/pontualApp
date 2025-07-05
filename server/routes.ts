@@ -72,6 +72,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint para verificar se o sistema foi inicializado (se existe pelo menos um usuário)
+  app.get('/api/auth/is-initialized', async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const hasUsers = users.length > 0;
+      res.json({ initialized: hasUsers });
+    } catch (error) {
+      console.error('Erro ao verificar inicialização do sistema:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Endpoint para criar o primeiro usuário administrador (apenas quando sistema não foi inicializado)
+  app.post('/api/auth/initialize', async (req, res) => {
+    try {
+      // Verificar se já existem usuários no sistema
+      const users = await storage.getAllUsers();
+      if (users.length > 0) {
+        return res.status(400).json({ message: 'Sistema já foi inicializado' });
+      }
+
+      const { username, password, email, fullName } = req.body;
+      
+      if (!username || !password || !email || !fullName) {
+        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+      }
+
+      // Criar o primeiro usuário como administrador
+      const user = await createUserWithDefaults(
+        username,
+        password,
+        email,
+        fullName,
+        'admin'
+      );
+
+      const token = generateJwtToken(user.id, user.username);
+      
+      res.status(201).json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role
+        }
+      });
+    } catch (error: any) {
+      console.error('Erro ao inicializar sistema:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
   // Obter informações do usuário autenticado
   app.get('/api/auth/me', authenticateAny, async (req: AuthenticatedRequest, res) => {
     try {

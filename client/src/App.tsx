@@ -13,7 +13,9 @@ import WhatsAppPage from "@/pages/whatsapp";
 import ManagerPage from "@/pages/manager-page";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login-page";
+import InitializePage from "@/pages/initialize-page";
 import { useAuth } from "@/hooks/useAuth";
+import { useSystemInitialized } from "@/hooks/useSystemInitialized";
 
 function AuthenticatedRoutes() {
   return (
@@ -54,9 +56,16 @@ function App() {
 }
 
 function AppContent() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { isInitialized, isLoading: initLoading } = useSystemInitialized();
 
-  if (loading) {
+  const handleInitialized = (token: string) => {
+    // Invalidar cache para recarregar dados do usuário
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/is-initialized'] });
+  };
+
+  if (initLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -65,6 +74,11 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  // Se o sistema não foi inicializado, mostrar página de inicialização
+  if (!isInitialized) {
+    return <InitializePage onInitialized={handleInitialized} />;
   }
 
   return isAuthenticated ? <AuthenticatedRoutes /> : <UnauthenticatedRoutes />;

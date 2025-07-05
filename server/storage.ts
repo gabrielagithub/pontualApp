@@ -107,8 +107,7 @@ export class MemStorage implements IStorage {
     this.currentTimeEntryId = 1;
     this.currentWhatsappLogId = 1;
     
-    // Criar usuário padrão do sistema
-    this.createDefaultUser();
+    // Sistema inicia vazio - primeiro usuário será criado via endpoint de inicialização
   }
 
   private createDefaultUser() {
