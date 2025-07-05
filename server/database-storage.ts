@@ -1,9 +1,86 @@
-import { tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TaskWithStats, type TimeEntryWithTask, type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog, type NotificationSettings, type InsertNotificationSettings } from "@shared/schema";
+import { tasks, taskItems, timeEntries, whatsappIntegrations, whatsappLogs, notificationSettings, users, type Task, type InsertTask, type TaskItem, type InsertTaskItem, type TimeEntry, type InsertTimeEntry, type UpdateTimeEntry, type TaskWithStats, type TimeEntryWithTask, type WhatsappIntegration, type InsertWhatsappIntegration, type WhatsappLog, type InsertWhatsappLog, type NotificationSettings, type InsertNotificationSettings, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, isNull, desc, asc } from "drizzle-orm";
 import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
+  // User authentication methods
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByApiKey(apiKey: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.apiKey, apiKey));
+    return user || undefined;
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.resetToken, token));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const allUsers = await db.select().from(users);
+    return allUsers;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db
+      .insert(users)
+      .values(user)
+      .returning();
+    return newUser;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async generateApiKey(userId: number): Promise<string> {
+    const apiKey = `pont_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    await this.updateUser(userId, { apiKey });
+    return apiKey;
+  }
+
+  async validateUserAccess(userId: number): Promise<boolean> {
+    const user = await this.getUser(userId);
+    return !!user && user.isActive;
+  }
+
+  async getTimeEntriesByUser(userId: number, startDate?: string, endDate?: string): Promise<TimeEntry[]> {
+    let query = db.select().from(timeEntries).where(eq(timeEntries.userId, userId));
+    
+    if (startDate) {
+      query = query.where(gte(timeEntries.createdAt, new Date(startDate)));
+    }
+    
+    if (endDate) {
+      query = query.where(lte(timeEntries.createdAt, new Date(endDate)));
+    }
+    
+    return await query;
+  }
   async getAllTasks(): Promise<TaskWithStats[]> {
     const allTasks = await db.select().from(tasks).orderBy(desc(tasks.createdAt));
     

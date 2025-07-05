@@ -549,6 +549,14 @@ Changelog:
   * Sistema de email configurado para envio automático de credenciais temporárias
   * Correções na estrutura de usuários para campos de reset de senha e autenticação
   * Painel administrativo funcional com controle de roles (admin/user) e validação de dados
+- July 05, 2025 (04:15): Correção crítica do erro de inicialização no Render:
+  * Identificado problema: DatabaseStorage incompleta causava erro 500 no endpoint de inicialização
+  * Implementados todos os métodos de usuário faltantes na DatabaseStorage (getUserByUsername, createUser, etc.)
+  * Adicionados imports corretos (users, User, InsertUser) no database-storage.ts
+  * Sistema de inicialização agora funciona tanto localmente quanto no Render
+  * Criado script test-initialization.js para diagnóstico de problemas de deploy
+  * Design da tela de login retornado ao estilo anterior (ícone do relógio, layout simples)
+  * Sistema completamente funcional: detecção automática se não há usuários + página de inicialização
 ```
 
 ## User Preferences
