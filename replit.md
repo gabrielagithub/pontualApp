@@ -540,6 +540,15 @@ Changelog:
   * Sistema de validação individual vs grupo funcionando corretamente no modo individual
   * Todas as entradas de tempo sendo persistidas no banco com dados corretos
   * WhatsApp integration 100% funcional com todos os comandos testados e validados
+- July 05, 2025 (03:35): Implementação completa do sistema multi-usuário com painel administrativo:
+  * Adicionado métodos getUserByEmail e getTimeEntriesByUser na interface IStorage para suporte multi-usuário
+  * Implementados métodos faltantes no MemStorage para operações multi-usuário
+  * Criada página administrativa completa em /manager com CRUD de usuários
+  * Interface administrativa inclui criação, edição, ativação/desativação e reset de senha
+  * Adicionada navegação para página administrativa no sidebar (ícone Users)
+  * Sistema de email configurado para envio automático de credenciais temporárias
+  * Correções na estrutura de usuários para campos de reset de senha e autenticação
+  * Painel administrativo funcional com controle de roles (admin/user) e validação de dados
 ```
 
 ## User Preferences

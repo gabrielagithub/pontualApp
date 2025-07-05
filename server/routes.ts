@@ -7,12 +7,19 @@ import {
   authenticateAny, 
   authenticateApiKey, 
   authenticateToken,
+  authenticateAdmin,
   verifyPassword, 
   generateJwtToken, 
   createUserWithDefaults,
+  createUserByAdmin,
+  updateLastLogin,
+  createPasswordResetToken,
+  resetPassword,
   AuthenticatedRequest 
 } from "./auth-middleware";
 import { whatsappService } from "./whatsapp-service";
+import { emailService } from "./email-service";
+import { createUserByAdminSchema, loginSchema, resetPasswordSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint para Render (sem autenticação)
@@ -132,6 +139,265 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   });
+
+  // ===== ROTAS ADMINISTRATIVAS =====
+
+  // Listar todos os usuários (apenas admin)
+  app.get('/api/admin/users', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const usersResponse = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        isActive: user.isActive,
+        mustResetPassword: user.mustResetPassword,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }));
+      res.json(usersResponse);
+    } catch (error: any) {
+      console.error('Erro ao listar usuários:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Criar novo usuário (apenas admin)
+  app.post('/api/admin/users', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const validated = createUserByAdminSchema.parse(req.body);
+      
+      // Verificar se usuário já existe
+      const existingUser = await storage.getUserByUsername(validated.username);
+      if (existingUser) {
+        return res.status(409).json({ message: 'Username já existe' });
+      }
+
+      // Verificar se email já existe
+      const existingEmail = await storage.getUserByEmail(validated.email);
+      if (existingEmail) {
+        return res.status(409).json({ message: 'Email já está em uso' });
+      }
+
+      // Gerar senha temporária
+      const temporaryPassword = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 4).toUpperCase();
+      
+      const user = await createUserByAdmin(
+        validated.username,
+        validated.email,
+        validated.fullName,
+        validated.role || 'user',
+        temporaryPassword
+      );
+
+      // Enviar email com credenciais
+      try {
+        await emailService.sendWelcomeEmail(user.email, user.fullName, temporaryPassword);
+        console.log(`📧 Email de boas-vindas enviado para ${user.email}`);
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar email de boas-vindas:', emailError);
+        // Não falha a criação do usuário se o email não for enviado
+      }
+
+      res.status(201).json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        isActive: user.isActive,
+        mustResetPassword: user.mustResetPassword,
+        createdAt: user.createdAt
+      });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Dados inválidos', errors: error.errors });
+      }
+      console.error('Erro ao criar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Atualizar usuário (apenas admin)
+  app.put('/api/admin/users/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Não permitir atualização de campos sensíveis via esta rota
+      delete updates.password;
+      delete updates.apiKey;
+      
+      const updatedUser = await storage.updateUser(userId, updates);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      res.json({
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        role: updatedUser.role,
+        isActive: updatedUser.isActive,
+        mustResetPassword: updatedUser.mustResetPassword,
+        lastLogin: updatedUser.lastLogin,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt
+      });
+    } catch (error: any) {
+      console.error('Erro ao atualizar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Deletar usuário (apenas admin)
+  app.delete('/api/admin/users/:id', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Não permitir que o admin delete a si mesmo
+      if (userId === req.user!.id) {
+        return res.status(400).json({ message: 'Você não pode deletar sua própria conta' });
+      }
+      
+      const success = await storage.deleteUser(userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      res.json({ message: 'Usuário deletado com sucesso' });
+    } catch (error: any) {
+      console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Reset de senha por admin
+  app.post('/api/admin/users/:id/reset-password', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      const resetToken = await createPasswordResetToken(userId);
+      
+      try {
+        await emailService.sendPasswordResetEmail(user.email, user.fullName, resetToken);
+        console.log(`📧 Email de reset de senha enviado para ${user.email}`);
+        res.json({ message: 'Email de reset de senha enviado com sucesso' });
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar email de reset:', emailError);
+        res.status(500).json({ message: 'Erro ao enviar email de reset de senha' });
+      }
+    } catch (error: any) {
+      console.error('Erro ao iniciar reset de senha:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Relatório de atividades de todos os usuários (apenas admin)
+  app.get('/api/admin/reports/activity', authenticateAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      const users = await storage.getAllUsers();
+      const report = [];
+      
+      for (const user of users) {
+        const timeEntries = await storage.getTimeEntriesByUser(user.id, startDate as string, endDate as string);
+        const totalTime = timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
+        
+        report.push({
+          userId: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          email: user.email,
+          totalTimeMinutes: totalTime,
+          totalTimeFormatted: formatDuration(totalTime),
+          entriesCount: timeEntries.length,
+          lastActivity: timeEntries.length > 0 ? timeEntries[0].endTime : null
+        });
+      }
+      
+      res.json(report);
+    } catch (error: any) {
+      console.error('Erro ao gerar relatório:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // ===== ROTAS DE RESET DE SENHA =====
+  
+  // Solicitar reset de senha (público)
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email é obrigatório' });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Por segurança, sempre retorna sucesso mesmo se o email não existir
+        return res.json({ message: 'Se o email existir em nossa base, você receberá instruções de reset' });
+      }
+
+      const resetToken = await createPasswordResetToken(user.id);
+      
+      try {
+        await emailService.sendPasswordResetEmail(user.email, user.fullName, resetToken);
+        console.log(`📧 Email de reset de senha enviado para ${user.email}`);
+      } catch (emailError) {
+        console.error('❌ Erro ao enviar email de reset:', emailError);
+      }
+      
+      res.json({ message: 'Se o email existir em nossa base, você receberá instruções de reset' });
+    } catch (error: any) {
+      console.error('Erro ao processar forgot password:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Executar reset de senha (público)
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const validated = resetPasswordSchema.parse(req.body);
+      
+      const success = await resetPassword(validated.token, validated.newPassword);
+      
+      if (!success) {
+        return res.status(400).json({ message: 'Token inválido ou expirado' });
+      }
+      
+      res.json({ message: 'Senha alterada com sucesso' });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Dados inválidos', errors: error.errors });
+      }
+      console.error('Erro ao resetar senha:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+
+  // Função auxiliar para formatar duração
+  function formatDuration(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}min`;
+    }
+    return `${mins}min`;
+  }
 
   // Endpoint para testar WhatsApp manualmente
   app.post("/api/whatsapp/test", async (req, res) => {

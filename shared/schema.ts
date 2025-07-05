@@ -9,9 +9,14 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(), // hash da senha
-  email: text("email").unique(),
-  fullName: text("full_name"),
+  email: text("email").notNull().unique(),
+  fullName: text("full_name").notNull(),
+  role: text("role").notNull().default("user"), // "admin" ou "user"
   isActive: boolean("is_active").notNull().default(true),
+  mustResetPassword: boolean("must_reset_password").notNull().default(false),
+  resetToken: text("reset_token"), // token para reset de senha
+  resetTokenExpiry: timestamp("reset_token_expiry"),
+  lastLogin: timestamp("last_login"),
   apiKey: text("api_key").unique(), // chave para acesso via API
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -104,10 +109,35 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  resetToken: true,
+  resetTokenExpiry: true,
+  lastLogin: true,
 }).extend({
   username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  email: z.string().email("Email deve ser válido").optional(),
+  email: z.string().email("Email deve ser válido"),
+  fullName: z.string().min(2, "Nome completo deve ter pelo menos 2 caracteres"),
+  role: z.enum(["admin", "user"]).default("user"),
+});
+
+// Schema para login
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username é obrigatório"),
+  password: z.string().min(1, "Senha é obrigatória"),
+});
+
+// Schema para reset de senha
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token é obrigatório"),
+  newPassword: z.string().min(6, "Nova senha deve ter pelo menos 6 caracteres"),
+});
+
+// Schema para criação de usuário pelo admin
+export const createUserByAdminSchema = z.object({
+  username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email deve ser válido"),
+  fullName: z.string().min(2, "Nome completo deve ter pelo menos 2 caracteres"),
+  role: z.enum(["admin", "user"]).default("user"),
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).omit({

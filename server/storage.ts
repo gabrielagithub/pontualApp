@@ -11,9 +11,13 @@ export interface IStorage {
   // User authentication methods
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByApiKey(apiKey: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUser(id: number): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   generateApiKey(userId: number): Promise<string>;
   validateUserAccess(userId: number): Promise<boolean>;
   // Task methods
@@ -36,6 +40,7 @@ export interface IStorage {
   getAllTimeEntries(): Promise<TimeEntryWithTask[]>;
   getTimeEntry(id: number): Promise<TimeEntry | undefined>;
   getTimeEntriesByTask(taskId: number): Promise<TimeEntry[]>;
+  getTimeEntriesByUser(userId: number, startDate?: string, endDate?: string): Promise<TimeEntry[]>;
   getRunningTimeEntries(): Promise<TimeEntryWithTask[]>;
   createTimeEntry(entry: InsertTimeEntry): Promise<TimeEntry>;
   updateTimeEntry(id: number, updates: UpdateTimeEntry): Promise<TimeEntry | undefined>;
@@ -113,7 +118,12 @@ export class MemStorage implements IStorage {
       password: '$2b$10$o94EUqCxV0Ih4BQ5ar.H2u08kL/.1Cy4kPzR5QH8ALzM9k9qU0R2G', // admin123
       email: 'admin@pontual.local',
       fullName: 'Administrador do Sistema',
+      role: 'admin',
       isActive: true,
+      mustResetPassword: false,
+      resetToken: null,
+      resetTokenExpiry: null,
+      lastLogin: null,
       apiKey: 'pont_' + Math.random().toString(36).substring(2) + Date.now().toString(36),
       createdAt: new Date(),
       updatedAt: new Date()
@@ -135,14 +145,31 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.resetToken === token);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
   async createUser(userData: InsertUser): Promise<User> {
     const user: User = {
       id: this.currentUserId++,
       username: userData.username,
       password: userData.password,
-      email: userData.email || null,
-      fullName: userData.fullName || null,
+      email: userData.email,
+      fullName: userData.fullName,
+      role: userData.role || 'user',
       isActive: userData.isActive ?? true,
+      mustResetPassword: userData.mustResetPassword ?? false,
+      resetToken: null,
+      resetTokenExpiry: null,
+      lastLogin: null,
       apiKey: userData.apiKey || null,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -158,6 +185,10 @@ export class MemStorage implements IStorage {
     const updatedUser = { ...user, ...updates, updatedAt: new Date() };
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    return this.users.delete(id);
   }
 
   async generateApiKey(userId: number): Promise<string> {
@@ -327,6 +358,32 @@ export class MemStorage implements IStorage {
 
   async getTimeEntriesByTask(taskId: number): Promise<TimeEntry[]> {
     return Array.from(this.timeEntries.values()).filter(entry => entry.taskId === taskId);
+  }
+
+  async getTimeEntriesByUser(userId: number, startDate?: string, endDate?: string): Promise<TimeEntry[]> {
+    let entries = Array.from(this.timeEntries.values()).filter(entry => entry.userId === userId);
+    
+    if (startDate || endDate) {
+      entries = entries.filter(entry => {
+        const entryDate = entry.startTime ? new Date(entry.startTime) : new Date();
+        
+        if (startDate && entryDate < new Date(startDate)) {
+          return false;
+        }
+        
+        if (endDate && entryDate > new Date(endDate)) {
+          return false;
+        }
+        
+        return true;
+      });
+    }
+    
+    return entries.sort((a, b) => {
+      const dateA = a.endTime ? new Date(a.endTime) : new Date();
+      const dateB = b.endTime ? new Date(b.endTime) : new Date();
+      return dateB.getTime() - dateA.getTime();
+    });
   }
 
   async getRunningTimeEntries(): Promise<TimeEntryWithTask[]> {

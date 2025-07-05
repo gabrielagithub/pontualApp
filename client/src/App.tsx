@@ -10,6 +10,7 @@ import Timer from "@/pages/timer";
 import Reports from "@/pages/reports";
 import History from "@/pages/history";
 import WhatsAppPage from "@/pages/whatsapp";
+import ManagerPage from "@/pages/manager-page";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";         // <= importe
 import { useAuth } from "@/hooks/useAuth";     // <= importe
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/reports" component={Reports} />
         <Route path="/history" component={History} />
         <Route path="/whatsapp" component={WhatsAppPage} />
+        <Route path="/manager" component={ManagerPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
